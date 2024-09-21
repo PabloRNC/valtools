@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: Arial, sans-serif;
+        background-color: #111;
+      }
+
+      .tabs-wrapper {
+        width: 452px; 
+        margin: 0 auto; 
+        background-color: #111; 
+        border-bottom: 1px solid #333;
+      }
+
+      .nav-tabs {
+        display: flex;
+        width: 100%; 
+        padding: 0; 
+        margin: 0; 
+        box-sizing: border-box; 
+      }
+
+      .nav-tabs .nav-item {
+        flex: 1; 
+        min-width: 120px;
+      }
+
+      .nav-tabs .nav-link {
+        border: 1px solid #444;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        padding: 8px 12px; 
+        text-align: center; 
+        box-sizing: border-box; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        color: white;
+      }
+      .nav-tabs .nav-link:hover {
+        background-color: #333; 
+      }
+      .nav-tabs .nav-link.active {
+        background-color: #333; 
+        border-color: #444;
+        font-weight: bold;
+        border-radius: 10px 10px 0 0;
+        color: white; 
+      }
+      .container-wrapper {
+        width: 452px;
+        border-radius: 10px;
+        overflow: visible; 
+        position: absolute;
+        top: 70px;
+        left: 20px;
+        background-color: #111;
+        border: 1px solid #444;
+      }
+
+      .main-content,
+      .hello-world-container {
+        width: 100%;
+        background-size: cover;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        border-radius: 10px;
+      }
+      .container,
+      .hello-world-container {
+        width: 100%;
+        height: 128px;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        box-sizing: border-box;
+      }
+      .container {
+        background-image: url("https://media.valorant-api.com/playercards/40f33c2d-404b-a9ec-6832-a48011c9e804/wideart.png");
+      }
+      .hello-world-container {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        padding: 0px;
+        background-color: transparent;
+        height: auto;
+      }
+      .franja {
+        width: 100%;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-image: url("https://media.valorant-api.com/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba/listviewicon.png");
+        background-size: cover;
+        border-radius: 0 0 10px 10px;
+        position: relative;
+        box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        padding: 0 20px;
+        border: 1px solid white;
+      }
+      .text-score-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        padding: 0 10px;
+      }
+
+      .agent-icon {
+        width: 80px; 
+        height: 80px; 
+        margin-right: 0px; 
+        margin-bottom: -1.7px;
+        padding: 2px;
+        position: relative; 
+        left: -21px; 
+      }
+      .text-kda-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        margin-right: -100px;
+      }
+      .franja.victory {
+        background-color: rgba(76, 175, 80, 0.8);
+      }
+      .franja.defeat {
+        background-color: rgba(244, 67, 54, 0.8);
+      }
+      .status-text {
+        font-size: 18px;
+        font-weight: bold;
+        color: inherit;
+        text-align: center;
+      }
+      .score {
+        font-size: 18px;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+      }
+      .victory {
+        color: #65c100;
+      }
+      .defeat {
+        color: red;
+      }
+      .kda-text {
+        font-size: 18px;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 8px;
+        text-align: left;
+      }
+      .number-image-wrapper {
+        position: relative;
+        width: 100px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+      }
+      .number-image {
+        width: 100%;
+        height: 100%;
+        background-image: url("https://media.valorant-api.com/levelborders/ebc736cd-4b6a-137b-e2b0-1486e31312c9/levelnumberappearance.png");
+        background-size: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-radius: 8px;
+      }
+      .number-text {
+        font-size: 20px;
+        color: white;
+        font-weight: bold;
+        z-index: 1;
+      }
+      .center-container {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 8px;
+        height: auto;
+        box-sizing: border-box;
+        flex-shrink: 0;
+        margin-left: 200px;
+      }
+      .rank-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        background-color: transparent;
+      }
+      .rank-image-wrapper {
+        padding: 3px;
+        box-sizing: border-box;
+        margin-bottom: 4px;
+        border-radius: 50%;
+        border: 2px solid white;
+      }
+      .rank {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+      .rank-name {
+        font-size: 16px;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 6px;
+      }
+      .progress-container {
+        width: 100%;
+        max-width: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background-color: #333;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 3px;
+        box-sizing: border-box;
+      }
+      .progress {
+        height: 100%;
+        background-color: #4caf50;
+        box-sizing: border-box;
+      }
+      .progress-text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+      }
+      .progress-text span {
+        font-size: 12px;
+        color: #a2f3a2;
+        font-weight: normal;
+        margin-left: 5px;
+      }
+      .name-bar-wrapper {
+        width: 100%;
+        background-color: #222;
+        padding: 0 10px;
+        box-sizing: border-box;
+        border-radius: 0 0 10px 10px;
+        margin-top: -1px;
+      }
+      .name-bar {
+        display: flex;
+        align-items: center;
+        height: 24px;
+      }
+      .name-bar-text {
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+      }
+      .tag {
+        background-color: #000;
+        color: white;
+        padding: 1px 6px;
+        height: 14px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        border: 1px solid #444;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
+      }
+
+      .close-button {
+        position: absolute; 
+        top: -12px; 
+        right: -12px; 
+        width: 24px; 
+        height: 24px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        background-color: #444; 
+        color: white; 
+        font-size: 18px; 
+        font-weight: bold; 
+        border-radius: 50%; 
+        cursor: pointer; 
+        z-index: 100; 
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
+        border: 1px solid #222; 
+        padding: 0; 
+      }
+
+      .close-button:hover {
+        background-color: #555; 
+      }
+    </style>
+    <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <script>
+      const helper = window.Twitch.ext;
+
+      helper.onAuthorized(({ token }) => {
+        console.log("The JWT", token);
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container-wrapper">
+      <!-- Botón de cierre "X" -->
+      <div class="close-button" onclick="handleClose()">✖</div>
+      <div class="tabs-wrapper">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a
+              class="nav-link active"
+              id="playerInfoTab"
+              href="#"
+              onclick="showPlayerInfo()"
+              >Player Info</a
+            >
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              id="casualMatchesTab"
+              href="#"
+              onclick="showCasualMatches()"
+              >Casual Matches</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="competitiveMatchesTab" href="#"
+              >Ranked Matches</a
+            >
+          </li>
+        </ul>
+      </div>
+      <div class="main-content" id="mainContent">
+        <div class="container">
+          <div class="number-image-wrapper">
+            <div class="number-image"></div>
+            <div class="number-text">102</div>
+          </div>
+          <div class="center-container">
+            <div class="rank-container">
+              <div class="rank-image-wrapper">
+                <img
+                  src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/27/smallicon.png"
+                  alt="Rank"
+                  class="rank"
+                />
+              </div>
+              <div class="rank-name">Radiant #1</div>
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div class="progress" style="width: 75%"></div>
+                </div>
+                <div class="progress-text">75/100 <span>RR</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="name-bar-wrapper">
+          <div class="name-bar">
+            <div class="name-bar-text">TH MiniBoo</div>
+            <div class="tag">#2440</div>
+          </div>
+        </div>
+      </div>
+      <div class="hello-world-container" id="helloWorld">
+        <div
+          class="franja victory d-flex align-items-center justify-content-between"
+        >
+          <img
+            src="https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/displayicon.png"
+            alt="Agent"
+            class="agent-icon"
+          />
+          <div class="text-kda-wrapper">
+            <div class="kda-text">KDA 20/1/9</div>
+          </div>
+          <div
+            class="text-score-wrapper d-flex flex-column align-items-center mx-auto"
+          >
+            <div class="status-text victory">VICTORY</div>
+            <div class="score">13 - 1</div>
+          </div>
+        </div>
+        <!-- Añade más franjas aquí, repitiendo el patrón -->
+      </div>
+    </div>
+    <script>
+      function showPlayerInfo() {
+        document.getElementById("mainContent").style.display = "flex";
+        document.getElementById("helloWorld").style.display = "none";
+        setActiveTab("playerInfoTab");
+      }
+
+      function showCasualMatches() {
+        document.getElementById("mainContent").style.display = "none";
+        document.getElementById("helloWorld").style.display = "flex";
+        setActiveTab("casualMatchesTab");
+      }
+
+      function setActiveTab(selectedTabId) {
+        document.querySelectorAll(".nav-link").forEach((tab) => {
+          tab.classList.remove("active");
+        });
+        document.getElementById(selectedTabId).classList.add("active");
+      }
+    </script>
+    <script>
+
+      function enableDrag() {
+        const container = document.querySelector(".container-wrapper");
+
+        let isDragging = false; 
+        let startX, startY, initialX, initialY; 
+
+        container.addEventListener("mousedown", (e) => {
+          isDragging = true; 
+          startX = e.clientX; 
+          startY = e.clientY; 
+          initialX = container.offsetLeft; 
+          initialY = container.offsetTop; 
+          document.body.style.cursor = "move"; 
+        });
+
+        document.addEventListener("mousemove", (e) => {
+          if (isDragging) {
+
+            const deltaX = e.clientX - startX; 
+            const deltaY = e.clientY - startY; 
+
+            container.style.left = `${initialX + deltaX}px`;
+            container.style.top = `${initialY + deltaY}px`;
+          }
+        });
+
+        document.addEventListener("mouseup", () => {
+          isDragging = false; 
+          document.body.style.cursor = "default"; 
+        });
+      }
+
+      enableDrag();
+    </script>
+    <script>
+
+      function handleClose() {
+        console.log("Botón de cierre presionado"); 
+      }
+    </script>
+  </body>
+</html>
