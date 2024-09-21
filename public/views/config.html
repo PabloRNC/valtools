@@ -1,244 +1,297 @@
 <!DOCTYPE html>
-<html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ValStats Configuration</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" />
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
-    <script src="https://kit.fontawesome.com/941f548723.js" crossorigin="anonymous"></script>
+    <script
+      src="https://kit.fontawesome.com/941f548723.js"
+      crossorigin="anonymous"
+    ></script>
     <style>
-        .btn-save {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            position: relative;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s;
-        }
-
-        .btn-save:hover {
-            background-color: #218838;
-        }
-
-        .btn-save.error {
-            background-color: #dc3545;
-        }
-
-        .spinner-border {
-            width: 1.5rem;
-            height: 1.5rem;
-            border-width: 0.3em;
-            color: white;
-            display: none;
-        }
-
-        .tick-icon,
-        .error-icon {
-            display: none;
-            font-size: 1.5rem;
-            color: white;
-        }
-
-        .btn-save.loading .spinner-border {
-            display: inline-block;
-        }
-
-        .btn-save.loading .fa-floppy-disk,
-        .btn-save.loaded .fa-floppy-disk,
-        .btn-save.error .fa-floppy-disk {
-            display: none;
-        }
-
-        .btn-save.loaded .tick-icon {
-            display: inline-block;
-        }
-
-        .btn-save.error .error-icon {
-            display: inline-block;
-        }
-
-        .form-control[disabled] {
-            background-color: #e9ecef;
-            opacity: 1;
-        }
-
-        .input-group {
-            display: flex;
-            align-items: center;
-        }
-
-        .input-group-text {
-            height: 70px;
-            font-size: 24px;
-            line-height: 1;
-        }
-
-        .form-control {
-            height: 70px;
-            font-size: 24px;
-        }
-
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-            min-width: 250px;
-        }
-
-        .toast-error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .toast-error .toast-header {
-            background-color: #f5c6cb;
-            border-bottom: 1px solid #f5c6cb;
-        }
-
-        .toast-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .toast-success .toast-header {
-            background-color: #c3e6cb;
-            border-bottom: 1px solid #c3e6cb;
-        }
+      body {
+        background-color: #f8f9fa;
+        color: #343a40;
+      }
+      .btn-save {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s;
+      }
+      .btn-save:hover {
+        background-color: #218838;
+      }
+      .spinner-border {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-width: 0.3em;
+        color: white;
+        display: none;
+      }
+      .tick-icon {
+        display: none;
+        font-size: 1.5rem;
+        color: white;
+      }
+      .btn-save.loading .fa-floppy-disk {
+        display: none;
+      }
+      .btn-save.loading .spinner-border {
+        display: inline-block;
+      }
+      .btn-save.loaded .spinner-border {
+        display: none;
+      }
+      .btn-save.loaded .fa-floppy-disk {
+        display: none;
+      }
+      .btn-save.loaded .tick-icon {
+        display: inline-block;
+      }
+      .input-group {
+        display: flex;
+        align-items: center;
+      }
+      .input-group-text {
+        height: 70px;
+        font-size: 24px;
+        line-height: 1;
+      }
+      .form-control {
+        height: 70px;
+        font-size: 24px;
+      }
+      .toggle-container {
+        background-color: #e9f7ef;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .form-check-label {
+        font-size: 1.2rem;
+      }
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+      }
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+      input:focus + .slider {
+        box-shadow: 0 0 1px #2196f3;
+      }
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+      .slider.round {
+        border-radius: 34px;
+      }
+      .slider.round:before {
+        border-radius: 50%;
+      }
+      .toast {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        min-width: 300px;
+      }
     </style>
-</head>
-
-<body>
+  </head>
+  <body>
     <div class="container d-flex flex-column justify-content-center align-items-center vh-100">
-        <h1 class="display-1 mb-5 text-center">ValStats Configuration</h1>
-        <div class="row g-3 w-75">
-            <div class="col">
-                <input type="text" class="form-control form-control-xl" id="username" placeholder="Enter your username"
-                    style="height: 70px; font-size: 24px;">
-            </div>
-            <div class="col">
-                <div class="input-group">
-                    <span class="input-group-text">#</span>
-                    <input type="text" class="form-control" id="tag" placeholder="Enter your tag">
-                </div>
-            </div>
+      <h1 class="display-1 mb-5 text-center">ValStats Configuration</h1>
+      <div class="row g-3 w-75">
+        <div class="col">
+          <input
+            type="text"
+            class="form-control form-control-xl"
+            id="username"
+            placeholder="Enter your username"
+          />
         </div>
-        <button id="saveBtn" class="btn btn-save btn-lg mt-4" disabled>
-            <i class="fa-solid fa-floppy-disk"></i>
-            <span class="spinner-border" role="status" aria-hidden="true"></span>
-            <span class="tick-icon"><i class="fa-solid fa-check"></i></span>
-            <span class="error-icon"><i class="fa-solid fa-xmark"></i></span>
-        </button>
-    </div>
+        <div class="col">
+          <div class="input-group">
+            <span class="input-group-text">#</span>
+            <input
+              type="text"
+              class="form-control"
+              id="tag"
+              placeholder="Enter your tag"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="toggle-container w-75">
+        <h5 class="mb-0">Display Match History</h5>
+        <label class="switch">
+          <input type="checkbox" id="matchHistoryToggle" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <button id="saveBtn" class="btn btn-save btn-lg mt-4" disabled>
+        <i class="fa-solid fa-floppy-disk"></i>
+        <span class="spinner-border" role="status" aria-hidden="true"></span>
+        <span class="tick-icon"><i class="fa-solid fa-check"></i></span>
+      </button>
 
-    <div class="toast toast-error" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast toast-success" role="alert" aria-live="assertive" aria-atomic="true" data-delay="5000">
         <div class="toast-header">
-            <strong class="mr-auto">Error</strong>
-            <small>Just now</small>
+          <strong class="mr-auto text-success">Success</strong>
+          <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
         <div class="toast-body">
-            User <span id="toast-username-error"></span>#<span id="toast-tag-error"></span> was not found.
+          Changes were saved.
         </div>
-    </div>
-
-    <div class="toast toast-success" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <strong class="mr-auto">Success</strong>
-            <small>Just now</small>
-        </div>
-        <div class="toast-body">
-            User <span id="toast-username-success"></span>#<span id="toast-tag-success"></span> has been linked with the Twitch channel.
-        </div>
+      </div>
     </div>
 
     <script>
-        $(document).ready(function () {
-            window.Twitch.ext.onAuthorized(function (data) {
-                const { token, channelId } = data;
-                const usernameInput = $('#username');
-                const tagInput = $('#tag');
-                const saveBtn = $('#saveBtn');
-                const toastError = $('.toast-error').toast({ delay: 5000 });
-                const toastSuccess = $('.toast-success').toast({ delay: 5000 });
-
-                let initialUsername = '';
-                let initialTag = '';
-
-                function fetchInitialData() {
-                    $.ajax({
-                        url: `/api/setup?channel_id=${channelId}`,
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        success: function (response) {
-                            initialUsername = response.data.username || '';
-                            initialTag = response.data.tag || '';
-                            usernameInput.val(initialUsername);
-                            tagInput.val(initialTag);
-                            checkInputs();
-                        }
-                    });
-                }
-
-                fetchInitialData();
-
-                function checkInputs() {
-                    const currentUsername = usernameInput.val().trim();
-                    const currentTag = tagInput.val().trim();
-                    const isModified = (currentUsername && currentTag) && (currentUsername !== initialUsername || currentTag !== initialTag);
-                    saveBtn.prop('disabled', !isModified);
-                }
-
-                usernameInput.on('input', checkInputs);
-                tagInput.on('input', checkInputs);
-
-                saveBtn.on('click', function () {
-                    const button = $(this);
-                    button.addClass('loading').removeClass('loaded error');
-
-                    const requestMethod = initialUsername || initialTag ? 'PUT' : 'POST';
-                    const requestUrl = '/api/setup';
-
-                    $.ajax({
-                        url: requestUrl,
-                        type: requestMethod,
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        data: JSON.stringify({
-                            channelId,
-                            username: usernameInput.val(),
-                            tag: tagInput.val()
-                        }),
-                        success: function () {
-                            button.removeClass('loading').addClass('loaded');
-                            initialUsername = usernameInput.val().trim();
-                            initialTag = tagInput.val().trim();
-                            $('#toast-username-success').text(usernameInput.val());
-                            $('#toast-tag-success').text(tagInput.val());
-                            toastSuccess.toast('show');
-                            saveBtn.prop('disabled', true);
-                        },
-                        error: function () {
-                            button.removeClass('loading').addClass('error');
-                            $('#toast-username-error').text(usernameInput.val());
-                            $('#toast-tag-error').text(tagInput.val());
-                            toastError.toast('show');
-                        }
-                    });
-                });
-            });
+      $(document).ready(function () {
+        window.Twitch.ext.onContext(({ theme }) => {
+          if (theme === "light") {
+            $("body").css("background-color", "#f8f9fa");
+            $("h1").css("color", "#343a40");
+          } else {
+            $("body").css("background-color", "#343a40");
+            $("h1").css("color", "#f8f9fa");
+          }
         });
-    </script>
-</body>
 
+        window.Twitch.ext.onAuthorized(function (data) {
+          const { token, channelId } = data;
+          const usernameInput = $("#username");
+          const tagInput = $("#tag");
+          const matchHistoryToggle = $("#matchHistoryToggle");
+          const saveBtn = $("#saveBtn");
+          const toastSuccess = $(".toast-success").toast({ delay: 5000 });
+
+          let initialUsername = "";
+          let initialTag = "";
+          let initialMatchHistory = true;
+
+          function fetchInitialData() {
+            $.ajax({
+              url: `/api/setup?channel_id=${channelId}`,
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              success: function (response) {
+                initialUsername = response.data.username || "";
+                initialTag = response.data.tag || "";
+                initialMatchHistory =
+                  response.match_history !== undefined
+                    ? response.match_history
+                    : true;
+
+                usernameInput.val(initialUsername);
+                tagInput.val(initialTag);
+                matchHistoryToggle.prop("checked", initialMatchHistory);
+
+                checkInputs();
+              },
+            });
+          }
+
+          fetchInitialData();
+
+          function checkInputs() {
+            const currentUsername = usernameInput.val().trim();
+            const currentTag = tagInput.val().trim();
+            const currentMatchHistory = matchHistoryToggle.is(":checked");
+            const isModified =
+              currentUsername &&
+              currentTag &&
+              (currentUsername !== initialUsername ||
+                currentTag !== initialTag ||
+                currentMatchHistory !== initialMatchHistory);
+
+            saveBtn.prop("disabled", !isModified);
+          }
+
+          usernameInput.on("input", checkInputs);
+          tagInput.on("input", checkInputs);
+          matchHistoryToggle.on("change", checkInputs);
+
+          saveBtn.on("click", function () {
+            const button = $(this);
+            button.addClass("loading").removeClass("loaded error");
+
+            const requestMethod =
+              initialUsername || initialTag ? "PUT" : "POST";
+            const requestUrl = "/api/setup";
+
+            $.ajax({
+              url: requestUrl,
+              type: requestMethod,
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              data: JSON.stringify({
+                channelId,
+                username: usernameInput.val().trim(),
+                tag: tagInput.val().trim(),
+                match_history: matchHistoryToggle.is(":checked"),
+              }),
+              success: function () {
+                initialUsername = usernameInput.val().trim();
+                initialTag = tagInput.val().trim();
+                initialMatchHistory = matchHistoryToggle.is(":checked");
+
+                button.removeClass("loading").addClass("loaded");
+                toastSuccess.toast("show");
+                checkInputs();
+              },
+            });
+          });
+        });
+      });
+    </script>
+  </body>
 </html>

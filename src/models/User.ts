@@ -6,6 +6,7 @@ export interface IUser {
     region: string;
     username: string;
     tag: string;
+    match_history: boolean;
 }
 
 export const UserSchema = new Schema<IUser>({
@@ -13,7 +14,8 @@ export const UserSchema = new Schema<IUser>({
     puuid: { type: String, required: true },
     region: { type: String, required: true },
     username: { type: String, required: true },
-    tag: { type: String, required: true }
+    tag: { type: String, required: true },
+    match_history: { type: Boolean, required: true }
 });
 
 export const User = model<IUser>('User', UserSchema);
