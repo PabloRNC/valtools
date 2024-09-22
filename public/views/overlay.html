@@ -18,22 +18,22 @@
       }
 
       .tabs-wrapper {
-        width: 452px; 
-        margin: 0 auto; 
-        background-color: #111; 
+        width: 452px;
+        margin: 0 auto;
+        background-color: #111;
         border-bottom: 1px solid #333;
       }
 
       .nav-tabs {
         display: flex;
-        width: 100%; 
-        padding: 0; 
-        margin: 0; 
-        box-sizing: border-box; 
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
       }
 
       .nav-tabs .nav-item {
-        flex: 1; 
+        flex: 1;
         min-width: 120px;
       }
 
@@ -41,28 +41,28 @@
         border: 1px solid #444;
         border-bottom: none;
         border-radius: 10px 10px 0 0;
-        padding: 8px 12px; 
-        text-align: center; 
-        box-sizing: border-box; 
-        white-space: nowrap; 
-        overflow: hidden; 
-        text-overflow: ellipsis; 
+        padding: 8px 12px;
+        text-align: center;
+        box-sizing: border-box;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         color: white;
       }
       .nav-tabs .nav-link:hover {
-        background-color: #333; 
+        background-color: #333;
       }
       .nav-tabs .nav-link.active {
-        background-color: #333; 
+        background-color: #333;
         border-color: #444;
         font-weight: bold;
         border-radius: 10px 10px 0 0;
-        color: white; 
+        color: white;
       }
       .container-wrapper {
         width: 452px;
         border-radius: 10px;
-        overflow: visible; 
+        overflow: visible;
         position: absolute;
         top: 70px;
         left: 20px;
@@ -71,7 +71,7 @@
       }
 
       .main-content,
-      .hello-world-container {
+      .match-history-container {
         width: 100%;
         background-size: cover;
         position: relative;
@@ -81,7 +81,7 @@
         border-radius: 10px;
       }
       .container,
-      .hello-world-container {
+      .match-history-container {
         width: 100%;
         height: 128px;
         display: flex;
@@ -92,7 +92,7 @@
       .container {
         background-image: url("https://media.valorant-api.com/playercards/40f33c2d-404b-a9ec-6832-a48011c9e804/wideart.png");
       }
-      .hello-world-container {
+      .match-history-container {
         display: none;
         flex-direction: column;
         align-items: center;
@@ -100,7 +100,7 @@
         background-color: transparent;
         height: auto;
       }
-      .franja {
+      .frame {
         width: 100%;
         height: 80px;
         display: flex;
@@ -117,20 +117,22 @@
       }
       .text-score-wrapper {
         display: flex;
+        position: relative;
         flex-direction: column;
         align-items: center;
         margin: 0;
         padding: 0 10px;
+        left: 30px;
       }
 
       .agent-icon {
-        width: 80px; 
-        height: 80px; 
-        margin-right: 0px; 
+        width: 80px;
+        height: 80px;
+        margin-right: 0px;
         margin-bottom: -1.7px;
         padding: 2px;
-        position: relative; 
-        left: -21px; 
+        position: relative;
+        left: -21px;
       }
       .text-kda-wrapper {
         display: flex;
@@ -138,11 +140,13 @@
         align-items: flex-start;
         justify-content: center;
         margin-right: -100px;
+        position: relative;
+        left: -20px;
       }
-      .franja.victory {
+      .frame.victory {
         background-color: rgba(76, 175, 80, 0.8);
       }
-      .franja.defeat {
+      .frame.defeat {
         background-color: rgba(244, 67, 54, 0.8);
       }
       .status-text {
@@ -167,7 +171,6 @@
         font-size: 18px;
         color: white;
         font-weight: bold;
-        margin-bottom: 8px;
         text-align: left;
       }
       .number-image-wrapper {
@@ -302,28 +305,57 @@
       }
 
       .close-button {
-        position: absolute; 
-        top: -12px; 
-        right: -12px; 
-        width: 24px; 
-        height: 24px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        background-color: #444; 
-        color: white; 
-        font-size: 18px; 
-        font-weight: bold; 
-        border-radius: 50%; 
-        cursor: pointer; 
-        z-index: 100; 
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
-        border: 1px solid #222; 
-        padding: 0; 
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #444;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 100;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        border: 1px solid #222;
+        padding: 0;
       }
 
       .close-button:hover {
-        background-color: #555; 
+        background-color: #555;
+      }
+
+      .accuracy {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        right: -40px;
+        display: flex;
+        align-items: center;
+      }
+
+      .accuracy-text {
+        margin-left: 10px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        top: -2.5px;
+      }
+
+      .accuracy-text span {
+        font-size: 12px;
+        color: white;
+        font-weight: bold;
+        margin-top: 5px;
+      }
+
+      .dummy {
+        width: 28px;
+        height: auto;
       }
     </style>
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
@@ -398,9 +430,9 @@
           </div>
         </div>
       </div>
-      <div class="hello-world-container" id="helloWorld">
+      <div class="match-history-container" id="matchHistory">
         <div
-          class="franja victory d-flex align-items-center justify-content-between"
+          class="frame victory d-flex align-items-center justify-content-between"
         >
           <img
             src="https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/displayicon.png"
@@ -416,20 +448,51 @@
             <div class="status-text victory">VICTORY</div>
             <div class="score">13 - 1</div>
           </div>
+          <div class="accuracy">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 33.316 80"
+              class="dummy"
+            >
+              <g transform="translate(-636.875 -624)">
+                <circle
+                  cx="6.153"
+                  cy="6.153"
+                  r="6.153"
+                  transform="translate(647.387 624)"
+                  fill="rgba(255, 255, 255, 0.5)"
+                ></circle>
+                <path
+                  d="M29.285,26.472,24.17,13.678l-1.352,6.831H10.512l-1.363-6.84-5.117,12.8A2.049,2.049,0,1,1,.072,25.411L6.441,1.639l.008,0A2.055,2.055,0,0,1,8.461,0h4.1L16.67,4.1l4.1-4.1h4.111a2.048,2.048,0,0,1,2.016,1.712l6.352,23.7a2.049,2.049,0,1,1-3.959,1.061Z"
+                  transform="translate(636.875 638.36)"
+                  fill="#fff"
+                ></path>
+                <path
+                  d="M6.521,41.025h0l-6.52,0L5.863,0H18.756l5.857,41.021-6.508,0L12.307,8.2,6.521,41.024Z"
+                  transform="translate(641.232 662.975)"
+                  fill="rgba(255, 255, 255, 0.5)"
+                ></path>
+              </g>
+            </svg>
+            <div class="accuracy-text">
+              <span>50%</span>
+              <span>30%</span>
+              <span>20%</span>
+            </div>
+          </div>
         </div>
-        <!-- Añade más franjas aquí, repitiendo el patrón -->
       </div>
     </div>
     <script>
       function showPlayerInfo() {
         document.getElementById("mainContent").style.display = "flex";
-        document.getElementById("helloWorld").style.display = "none";
+        document.getElementById("matchHistory").style.display = "none";
         setActiveTab("playerInfoTab");
       }
 
       function showCasualMatches() {
         document.getElementById("mainContent").style.display = "none";
-        document.getElementById("helloWorld").style.display = "flex";
+        document.getElementById("matchHistory").style.display = "flex";
         setActiveTab("casualMatchesTab");
       }
 
@@ -441,27 +504,25 @@
       }
     </script>
     <script>
-
       function enableDrag() {
         const container = document.querySelector(".container-wrapper");
 
-        let isDragging = false; 
-        let startX, startY, initialX, initialY; 
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
 
         container.addEventListener("mousedown", (e) => {
-          isDragging = true; 
-          startX = e.clientX; 
-          startY = e.clientY; 
-          initialX = container.offsetLeft; 
-          initialY = container.offsetTop; 
-          document.body.style.cursor = "move"; 
+          isDragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          initialX = container.offsetLeft;
+          initialY = container.offsetTop;
+          document.body.style.cursor = "move";
         });
 
         document.addEventListener("mousemove", (e) => {
           if (isDragging) {
-
-            const deltaX = e.clientX - startX; 
-            const deltaY = e.clientY - startY; 
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
 
             container.style.left = `${initialX + deltaX}px`;
             container.style.top = `${initialY + deltaY}px`;
@@ -469,15 +530,14 @@
         });
 
         document.addEventListener("mouseup", () => {
-          isDragging = false; 
-          document.body.style.cursor = "default"; 
+          isDragging = false;
+          document.body.style.cursor = "default";
         });
       }
 
       enableDrag();
     </script>
     <script>
-
       function handleClose() {
         helper.actions.minimize();
       }
