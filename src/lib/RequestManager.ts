@@ -1,24 +1,30 @@
 import 'dotenv/config';
-import { GetResponses, ResponseParser, GetRiotAccountByUsernameResponse, GetRiotAccountByPuuidResponse } from "./types";
+import { GetResponses, ResponseParser, GetValorantAccountByUsernameResponse, GetValorantAccountByPuuidResponse, GetMatchListResponse, GetMMRResponse } from "./types";
 
 
 export class RequestManager {
 
  
-    public static async get(endpoint: string, params?: URLSearchParams): Promise<ResponseParser<GetResponses>> {
+    public static async get<T extends GetResponses>(endpoint: string, params?: URLSearchParams): Promise<ResponseParser<T>> {
         const response = await fetch(process.env.BASE_URL + endpoint + (params? `?${params?.toString()}` : ''), { method: 'GET', headers: this.makeHeaders() });
         if(!response.ok) throw new Error(response.statusText);
-        return await response.json();
+        return { ...await response.json(), headers: response.headers } ;
     }
 
-    public static async getRiotAccountByUsername(username: string, tag: string): Promise<GetRiotAccountByUsernameResponse> {
-        const response = await this.get(`v2/account/${username}/${tag}`);
-        return response.data as GetRiotAccountByUsernameResponse;
+    public static async getValorantAccountByUsername(username: string, tag: string) {
+        return await this.get<GetValorantAccountByUsernameResponse>(`v2/account/${username}/${tag}`);
     }
 
-    public static async getRiotAccountByPuuid(puuid: string): Promise<GetRiotAccountByPuuidResponse> {
-        const response = await this.get(`v2/account/${puuid}`);
-        return response.data as GetRiotAccountByPuuidResponse;
+    public static async getValorantAccountByPuuid(puuid: string) {
+        return await this.get<GetValorantAccountByPuuidResponse>(`v2/account/${puuid}`);
+    }
+
+    public static async getMatchList(puuid: string){
+        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/eu/pc/${puuid}`);
+    }
+
+    public static async getMMR(puuid: string){
+        return await this.get<GetMMRResponse>(`v3/by-puuid/mmr/eu/pc/${puuid}`);
     }
 
     private static makeHeaders(): Headers {

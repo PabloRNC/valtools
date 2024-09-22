@@ -5,7 +5,7 @@ export function isAuthorized(req: Request, res: Response, next: NextFunction) {
   const data = req.headers["authorization"];
 
   if (!data)
-    return res.status(401).json({ statsu: 401, error: "Unauthorized" });
+    return res.status(401).json({ status: 401, error: "Unauthorized" });
 
   const [prefix, token] = data.split(" ");
 

@@ -204,6 +204,7 @@
 
         window.Twitch.ext.onAuthorized(function (data) {
           const { token, channelId } = data;
+          console.log(token);
           const usernameInput = $("#username");
           const tagInput = $("#tag");
           const matchHistoryToggle = $("#matchHistoryToggle");

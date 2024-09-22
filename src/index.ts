@@ -1,18 +1,20 @@
 import express from 'express';
 import { connect } from 'mongoose';
+import { Redis } from 'ioredis';
 import { JWTPayload } from './lib';
 import { Api } from './routes';
 import { isAuthorized } from './middlewares';
 import 'dotenv/config';
 
 const app = express();
+const redis = new Redis();
 
 const PORT = Number(process.env.PORT) || 8080;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.use('/api', isAuthorized ,Api);
+app.use('/api', isAuthorized, Api);
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
@@ -46,3 +48,5 @@ declare global {
 declare module 'jsonwebtoken' {
     export function verify(token: string, secret: string | Buffer, options?: VerifyOptions): JWTPayload;
 }
+
+export { redis };

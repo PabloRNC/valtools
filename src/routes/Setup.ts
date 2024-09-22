@@ -12,7 +12,7 @@ router.post('/', async(req, res) => {
 
     if(await User.exists({ channelId: body.channelId })) return res.status(400).json({ status: 400, error: "User already exists" });
 
-    RequestManager.getRiotAccountByUsername(body.username, body.tag).then(async(data) => {
+    RequestManager.getValorantAccountByUsername(body.username, body.tag).then(async({ data }) => {
         await User.create({
             channelId: body.channelId,
             puuid: data.puuid,
@@ -40,7 +40,7 @@ router.put('/', async(req, res) => {
     
         if(!user) return res.status(404).json({ status: 404, error: "User was not found." });
     
-        RequestManager.getRiotAccountByUsername(body.username, body.tag).then(async(data) => {
+        RequestManager.getValorantAccountByUsername(body.username, body.tag).then(async({ data }) => {
             await user.updateOne({
                 puuid: data.puuid,
                 region: data.region,
