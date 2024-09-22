@@ -358,12 +358,31 @@
         height: auto;
       }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <script>
+      async function pullData(token, channelId){
+        $.ajax({
+          url: `/api/players/${channelId}`,
+          type: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          success: function (data) {
+            $('#accountName').text(data.mmr.account.name);
+            $('#accountTag').text(`#${data.mmr.account.tag}`);
+          },
+        })
+      }
+    </script>
     <script>
       const helper = window.Twitch.ext;
 
-      helper.onAuthorized(({ token }) => {
-        console.log("The JWT", token);
+      helper.onAuthorized(({ token, channelId }) => {
+          setInterval(() => {
+            pullData(token, channelId);
+          }, 6e3);
       });
     </script>
   </head>
@@ -425,8 +444,8 @@
         </div>
         <div class="name-bar-wrapper">
           <div class="name-bar">
-            <div class="name-bar-text">TH MiniBoo</div>
-            <div class="tag">#2440</div>
+            <div class="name-bar-text" id="accountName">TH MiniBoo</div>
+            <div class="tag" id="accountTag">#2440</div>
           </div>
         </div>
       </div>

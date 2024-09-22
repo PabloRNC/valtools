@@ -143,7 +143,14 @@ export interface PlayerEconomy {
 }
 
 export interface Stats {
-  damage: Location;
+  score: number
+  kills: number;
+  deaths: number;
+  assists: number;
+  headshots: number;
+  legshots: number;
+  bodyshots: number;
+  damage: { dealt: number, received: number };
 }
 
 export interface Tier {
@@ -184,7 +191,7 @@ export interface StatEconomy {
 
 export interface Team {
   team_id: string;
-  rounds: Location;
+  rounds: { won: number, lost: number };
   won: boolean;
   premier_roster: PremierRoster;
 }
@@ -223,7 +230,7 @@ export interface Current {
   last_change: number;
   elo: number;
   games_needed_for_rating: number;
-  leaderboard_placement: null;
+  leaderboard_placement: number | null;
 }
 
 export interface Tier {

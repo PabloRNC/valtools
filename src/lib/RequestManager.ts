@@ -16,7 +16,7 @@ export class RequestManager {
     }
 
     public static async getValorantAccountByPuuid(puuid: string) {
-        return await this.get<GetValorantAccountByPuuidResponse>(`v2/account/${puuid}`);
+        return await this.get<GetValorantAccountByPuuidResponse>(`v2/by-puuid/account/${puuid}`);
     }
 
     public static async getMatchList(puuid: string){
