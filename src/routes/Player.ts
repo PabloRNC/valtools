@@ -43,7 +43,7 @@ export async function checkMatchlist(
   } else {
     const { data, headers } = await RequestManager.getMatchList(puuid, region);
 
-    const matchlist = data.slice(0, 5).map((x) => {
+    const matchlist = data.slice(0, 3).map((x) => {
 
         const player = x.players.find((_) => _.puuid === puuid)!;
   
@@ -66,7 +66,8 @@ export async function checkMatchlist(
           assists: player.stats.assists,
           headshots: (player.stats.headshots / shoots).toFixed(2),
           bodyshots: (player.stats.bodyshots / shoots).toFixed(2),
-          legshots: (player.stats.legshots / shoots).toFixed(2)
+          legshots: (player.stats.legshots / shoots).toFixed(2),
+          won: x.metadata.queue.id === "deathmatch" ? player.stats.kills >= 40 : team.rounds.won > team.rounds.lost,
         };
       });
 
