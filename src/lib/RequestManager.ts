@@ -8,7 +8,7 @@ export class RequestManager {
     public static async get<T extends GetResponses>(endpoint: string, params?: URLSearchParams): Promise<ResponseParser<T>> {
         const response = await fetch(process.env.BASE_URL + endpoint + (params? `?${params?.toString()}` : ''), { method: 'GET', headers: this.makeHeaders() });
         if(!response.ok) {
-            throw new Error(response.statusText);
+            throw new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}`);
         }
         return { ...await response.json(), headers: response.headers } ;
     }

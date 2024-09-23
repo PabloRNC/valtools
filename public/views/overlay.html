@@ -384,7 +384,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
   </head>
-  <body>
+  <body style="display: none;">
     <div class="container-wrapper">
       <div class="close-button" onclick="handleClose()">✖</div>
       <div class="tabs-wrapper">
@@ -678,7 +678,7 @@
                       $("<span>").text(`${(Number(match.legshots) * 100).toFixed(2)}%`)
                     );
                   frame.append(accuracyText);
-                } else scoreWrapper.css("left", "-7px")
+                } else scoreWrapper.css("left", "-16px")
 
                 frame.css(
                   "background-image",
@@ -688,6 +688,9 @@
                 $("#matchHistory").append(frame);
               }
             }
+
+            $('body').show();
+
             setTimeout(() => pullData(token, channelId), 10000);
           },
         });

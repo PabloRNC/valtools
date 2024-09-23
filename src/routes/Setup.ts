@@ -1,7 +1,9 @@
 import { Router } from "express";
+import { redis } from "..";
 import { PostSetupRequestBody, PutSetupRequestBody, RequestManager } from "../lib";
 import { User } from "../models";
 import { createEntry } from "./Player";
+
 
 const router = Router();
 
@@ -23,7 +25,9 @@ router.post('/', async(req, res) => {
             match_history: body.match_history
         })
 
-        await createEntry(body.channelId, data.puuid, data.region, body.match_history);
+        if(!Object.keys(await redis.hgetall(data.puuid)).length){
+            await createEntry(data.puuid, data.region, body.match_history);
+        }
 
         return res.status(200).json({ status: 200, message: `${data.name}#${data.tag} was linked with this channel successfully!` });
     }, (err) => {
@@ -49,9 +53,11 @@ router.put('/', async(req, res) => {
                 username: data.name,
                 tag: data.tag,
                 match_history: body.match_history
-            })
+            });
 
-            await createEntry(body.channelId, data.puuid, data.region, body.match_history);
+            if(!Object.keys(await redis.hgetall(data.puuid)).length){
+                await createEntry(data.puuid, data.region, body.match_history);
+            }
     
             return res.status(200).json({ status: 200, message: `Changes were save sucessfully!` });
         }, () => {

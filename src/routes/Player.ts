@@ -13,27 +13,26 @@ router.get("/:channel_id", async (req, res) => {
   if (!user)
     return res.status(404).json({ status: 404, error: "User was not found" });
 
-  const data = await redis.hgetall(req.params.channel_id) as { matchlist: string, player: string, mmr: string };
+  const data = await redis.hgetall(user.puuid) as { matchlist: string, player: string, mmr: string };
 
   if (!data || !Object.keys(data).length) {
     
-    const entry = await createEntry(req.params.channel_id, user.puuid, user.region, user.match_history);
+    const entry = await createEntry(user.puuid, user.region, user.match_history);
 
     return res.status(200).json({ status: 200, data: entry });
-  }
+  } 
 
-  const matchlist = user.match_history ? await checkMatchlist(req.params.channel_id, user.puuid, user.region, JSON.parse(data.matchlist)) : null;
+  const matchlist = user.match_history ? await checkMatchlist(user.puuid, user.region, JSON.parse(data.matchlist)) : null;
 
-  const player = await checkPlayer(req.params.channel_id, user.puuid, JSON.parse(data.player));
+  const player = await checkPlayer(user.puuid, JSON.parse(data.player));
 
-  const mmr = await checkMMR(req.params.channel_id, user.puuid, user.region, JSON.parse(data.mmr));
+  const mmr = await checkMMR(user.puuid, user.region, JSON.parse(data.mmr));
 
   return res.status(200).json({ status: 200, data: { matchlist, player, mmr } });
 
 });
 
 export async function checkMatchlist(
-  channel_id: string,
   puuid: string,
   region: string,
   matchlist?: Redis<RedisMatchlist[]>
@@ -71,59 +70,65 @@ export async function checkMatchlist(
         };
       });
 
+    const query = {
+      updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
+      data: matchlist
+    };
+
     await redis.hset(
-      channel_id,
+      puuid,
       "matchlist",
-      JSON.stringify({
-        updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
-        data: matchlist,
-      })
+      JSON.stringify(query)
     );
 
-    return matchlist;
+    return query;
   }
 }
 
-export async function checkPlayer(channel_id: string, puuid: string, player?: Redis<GetValorantAccountByPuuidResponse>){
+export async function checkPlayer(puuid: string, player?: Redis<GetValorantAccountByPuuidResponse>){
     if(player?.updateAt || 0 > Date.now()){
         return player;
     } else {
         const { data, headers } = await RequestManager.getValorantAccountByPuuid(puuid);
 
-        await redis.hset(channel_id, "player", JSON.stringify({
+        const query = {
             updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
             data
-        }));
+        }
 
-        return data;
+        await redis.hset(puuid, "player", JSON.stringify(query));
+
+        return query;
     }
 }
 
-export async function checkMMR(channel_id: string, puuid: string, region: string, mmr?: Redis<RedisMMR>){
+export async function checkMMR(puuid: string, region: string, mmr?: Redis<RedisMMR>){
     if(mmr?.updateAt || 0 > Date.now()){
         return mmr;
     } else {
         const { data, headers } = await RequestManager.getMMR(puuid, region);
 
-        await redis.hset(channel_id, "mmr", JSON.stringify({
-            updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
+        const query = {
+          updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
             data: {
                 tier: data.current.tier,
                 rr: data.current.rr,
                 leaderboard_rank: data.current.leaderboard_placement,
                 account: data.account
             }
-        }));
+        }
 
-        return data;
+        await redis.hset(puuid, "mmr", JSON.stringify(query));
+
+        return query;
     }
 }
 
 
-export async function createEntry(channel_id: string, puuid: string, region: string, displayMatchlist: boolean){
-  const mmr = await checkMMR(channel_id, puuid, region);
-  const player = await checkPlayer(channel_id, puuid);
-  const matchlist = displayMatchlist ? await checkMatchlist(channel_id, puuid, region) : null
+export async function createEntry(puuid: string, region: string, displayMatchlist: boolean){
+  const mmr = await checkMMR(puuid, region);
+  const player = await checkPlayer(puuid);
+  const matchlist = displayMatchlist ? await checkMatchlist(puuid, region) : null
 
   return { mmr, player, matchlist };
 }
