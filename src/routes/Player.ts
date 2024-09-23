@@ -16,32 +16,32 @@ router.get("/:channel_id", async (req, res) => {
   const data = await redis.hgetall(req.params.channel_id) as { matchlist: string, player: string, mmr: string };
 
   if (!data || !Object.keys(data).length) {
-    const matchlist = user.match_history ? await checkMatchlist(req.params.channel_id, user.puuid) : null;
-    const player = await checkPlayer(req.params.channel_id, user.puuid);
-    const mmr = await checkMMR(req.params.channel_id, user.puuid);
+    
+    const entry = await createEntry(req.params.channel_id, user.puuid, user.region, user.match_history);
 
-    return res.status(200).json({ status: 200, data: { matchlist, player, mmr } });
+    return res.status(200).json({ status: 200, data: entry });
   }
 
-  const matchlist = user.match_history ? await checkMatchlist(req.params.channel_id, user.puuid, JSON.parse(data.matchlist)) : null;
+  const matchlist = user.match_history ? await checkMatchlist(req.params.channel_id, user.puuid, user.region, JSON.parse(data.matchlist)) : null;
 
   const player = await checkPlayer(req.params.channel_id, user.puuid, JSON.parse(data.player));
 
-  const mmr = await checkMMR(req.params.channel_id, user.puuid, JSON.parse(data.mmr));
+  const mmr = await checkMMR(req.params.channel_id, user.puuid, user.region, JSON.parse(data.mmr));
 
   return res.status(200).json({ status: 200, data: { matchlist, player, mmr } });
 
 });
 
-async function checkMatchlist(
+export async function checkMatchlist(
   channel_id: string,
   puuid: string,
+  region: string,
   matchlist?: Redis<RedisMatchlist[]>
 ) {
   if (matchlist?.updateAt || 0 > Date.now()) {
     return matchlist;
   } else {
-    const { data, headers } = await RequestManager.getMatchList(puuid);
+    const { data, headers } = await RequestManager.getMatchList(puuid, region);
 
     const matchlist = data.slice(0, 5).map((x) => {
 
@@ -83,7 +83,7 @@ async function checkMatchlist(
   }
 }
 
-async function checkPlayer(channel_id: string, puuid: string, player?: Redis<GetValorantAccountByPuuidResponse>){
+export async function checkPlayer(channel_id: string, puuid: string, player?: Redis<GetValorantAccountByPuuidResponse>){
     if(player?.updateAt || 0 > Date.now()){
         return player;
     } else {
@@ -98,11 +98,11 @@ async function checkPlayer(channel_id: string, puuid: string, player?: Redis<Get
     }
 }
 
-async function checkMMR(channel_id: string, puuid: string, mmr?: Redis<RedisMMR>){
+export async function checkMMR(channel_id: string, puuid: string, region: string, mmr?: Redis<RedisMMR>){
     if(mmr?.updateAt || 0 > Date.now()){
         return mmr;
     } else {
-        const { data, headers } = await RequestManager.getMMR(puuid);
+        const { data, headers } = await RequestManager.getMMR(puuid, region);
 
         await redis.hset(channel_id, "mmr", JSON.stringify({
             updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
@@ -118,4 +118,12 @@ async function checkMMR(channel_id: string, puuid: string, mmr?: Redis<RedisMMR>
     }
 }
 
+
+export async function createEntry(channel_id: string, puuid: string, region: string, displayMatchlist: boolean){
+  const mmr = await checkMMR(channel_id, puuid, region);
+  const player = await checkPlayer(channel_id, puuid);
+  const matchlist = displayMatchlist ? await checkMatchlist(channel_id, puuid, region) : null
+
+  return { mmr, player, matchlist };
+}
 export { router as Player };

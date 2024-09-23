@@ -7,7 +7,9 @@ export class RequestManager {
  
     public static async get<T extends GetResponses>(endpoint: string, params?: URLSearchParams): Promise<ResponseParser<T>> {
         const response = await fetch(process.env.BASE_URL + endpoint + (params? `?${params?.toString()}` : ''), { method: 'GET', headers: this.makeHeaders() });
-        if(!response.ok) throw new Error(response.statusText);
+        if(!response.ok) {
+            throw new Error(response.statusText);
+        }
         return { ...await response.json(), headers: response.headers } ;
     }
 
@@ -19,12 +21,12 @@ export class RequestManager {
         return await this.get<GetValorantAccountByPuuidResponse>(`v2/by-puuid/account/${puuid}`);
     }
 
-    public static async getMatchList(puuid: string){
-        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/eu/pc/${puuid}`);
+    public static async getMatchList(puuid: string, region: string){
+        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/${region}/pc/${puuid}`);
     }
 
-    public static async getMMR(puuid: string){
-        return await this.get<GetMMRResponse>(`v3/by-puuid/mmr/eu/pc/${puuid}`);
+    public static async getMMR(puuid: string, region: string){
+        return await this.get<GetMMRResponse>(`v3/by-puuid/mmr/${region}/pc/${puuid}`);
     }
 
     private static makeHeaders(): Headers {

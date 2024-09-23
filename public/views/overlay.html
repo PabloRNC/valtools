@@ -173,31 +173,27 @@
         font-weight: bold;
         text-align: left;
       }
+
       .number-image-wrapper {
+        display: inline-block;
         position: relative;
-        width: 100px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 20px;
+        text-align: center;
+        vertical-align: middle;
       }
-      .number-image {
-        width: 100%;
-        height: 100%;
-        background-image: url("https://media.valorant-api.com/levelborders/ebc736cd-4b6a-137b-e2b0-1486e31312c9/levelnumberappearance.png");
-        background-size: cover;
+
+      .number-image-wrapper img {
+        display: block;
+      }
+
+      .number {
         position: absolute;
-        top: 0;
-        left: 0;
-        border-radius: 8px;
-      }
-      .number-text {
-        font-size: 20px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.8em;
         color: white;
-        font-weight: bold;
-        z-index: 1;
       }
+
       .center-container {
         display: flex;
         align-items: center;
@@ -214,6 +210,8 @@
         align-items: center;
         text-align: center;
         background-color: transparent;
+        position: relative;
+        width: 140px;
       }
       .rank-image-wrapper {
         padding: 3px;
@@ -362,33 +360,71 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
     <script>
-      async function pullData(token, channelId){
+      async function pullData(token, channelId) {
         $.ajax({
           url: `/api/players/${channelId}`,
           type: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          success: function (data) {
-            $('#accountName').text(data.mmr.account.name);
-            $('#accountTag').text(`#${data.mmr.account.tag}`);
+          success: async function ({ data }) {
+            const mmr = data.mmr.data;
+            const player = data.player.data;
+            $("#accountName").text(mmr.account.name);
+            $("#accountTag").text(`#${mmr.account.tag}`);
+            $("#accountLevel").text(player.account_level);
+            $("#rankImage").attr(
+              "src",
+              `https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/${mmr.tier.id}/smallicon.png`
+            );
+            $("#rankName").text(
+              mmr.leaderboard_rank?.rank
+                ? `${mmr.tier.name} #${mmr.leaderboard_rank.rank}`
+                : mmr.tier.name
+            );
+            $("#progressBar").css(
+              "width",
+              `${mmr.tier.id >= 24 ? 100 : mmr.rr}%`
+            );
+            $("#progressText").html(
+              mmr.tier.id >= 24
+                ? `${mmr.rr} <span>RR</span>`
+                : `${mmr.rr}/100 <span>RR</span>`
+            );
+            $(".container").css(
+              "background-image",
+              `url(https://media.valorant-api.com/playercards/${player.card}/wideart.png)`
+            );
+            await $.ajax({
+              url: "https://valorant-api.com/v1/levelborders",
+              type: "GET",
+              success: function ({ data }) {
+                const border = data.find((x, i) =>
+                  x.startingLevel <= Number(player.account_level) && data[i + 1]
+                    ? data.startingLevel > Number(player.account_level)
+                    : true
+                );
+                $("#levelBorder").attr(
+                  "src",
+                  border.levelNumberAppearance
+                );
+              },
+            });
+            setTimeout(() => pullData(token, channelId), 10000);
           },
-        })
+        });
       }
     </script>
     <script>
       const helper = window.Twitch.ext;
 
       helper.onAuthorized(({ token, channelId }) => {
-          setInterval(() => {
-            pullData(token, channelId);
-          }, 6e3);
+        pullData(token, channelId);
       });
     </script>
   </head>
   <body>
     <div class="container-wrapper">
-      <!-- Botón de cierre "X" -->
       <div class="close-button" onclick="handleClose()">✖</div>
       <div class="tabs-wrapper">
         <ul class="nav nav-tabs">
@@ -420,8 +456,12 @@
       <div class="main-content" id="mainContent">
         <div class="container">
           <div class="number-image-wrapper">
-            <div class="number-image"></div>
-            <div class="number-text">102</div>
+            <img
+              src="https://media.valorant-api.com/levelborders/6694d7f7-4ab9-8545-5921-35a9ea8cec24/levelnumberappearance.png"
+              alt="Imagen"
+              id="levelBorder"
+            />
+            <div class="number" id="accountLevel">1000</div>
           </div>
           <div class="center-container">
             <div class="rank-container">
@@ -430,14 +470,21 @@
                   src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/27/smallicon.png"
                   alt="Rank"
                   class="rank"
+                  id="rankImage"
                 />
               </div>
-              <div class="rank-name">Radiant #1</div>
+              <div class="rank-name" id="rankName">Radiant #1</div>
               <div class="progress-container">
                 <div class="progress-bar">
-                  <div class="progress" style="width: 75%"></div>
+                  <div
+                    class="progress"
+                    style="width: 75%"
+                    id="progressBar"
+                  ></div>
                 </div>
-                <div class="progress-text">75/100 <span>RR</span></div>
+                <div class="progress-text" id="progressText">
+                  75/100 <span>RR</span>
+                </div>
               </div>
             </div>
           </div>
