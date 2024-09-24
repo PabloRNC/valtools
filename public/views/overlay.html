@@ -384,7 +384,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
   </head>
-  <body style="display: none;">
+  <body style="display: none">
     <div class="container-wrapper">
       <div class="close-button" onclick="handleClose()">✖</div>
       <div class="tabs-wrapper">
@@ -425,7 +425,7 @@
             <div class="number" id="accountLevel">1000</div>
           </div>
           <div class="center-container">
-            <div class="rank-container">
+            <div class="rank-container" style="display: none;">
               <div class="rank-image-wrapper">
                 <img
                   src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/27/smallicon.png"
@@ -520,30 +520,34 @@
             Authorization: `Bearer ${token}`,
           },
           success: async function ({ data }) {
-            const mmr = data.mmr.data;
+            const mmr = data.mmr?.data;
             const player = data.player.data;
             const matchlist = data.matchlist?.data;
-            $("#accountName").text(mmr.account.name);
-            $("#accountTag").text(`#${mmr.account.tag}`);
+            $("#accountName").text(player.name);
+            $("#accountTag").text(`#${player.tag}`);
             $("#accountLevel").text(player.account_level);
-            $("#rankImage").attr(
-              "src",
-              `https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/${mmr.tier.id}/smallicon.png`
-            );
-            $("#rankName").text(
-              mmr.leaderboard_rank?.rank
-                ? `${mmr.tier.name} #${mmr.leaderboard_rank.rank}`
-                : mmr.tier.name
-            );
-            $("#progressBar").css(
-              "width",
-              `${mmr.tier.id >= 24 ? 100 : mmr.rr}%`
-            );
-            $("#progressText").html(
-              mmr.tier.id >= 24
-                ? `${mmr.rr} <span>RR</span>`
-                : `${mmr.rr}/100 <span>RR</span>`
-            );
+
+            if (mmr) {
+              $(".rank-container").show();
+              $("#rankImage").attr(
+                "src",
+                `https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/${mmr.tier.id}/smallicon.png`
+              );
+              $("#rankName").text(
+                mmr.leaderboard_rank?.rank
+                  ? `${mmr.tier.name} #${mmr.leaderboard_rank.rank}`
+                  : mmr.tier.name
+              );
+              $("#progressBar").css(
+                "width",
+                `${mmr.tier.id >= 24 ? 100 : mmr.rr}%`
+              );
+              $("#progressText").html(
+                mmr.tier.id >= 24
+                  ? `${mmr.rr} <span>RR</span>`
+                  : `${mmr.rr}/100 <span>RR</span>`
+              );
+            }
             $(".container").css(
               "background-image",
               `url(https://media.valorant-api.com/playercards/${player.card}/wideart.png)`
@@ -582,7 +586,6 @@
                   .addClass("agent-icon");
                 frame.append(agentIcon);
 
-
                 const kdaWrapper = $("<div>")
                   .addClass("text-kda-wrapper")
                   .append(
@@ -607,7 +610,6 @@
                 frame.append(scoreWrapper);
 
                 if (!match.isDeathmatch) {
-
                   const headshots = Number(match.headshots);
 
                   const bodyshots = Number(match.bodyshots);
@@ -637,7 +639,10 @@
                     cy: "6.153",
                     r: "6.153",
                     transform: "translate(647.387 624)",
-                    fill: headshots > bodyshots && headshots > legshots? "#fff" : "rgba(255, 255, 255, 0.5)",
+                    fill:
+                      headshots > bodyshots && headshots > legshots
+                        ? "#fff"
+                        : "rgba(255, 255, 255, 0.5)",
                   });
 
                   const path1 = document.createElementNS(
@@ -647,7 +652,10 @@
                   $(path1).attr({
                     d: "M29.285,26.472,24.17,13.678l-1.352,6.831H10.512l-1.363-6.84-5.117,12.8A2.049,2.049,0,1,1,.072,25.411L6.441,1.639l.008,0A2.055,2.055,0,0,1,8.461,0h4.1L16.67,4.1l4.1-4.1h4.111a2.048,2.048,0,0,1,2.016,1.712l6.352,23.7a2.049,2.049,0,1,1-3.959,1.061Z",
                     transform: "translate(636.875 638.36)",
-                    fill: bodyshots > headshots && bodyshots > legshots? "#fff" : "rgba(255, 255, 255, 0.5)",
+                    fill:
+                      bodyshots > headshots && bodyshots > legshots
+                        ? "#fff"
+                        : "rgba(255, 255, 255, 0.5)",
                   });
 
                   const path2 = document.createElementNS(
@@ -657,9 +665,11 @@
                   $(path2).attr({
                     d: "M6.521,41.025h0l-6.52,0L5.863,0H18.756l5.857,41.021-6.508,0L12.307,8.2,6.521,41.024Z",
                     transform: "translate(641.232 662.975)",
-                    fill: legshots > headshots && legshots > bodyshots? "#fff" : "rgba(255, 255, 255, 0.5",
+                    fill:
+                      legshots > headshots && legshots > bodyshots
+                        ? "#fff"
+                        : "rgba(255, 255, 255, 0.5",
                   });
-
 
                   $(g).append(circle, path1, path2);
                   $(svg).append(g);
@@ -669,16 +679,22 @@
                   const accuracyText = $("<div>")
                     .addClass("accuracy-text")
                     .append(
-                      $("<span>").text(`${(Number(match.headshots) * 100).toFixed(2)}%`)
+                      $("<span>").text(
+                        `${(Number(match.headshots) * 100).toFixed(2)}%`
+                      )
                     )
                     .append(
-                      $("<span>").text(`${(Number(match.bodyshots) * 100).toFixed(2)}%`)
+                      $("<span>").text(
+                        `${(Number(match.bodyshots) * 100).toFixed(2)}%`
+                      )
                     )
                     .append(
-                      $("<span>").text(`${(Number(match.legshots) * 100).toFixed(2)}%`)
+                      $("<span>").text(
+                        `${(Number(match.legshots) * 100).toFixed(2)}%`
+                      )
                     );
                   frame.append(accuracyText);
-                } else scoreWrapper.css("left", "-16px")
+                } else scoreWrapper.css("left", "-16px");
 
                 frame.css(
                   "background-image",
@@ -689,7 +705,7 @@
               }
             }
 
-            $('body').show();
+            $("body").show();
 
             setTimeout(() => pullData(token, channelId), 10000);
           },

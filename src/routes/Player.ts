@@ -106,16 +106,18 @@ export async function checkMMR(puuid: string, region: string, mmr?: Redis<RedisM
     if(mmr?.updateAt || 0 > Date.now()){
         return mmr;
     } else {
-        const { data, headers } = await RequestManager.getMMR(puuid, region);
+        const { data, headers } = await RequestManager.getMMR(puuid, region).catch(() => ({ data: null, headers: null }));
+
+
 
         const query = {
-          updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
-            data: {
+          updateAt: Date.now() + Number(headers?.get("x-cache-ttl") ?? 300) * 1000,
+            data: data? {
                 tier: data.current.tier,
                 rr: data.current.rr,
                 leaderboard_rank: data.current.leaderboard_placement,
                 account: data.account
-            }
+            } : null
         }
 
         await redis.hset(puuid, "mmr", JSON.stringify(query));
