@@ -101,12 +101,15 @@
         height: auto;
       }
       .frame {
+        background-color: rgba(0, 0, 0, 0.5);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7),
+          4px 4px 8px rgba(0, 0, 0, 0.5), 6px 6px 12px rgba(0, 0, 0, 0.3),
+          8px 8px 16px rgba(0, 0, 0, 0.1);
         width: 100%;
         height: 80px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background-image: url("https://media.valorant-api.com/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba/listviewicon.png");
         background-size: cover;
         border-radius: 0 0 10px 10px;
         position: relative;
@@ -121,8 +124,18 @@
         flex-direction: column;
         align-items: center;
         margin: 0;
-        padding: 0 10px;
-        left: 60px;
+        top: -5px;
+        padding: 0 0 0 0;
+        left: 65px;
+      }
+
+      .mode {
+        text-transform: uppercase;
+        position: relative;
+        bottom: -10px;
+        color: white;
+        font-weight: bold;
+        font-size: 10px;
       }
 
       .agent-icon {
@@ -139,6 +152,7 @@
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
+        align-items: center;
         margin-right: -100px;
         position: relative;
         left: -20px;
@@ -151,12 +165,17 @@
         background-color: rgba(244, 67, 54, 0.8);
       }
       .status-text {
+        position: relative;
+        top: 7px;
         font-size: 18px;
         font-weight: bold;
         color: inherit;
         text-align: center;
       }
       .score {
+        position: relative;
+        top: 7px;
+        margin: -5px;
         font-size: 18px;
         color: white;
         font-weight: bold;
@@ -332,7 +351,7 @@
         position: relative;
         width: 100px;
         height: 100px;
-        right: -40px;
+        right: -70px;
         display: flex;
         align-items: center;
       }
@@ -378,6 +397,46 @@
       .info-container .info-text {
         font-size: 12px;
         color: #555;
+      }
+
+      .acs {
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: white;
+        font-weight: bold;
+      }
+
+      .mvp-badge {
+        right: -10px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        background-color: #ffd700;
+        border-radius: 10px;
+        padding: 1px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-shadow: none;
+        color: #000;
+        position: relative;
+        width: 36px;
+        height: 24px;
+        transition: transform 0.3s;
+      }
+
+      .mvp-badge:hover {
+        transform: scale(1.05);
+      }
+
+      .star-icon {
+        font-size: 12px;
+        margin-right: 1px;
+      }
+
+      .mvp-text {
+        font-size: 6px;
+        font-weight: bold;
+        color: #333;
       }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -425,7 +484,7 @@
             <div class="number" id="accountLevel">1000</div>
           </div>
           <div class="center-container">
-            <div class="rank-container" style="display: none;">
+            <div class="rank-container" style="display: none">
               <div class="rank-image-wrapper">
                 <img
                   src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/27/smallicon.png"
@@ -468,8 +527,9 @@
             class="agent-icon"
           />
           <div class="text-kda-wrapper">
-            <div class="kda-text">KDA 20/1/9</div>
-          </div>
+  <div class="kda-text">KDA 20/1/9</div>
+  <div class="acs">Texto adicional debajo del KDA</div>
+</div>
           <div
             class="text-score-wrapper d-flex flex-column align-items-center mx-auto"
           >
@@ -571,12 +631,39 @@
           <div class="info-text">The streamer has disabled match history.</div>
         </div>`);
             } else {
+
               $("#matchHistory").empty();
+
+              if(!matchlist.length){
+                $("#matchHistory").html(`<div class="info-container">
+          <div class="info-icon">ℹ️</div>
+          <div class="info-text">The valorant player has not played any casual matches (not competitive) in a long time so nothing is displayed.</div>
+        </div>`);
+              }
 
               for (const match of matchlist) {
                 const frame = $("<div>").addClass(
                   "frame victory d-flex align-items-center justify-content-between"
                 );
+
+                const bg = $("<div>")
+                  .addClass("bg")
+                  .css("width", "100%")
+                  .height("100%")
+                  .css("position", "absolute")
+                  .css("border-radius", "0 0 10px 10px")
+                  .css("left", "0px")
+                  .css(
+                    "background-image",
+                    `url(https://media.valorant-api.com/maps/${match.map.id}/listviewicon.png)`
+                  )
+                  .css("background-size", "cover")
+                  .css("filter", "blur(1.5px)")
+                  .css("-webkit-filter", "blur(1.5px)")
+                  .css("box-shadow", "inset 0 0 5px rgba(0, 0, 0, 0.5)")
+                  .css("overflow", "hidden");
+
+                frame.append(bg);
 
                 const agentIcon = $("<img>")
                   .attr(
@@ -592,7 +679,8 @@
                     $("<div>")
                       .addClass("kda-text")
                       .text(`${match.kills}/${match.deaths}/${match.assists}`)
-                  );
+                  )
+                  .append($("<div>").addClass("acs").text(`ACS: ${match.acs}`));
                 frame.append(kdaWrapper);
 
                 const scoreWrapper = $("<div>")
@@ -606,7 +694,9 @@
                       )
                       .text(match.won ? "VICTORY" : "DEFEAT")
                   )
-                  .append($("<div>").addClass("score").text(match.score));
+                  .append($("<div>").addClass("score").text(match.score))
+                  .append($("<div>").addClass("mode").text(match.mode));
+
                 frame.append(scoreWrapper);
 
                 if (!match.isDeathmatch) {
@@ -694,12 +784,20 @@
                       )
                     );
                   frame.append(accuracyText);
-                } else scoreWrapper.css("left", "-16px");
+                } else scoreWrapper.css("left", "-8px");
 
-                frame.css(
-                  "background-image",
-                  `url(https://media.valorant-api.com/maps/${match.map.id}/listviewicon.png)`
-                );
+             
+                  const mvp = $("<div>").addClass("mvp-badge");
+                  const star = $("<div>").addClass("star-icon").text("★");
+                  const mvpText = $("<div>")
+                    .addClass("mvp-text")
+                    .text(match.teamMvp ? "TEAM MVP" : "MVP");
+
+                  mvp.append(star, mvpText);
+
+                  if(!match.teamMvp && !match.mvp) mvp.css("opacity", "0");
+
+                  frame.append(mvp);
 
                 $("#matchHistory").append(frame);
               }
@@ -707,6 +805,9 @@
 
             $("body").show();
 
+            setTimeout(() => pullData(token, channelId), 10000);
+          },
+          error: function (error) {
             setTimeout(() => pullData(token, channelId), 10000);
           },
         });

@@ -22,7 +22,7 @@ export class RequestManager {
     }
 
     public static async getMatchList(puuid: string, region: string){
-        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/${region}/pc/${puuid}`);
+        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/${region}/pc/${puuid}`, new URLSearchParams({ size: '1000' }));
     }
 
     public static async getMMR(puuid: string, region: string){

@@ -37,12 +37,16 @@ export async function checkMatchlist(
   region: string,
   matchlist?: Redis<RedisMatchlist[]>
 ) {
-  if (matchlist?.updateAt || 0 > Date.now()) {
+
+  if ((matchlist?.updateAt || 0) > Date.now()) {
+    console.log('Using cached matchlist')
     return matchlist;
   } else {
-    const { data, headers } = await RequestManager.getMatchList(puuid, region);
 
-    const matchlist = data.slice(0, 3).map((x) => {
+    console.log('Requesting matchlist')
+    const { data, headers } = await RequestManager.getMatchList(puuid, region);
+    
+    const matchlist = data.filter((x) => x.metadata.queue.id !== 'competitive').slice(0, 3).map((x) => {
 
         const player = x.players.find((_) => _.puuid === puuid)!;
   
@@ -67,6 +71,9 @@ export async function checkMatchlist(
           bodyshots: (player.stats.bodyshots / shoots).toFixed(2),
           legshots: (player.stats.legshots / shoots).toFixed(2),
           won: x.metadata.queue.id === "deathmatch" ? player.stats.kills >= 40 : team.rounds.won > team.rounds.lost,
+          acs: Math.round(player.stats.score / x.rounds.length),
+          mvp: x.metadata.queue.id === "deathmatch" ? false: x.players.sort((a, b) => b.stats.score - a.stats.score)[0].puuid === player.puuid,
+          teamMvp: x.metadata.queue.id === "deathmatch" ? false: x.players.filter((_) => _.team_id === player.team_id).sort((a, b) => b.stats.score - a.stats.score)[0].puuid === player.puuid,
         };
       });
 
@@ -86,7 +93,7 @@ export async function checkMatchlist(
 }
 
 export async function checkPlayer(puuid: string, player?: Redis<GetValorantAccountByPuuidResponse>){
-    if(player?.updateAt || 0 > Date.now()){
+    if((player?.updateAt || 0) > Date.now()){
         return player;
     } else {
         const { data, headers } = await RequestManager.getValorantAccountByPuuid(puuid);
@@ -103,12 +110,10 @@ export async function checkPlayer(puuid: string, player?: Redis<GetValorantAccou
 }
 
 export async function checkMMR(puuid: string, region: string, mmr?: Redis<RedisMMR>){
-    if(mmr?.updateAt || 0 > Date.now()){
+    if((mmr?.updateAt || 0) > Date.now()){
         return mmr;
     } else {
         const { data, headers } = await RequestManager.getMMR(puuid, region).catch(() => ({ data: null, headers: null }));
-
-
 
         const query = {
           updateAt: Date.now() + Number(headers?.get("x-cache-ttl") ?? 300) * 1000,
