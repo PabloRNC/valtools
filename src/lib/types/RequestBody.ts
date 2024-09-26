@@ -3,6 +3,7 @@ export interface PostSetupRequestBody {
     username: string;
     tag: string;
     match_history: boolean;
+    platform: 'pc' | 'console';
 }
 
 export interface PutSetupRequestBody {
@@ -10,4 +11,5 @@ export interface PutSetupRequestBody {
     username: string;
     tag: string;
     match_history: boolean;
+    platform: 'pc' | 'console';
 }

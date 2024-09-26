@@ -80,8 +80,8 @@
         margin: 20px 0;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
       }
       .form-check-label {
         font-size: 1.2rem;
@@ -91,6 +91,7 @@
         display: inline-block;
         width: 60px;
         height: 34px;
+        margin-left: auto;
       }
       .switch input {
         opacity: 0;
@@ -164,13 +165,26 @@
           </div>
         </div>
       </div>
+
+      <!-- Contenedor con toggle y select dentro -->
       <div class="toggle-container w-75">
-        <h5 class="mb-0">Display Match History</h5>
-        <label class="switch">
-          <input type="checkbox" id="matchHistoryToggle" />
-          <span class="slider round"></span>
-        </label>
+        <!-- Toggle de Match History -->
+        <div class="d-flex justify-content-between w-100 align-items-center">
+          <h5 class="mb-0">Display Match History</h5>
+          <label class="switch">
+            <input type="checkbox" id="matchHistoryToggle" />
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <div class="d-flex justify-content-between w-100 align-items-center mt-3">
+          <h5 class="mb-0">Platform</h5>
+          <select id="platformSelect" class="form-control w-auto">
+            <option value="pc">PC</option>
+            <option value="console">Console</option>
+          </select>
+        </div>
       </div>
+
       <button id="saveBtn" class="btn btn-save btn-lg mt-4" disabled>
         <i class="fa-solid fa-floppy-disk"></i>
         <span class="spinner-border" role="status" aria-hidden="true"></span>
@@ -208,12 +222,14 @@
           const usernameInput = $("#username");
           const tagInput = $("#tag");
           const matchHistoryToggle = $("#matchHistoryToggle");
+          const platformSelect = $("#platformSelect");
           const saveBtn = $("#saveBtn");
           const toastSuccess = $(".toast-success").toast({ delay: 5000 });
 
           let initialUsername = "";
           let initialTag = "";
           let initialMatchHistory = true;
+          let initialPlatform = "pc";
 
           function fetchInitialData() {
             $.ajax({
@@ -229,10 +245,12 @@
                   response.match_history !== undefined
                     ? response.match_history
                     : true;
+                initialPlatform = response.platform || "pc";
 
                 usernameInput.val(initialUsername);
                 tagInput.val(initialTag);
                 matchHistoryToggle.prop("checked", initialMatchHistory);
+                platformSelect.val(initialPlatform);
 
                 checkInputs();
               },
@@ -245,12 +263,14 @@
             const currentUsername = usernameInput.val().trim();
             const currentTag = tagInput.val().trim();
             const currentMatchHistory = matchHistoryToggle.is(":checked");
+            const currentPlatform = platformSelect.val();
             const isModified =
               currentUsername &&
               currentTag &&
               (currentUsername !== initialUsername ||
                 currentTag !== initialTag ||
-                currentMatchHistory !== initialMatchHistory);
+                currentMatchHistory !== initialMatchHistory ||
+                currentPlatform !== initialPlatform);
 
             saveBtn.prop("disabled", !isModified);
           }
@@ -258,36 +278,45 @@
           usernameInput.on("input", checkInputs);
           tagInput.on("input", checkInputs);
           matchHistoryToggle.on("change", checkInputs);
+          platformSelect.on("change", checkInputs);
 
-          saveBtn.on("click", function () {
-            const button = $(this);
-            button.addClass("loading").removeClass("loaded error");
-
+          saveBtn.click(function () {
+            saveBtn.addClass("loading").prop("disabled", true);
             const requestMethod =
               initialUsername || initialTag ? "PUT" : "POST";
             const requestUrl = "/api/setup";
 
             $.ajax({
-              url: requestUrl,
-              type: requestMethod,
+              url: `/api/setup`,
+              method: requestMethod,
               headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
               data: JSON.stringify({
-                channelId,
                 username: usernameInput.val().trim(),
                 tag: tagInput.val().trim(),
                 match_history: matchHistoryToggle.is(":checked"),
+                platform: platformSelect.val(),
+                channelId
               }),
               success: function () {
+                saveBtn.removeClass("loading").addClass("loaded");
+
+                setTimeout(() => {
+                  saveBtn.removeClass("loaded");
+                  checkInputs();
+                }, 2000);
+
                 initialUsername = usernameInput.val().trim();
                 initialTag = tagInput.val().trim();
                 initialMatchHistory = matchHistoryToggle.is(":checked");
+                initialPlatform = platformSelect.val();
 
-                button.removeClass("loading").addClass("loaded");
                 toastSuccess.toast("show");
-                checkInputs();
+              },
+              error: function () {
+                saveBtn.removeClass("loading").prop("disabled", false).css('background-color', '#dc3545');
               },
             });
           });

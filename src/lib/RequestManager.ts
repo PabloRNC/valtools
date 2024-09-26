@@ -21,13 +21,17 @@ export class RequestManager {
         return await this.get<GetValorantAccountByPuuidResponse>(`v2/by-puuid/account/${puuid}`);
     }
 
-    public static async getMatchList(puuid: string, region: string){
-        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/${region}/pc/${puuid}`, new URLSearchParams({ size: '1000' }));
+    public static async getMatchList(puuid: string, region: string, platform: 'console' | 'pc'){
+        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/${region}/${platform}/${puuid}`, new URLSearchParams({ size: '1000' }));
     }
 
-    public static async getMMR(puuid: string, region: string){
-        return await this.get<GetMMRResponse>(`v3/by-puuid/mmr/${region}/pc/${puuid}`);
+    public static async getMMR(puuid: string, region: string, platform: 'console' | 'pc'){
+        return await this.get<GetMMRResponse>(`v3/by-puuid/mmr/${region}/${platform}/${puuid}`);
     }
+
+    /*public static async getMMRHistory(puuid: string, region: string, platform: 'console' | 'pc'){
+        return await this.get<GetMMRResponse[]>(`v3/by-puuid/mmr-history/${region}/${platform}/${puuid}`);
+    }*/
 
     private static makeHeaders(): Headers {
         return new Headers({

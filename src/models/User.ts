@@ -7,6 +7,7 @@ export interface IUser {
     username: string;
     tag: string;
     match_history: boolean;
+    platform: 'pc' | 'console';
 }
 
 export const UserSchema = new Schema<IUser>({
@@ -15,7 +16,8 @@ export const UserSchema = new Schema<IUser>({
     region: { type: String, required: true },
     username: { type: String, required: true },
     tag: { type: String, required: true },
-    match_history: { type: Boolean, required: true }
+    match_history: { type: Boolean, required: true },
+    platform: { type: String, required: true, enum: ['pc', 'console'] }
 });
 
 export const User = model<IUser>('User', UserSchema);

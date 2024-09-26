@@ -17,16 +17,16 @@ router.get("/:channel_id", async (req, res) => {
 
   if (!data || !Object.keys(data).length) {
     
-    const entry = await createEntry(user.puuid, user.region, user.match_history);
+    const entry = await createEntry(user.puuid, user.region, user.platform, user.match_history);
 
     return res.status(200).json({ status: 200, data: entry });
   } 
 
-  const matchlist = user.match_history ? await checkMatchlist(user.puuid, user.region, JSON.parse(data.matchlist)) : null;
+  const matchlist = user.match_history ? await checkMatchlist(user.puuid, user.region, user.platform, JSON.parse(data.matchlist)) : null;
 
   const player = await checkPlayer(user.puuid, JSON.parse(data.player));
 
-  const mmr = await checkMMR(user.puuid, user.region, JSON.parse(data.mmr));
+  const mmr = await checkMMR(user.puuid, user.region, user.platform, JSON.parse(data.mmr));
 
   return res.status(200).json({ status: 200, data: { matchlist, player, mmr } });
 
@@ -35,6 +35,7 @@ router.get("/:channel_id", async (req, res) => {
 export async function checkMatchlist(
   puuid: string,
   region: string,
+  platform: 'console' | 'pc',
   matchlist?: Redis<RedisMatchlist[]>
 ) {
 
@@ -44,7 +45,7 @@ export async function checkMatchlist(
   } else {
 
     console.log('Requesting matchlist')
-    const { data, headers } = await RequestManager.getMatchList(puuid, region);
+    const { data, headers } = await RequestManager.getMatchList(puuid, region, platform);
     
     const matchlist = data.filter((x) => x.metadata.queue.id !== 'competitive').slice(0, 3).map((x) => {
 
@@ -109,11 +110,11 @@ export async function checkPlayer(puuid: string, player?: Redis<GetValorantAccou
     }
 }
 
-export async function checkMMR(puuid: string, region: string, mmr?: Redis<RedisMMR>){
+export async function checkMMR(puuid: string, region: string, platform: 'pc' | 'console', mmr?: Redis<RedisMMR>){
     if((mmr?.updateAt || 0) > Date.now()){
         return mmr;
     } else {
-        const { data, headers } = await RequestManager.getMMR(puuid, region).catch(() => ({ data: null, headers: null }));
+        const { data, headers } = await RequestManager.getMMR(puuid, region, platform).catch(() => ({ data: null, headers: null }));
 
         const query = {
           updateAt: Date.now() + Number(headers?.get("x-cache-ttl") ?? 300) * 1000,
@@ -132,10 +133,10 @@ export async function checkMMR(puuid: string, region: string, mmr?: Redis<RedisM
 }
 
 
-export async function createEntry(puuid: string, region: string, displayMatchlist: boolean){
-  const mmr = await checkMMR(puuid, region);
+export async function createEntry(puuid: string, region: string, platform: 'pc' | 'console', displayMatchlist: boolean){
+  const mmr = await checkMMR(puuid, region, platform);
   const player = await checkPlayer(puuid);
-  const matchlist = displayMatchlist ? await checkMatchlist(puuid, region) : null
+  const matchlist = displayMatchlist ? await checkMatchlist(puuid, region, platform) : null
 
   return { mmr, player, matchlist };
 }
