@@ -5,4 +5,5 @@ export interface PostMMRHistoryRawBody {
     type: string
     region: string
     platform: 'pc' | 'console'
+    queries: string
 }

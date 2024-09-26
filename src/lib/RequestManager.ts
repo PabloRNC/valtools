@@ -38,7 +38,7 @@ export class RequestManager {
     }
 
     public static async getMMRHistory(puuid: string, region: string, platform: 'console' | 'pc'){
-        return await this.post<PostMMRHistoryRawResponse>('v1/raw', { value: puuid, type: 'competitiveupdates', region, platform });
+        return await this.post<PostMMRHistoryRawResponse>('v1/raw', { value: puuid, type: 'competitiveupdates', region, platform, queries: `?queue=${platform === 'console' ? 'console_competitive' : 'competitive' }`});
     }
 
     public static async getMatch(matchId: string, region: string){

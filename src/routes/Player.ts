@@ -142,31 +142,53 @@ export async function checkMMRHistory(puuid: string, region: string, platform: '
     } else {
         const { Matches, headers } = await RequestManager.getMMRHistory(puuid, region, platform);
 
-        const matches = Matches.reverse();
-
         const query: { updateAt: number, data: RedisMMRHistory[] } = {
           updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
           data: []
         }
 
-        let acc = 0;
-
-        for(const match of matches.slice(0, 3)){
+        for(const match of Matches.slice(0, 3)){
 
           const data = history?.data.find((x) => x.id === match.MatchID);
 
           if(data){
-            query.data.push({ ...data, tierAfterUpdate: match.TierAfterUpdate, tierBeforeUpdate: match.TierBeforeUpdate, rrChange: match.RankedRatingEarned });
-          } else {
-            
-            const parsed = await parseMatch(puuid, match, region, matches, acc);
-
-            if(parsed){
-              query.data.push(parsed);
-            } else continue;
-
+            query.data.push(data);
+            continue;
           }
 
+          const { data: matchData } = await RequestManager.getMatch(match.MatchID, region);
+
+          const player = matchData.players.find((_) => _.puuid === puuid)!;
+
+          const team = matchData.teams.find((_) => _.team_id === player.team_id)!;
+        
+          const score = matchData.metadata.queue.id === 'deathmatch' ? player.stats.kills.toString() : `${team.rounds.won} - ${team.rounds.lost}`;
+        
+          const shoots = player.stats.bodyshots + player.stats.headshots + player.stats.legshots;
+        
+          query.data.push({
+            id: match.MatchID,
+            agent: player.agent,
+            map: matchData.metadata.map,
+            cluster: matchData.metadata.cluster,
+            mode: matchData.metadata.queue.name,
+            isDeathmatch: matchData.metadata.queue.id === "deathmatch",
+            score,
+            kills: player.stats.kills,
+            deaths: player.stats.deaths,
+            assists: player.stats.assists,
+            headshots: (player.stats.headshots / shoots).toFixed(2),
+            bodyshots: (player.stats.bodyshots / shoots).toFixed(2),
+            legshots: (player.stats.legshots / shoots).toFixed(2),
+            won: matchData.metadata.queue.id === "deathmatch" ? player.stats.kills >= 40 : team.rounds.won > team.rounds.lost,
+            acs: Math.round(player.stats.score / matchData.rounds.length),
+            mvp: matchData.metadata.queue.id === "deathmatch" ? false: matchData.players.sort((a, b) => b.stats.score - a.stats.score)[0].puuid === player.puuid,
+            teamMvp: matchData.metadata.queue.id === "deathmatch" ? false: matchData.players.filter((_) => _.team_id === player.team_id).sort((a, b) => b.stats.score - a.stats.score)[0].puuid === player.puuid,
+            tierAfterUpdate: match.TierAfterUpdate,
+            tierBeforeUpdate: match.TierBeforeUpdate,
+            rrChange: match.RankedRatingEarned
+          });
+          
         }
 
         await redis.hset(puuid, "mmrHistory", JSON.stringify(query));

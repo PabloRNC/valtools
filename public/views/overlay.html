@@ -253,13 +253,23 @@
       }
 
       .rank-c {
+        align-items: center;
+        text-align: center;
+        display: flex;
+        justify-content: flex-start;
         position: absolute;
         z-index: 100;
-        right: 12px;
-        bottom: 10px;
+        right: 5px;
+        bottom: 5px;
+        width: 48px;
+        height: 36px;
+      }
+
+      .rank-c img {
         width: 32px;
         height: auto;
       }
+
       .progress-container {
         width: 100%;
         max-width: 100px;
@@ -1018,7 +1028,53 @@
                       (x) => x.tier === match.tierAfterUpdate
                     ).smallIcon;
 
-                    const rank = $("<img>").addClass("rank-c").attr("src", url);
+                    let svg;
+
+                    if(match.tierBeforeUpdate > match.tierAfterUpdate){
+
+                      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+
+                      $(svg).addClass("arrow-down").attr('viewBox', '0 0 24 24').css("fill", "red").css("text-shadow", "2px 2px rgba(0, 0, 0, 0.7)");
+
+                      const path1 = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "path"
+                      );
+
+                      $(path1).attr({
+                        d: "M12 22L3 11h6V2h6v9h6l-9 11z",
+                      });
+
+                      $(svg).append(path1);
+
+                    } else if(match.tierBeforeUpdate < match.tierAfterUpdate){
+
+                      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+                      $(svg).addClass("arrow-up").attr('viewBox', '0 0 24 24').css("fill", "green");
+
+                      const path1 = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "path"
+                      );
+
+                      $(path1).attr({
+                        d: "M12 2L3 13h6v9h6v-9h6L12 2z",
+                      });
+
+                      $(svg).append(path1);
+
+                    }
+                    
+                  
+                    const rank = $("<div>").addClass("rank-c").append($("<img>").attr("src", url));
+
+                    if(svg){
+                      rank.append(svg);
+                    } else {
+                      rank.css("display", "block").css("justify-content", "center").css("align-items", "center");
+                    }
 
                     frame.append(rank);
 
