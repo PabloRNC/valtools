@@ -2,7 +2,8 @@ export type GetResponses =
   | GetValorantAccountByUsernameResponse
   | GetValorantAccountByPuuidResponse
   | GetMatchListResponse[]
-  | GetMMRResponse;
+  | GetMMRResponse
+  | GetMatchResponse;
 
 export interface GetValorantAccountByUsernameResponse {
   puuid: string;
@@ -262,4 +263,14 @@ export interface Seasonal {
 export interface LeaderboardPlacement {
   rank: number;
   updated_at: string;
+}
+
+export interface GetMatchResponse {
+  metadata: Metadata;
+  players: Player[];
+  observers: Observer[];
+  coaches: Coach[];
+  teams: Team[];
+  rounds: Round[];
+  kills: Kill[];
 }

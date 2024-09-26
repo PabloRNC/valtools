@@ -4,6 +4,7 @@ export type Redis<T> = {
 }
 
 export interface RedisMatchlist {
+    id: string;
     agent: { name: string, id: string };
     map: { name: string, id: string };
     cluster: string;
@@ -16,6 +17,10 @@ export interface RedisMatchlist {
     headshots: string;
     bodyshots: string;
     legshots: string;
+    won: boolean;
+    acs: number;
+    mvp: boolean;
+    teamMvp: boolean;
 }
 
 export interface RedisMMR {
@@ -23,4 +28,10 @@ export interface RedisMMR {
     rr: number;
     leaderboard_rank: number | null; 
     account: { puuid: string, name: string, tag: string };
+}
+
+export interface RedisMMRHistory extends RedisMatchlist {
+    tierAfterUpdate: number;
+    tierBeforeUpdate: number;
+    rrChange: number;
 }

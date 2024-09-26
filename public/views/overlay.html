@@ -104,7 +104,7 @@
         background-color: rgba(0, 0, 0, 0.5);
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7),
           4px 4px 8px rgba(0, 0, 0, 0.5), 6px 6px 12px rgba(0, 0, 0, 0.3),
-          8px 8px 16px rgba(0, 0, 0, 0.1);
+          8px 8px 16px rgba(0, 0, 0, 0.3);
         width: 100%;
         height: 80px;
         display: flex;
@@ -177,9 +177,9 @@
         top: 7px;
         margin: -5px;
         font-size: 18px;
-        color: white;
         font-weight: bold;
         text-align: center;
+        color: white;
       }
       .victory {
         color: #65c100;
@@ -251,6 +251,15 @@
         font-weight: bold;
         margin-bottom: 6px;
       }
+
+      .rank-c {
+        position: absolute;
+        z-index: 100;
+        right: 12px;
+        bottom: 10px;
+        width: 32px;
+        height: auto;
+      }
       .progress-container {
         width: 100%;
         max-width: 100px;
@@ -320,6 +329,15 @@
         align-items: center;
         border: 1px solid #444;
         box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
+      }
+
+      .rr {
+        text-shadow: 2px 2px rgba(0, 0, 0, 0.7);
+        font-weight: bold;
+        font-size: 18px;
+        font-weight: bold;
+        color: inherit;
+        text-align: center;
       }
 
       .close-button {
@@ -418,10 +436,16 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         text-shadow: none;
         color: #000;
+        justify-content: center;
+        text-align: center;
         position: relative;
         width: 36px;
         height: 24px;
         transition: transform 0.3s;
+      }
+
+      .mvp-badge.competitive {
+        top: -20px;
       }
 
       .mvp-badge:hover {
@@ -434,6 +458,9 @@
       }
 
       .mvp-text {
+        text-align: center;
+        justify-content: center;
+        align-items: center;
         font-size: 6px;
         font-weight: bold;
         color: #333;
@@ -467,7 +494,11 @@
             >
           </li>
           <li class="nav-item">
-            <a class="nav-link" id="competitiveMatchesTab" href="#"
+            <a
+              class="nav-link"
+              id="competitiveMatchesTab"
+              href="#"
+              onclick="showCompetitiveMatches()"
               >Ranked Matches</a
             >
           </li>
@@ -570,9 +601,10 @@
           </div>
         </div>-->
       </div>
+      <div class="match-history-container" id="cMatchHistory"></div>
     </div>
     <script>
-      async function pullData(token, channelId) {
+      async function pullData(token, channelId, borders, ranks) {
         $.ajax({
           url: `/api/players/${channelId}`,
           type: "GET",
@@ -583,6 +615,8 @@
             const mmr = data.mmr?.data;
             const player = data.player.data;
             const matchlist = data.matchlist?.data;
+            const cMatchlist = data.mmrHistory?.data;
+
             $("#accountName").text(player.name);
             $("#accountTag").text(`#${player.tag}`);
             $("#accountLevel").text(player.account_level);
@@ -612,18 +646,13 @@
               "background-image",
               `url(https://media.valorant-api.com/playercards/${player.card}/wideart.png)`
             );
-            await $.ajax({
-              url: "https://valorant-api.com/v1/levelborders",
-              type: "GET",
-              success: function ({ data }) {
-                const border = data.find((x, i) =>
-                  x.startingLevel <= Number(player.account_level) && data[i + 1]
-                    ? data.startingLevel > Number(player.account_level)
-                    : true
-                );
-                $("#levelBorder").attr("src", border.levelNumberAppearance);
-              },
-            });
+
+            const border = borders.find((x, i) =>
+              x.startingLevel <= Number(player.account_level) && data[i + 1]
+                ? data.startingLevel > Number(player.account_level)
+                : true
+            );
+            $("#levelBorder").attr("src", border.levelNumberAppearance);
 
             if (!matchlist) {
               $("#matchHistory").html(`<div class="info-container">
@@ -631,10 +660,9 @@
           <div class="info-text">The streamer has disabled match history.</div>
         </div>`);
             } else {
-
               $("#matchHistory").empty();
 
-              if(!matchlist.length){
+              if (!matchlist.length) {
                 $("#matchHistory").html(`<div class="info-container">
           <div class="info-icon">ℹ️</div>
           <div class="info-text">The valorant player has not played any casual matches (not competitive) in a long time so nothing is displayed.</div>
@@ -658,8 +686,8 @@
                     `url(https://media.valorant-api.com/maps/${match.map.id}/listviewicon.png)`
                   )
                   .css("background-size", "cover")
-                  .css("filter", "blur(1.5px)")
-                  .css("-webkit-filter", "blur(1.5px)")
+                  .css("filter", "blur(2px)")
+                  .css("-webkit-filter", "blur(2px)")
                   .css("box-shadow", "inset 0 0 5px rgba(0, 0, 0, 0.5)")
                   .css("overflow", "hidden");
 
@@ -786,26 +814,225 @@
                   frame.append(accuracyText);
                 } else scoreWrapper.css("left", "-8px");
 
-             
-                  const mvp = $("<div>").addClass("mvp-badge");
-                  const star = $("<div>").addClass("star-icon").text("★");
-                  const mvpText = $("<div>")
-                    .addClass("mvp-text")
-                    .text(match.teamMvp ? "TEAM MVP" : "MVP");
+                const mvp = $("<div>").addClass("mvp-badge");
+                const star = $("<div>").addClass("star-icon").text("★");
+                const mvpText = $("<div>")
+                  .addClass("mvp-text")
+                  .text(match.mvp ? "MVP" : "TEAM MVP");
 
-                  mvp.append(star, mvpText);
+                mvp.append(star, mvpText);
 
-                  if(!match.teamMvp && !match.mvp) mvp.css("opacity", "0");
+                if (!match.teamMvp && !match.mvp) mvp.css("opacity", "0");
 
-                  frame.append(mvp);
+                frame.append(mvp);
 
                 $("#matchHistory").append(frame);
+              }
+
+              if (!cMatchlist) {
+                $("#cMatchHistory").html(`<div class="info-container">
+          <div class="info-icon">ℹ️</div>
+          <div class="info-text">The streamer has disabled match history.</div>
+        </div>'`);
+              } else {
+                if (!cMatchlist.length) {
+                  $("#cMatchHistory").html(`<div class="info-container">
+          <div class="info-icon">ℹ️</div>
+          <div class="info-text">The valorant player has not played any casual matches (not competitive) in a long time so nothing is displayed.</div>
+        </div>`);
+                } else {
+                  $("#cMatchHistory").empty();
+                  for (const match of cMatchlist) {
+                    const frame = $("<div>").addClass(
+                      "frame victory d-flex align-items-center justify-content-between"
+                    );
+
+                    const bg = $("<div>")
+                      .addClass("bg")
+                      .css("width", "100%")
+                      .height("100%")
+                      .css("position", "absolute")
+                      .css("border-radius", "0 0 10px 10px")
+                      .css("left", "0px")
+                      .css(
+                        "background-image",
+                        `url(https://media.valorant-api.com/maps/${match.map.id}/listviewicon.png)`
+                      )
+                      .css("background-size", "cover")
+                      .css("filter", "blur(2px)")
+                      .css("-webkit-filter", "blur(2px)")
+                      .css("box-shadow", "inset 0 0 5px rgba(0, 0, 0, 0.5)")
+                      .css("overflow", "hidden");
+
+                    frame.append(bg);
+
+                    const agentIcon = $("<img>")
+                      .attr(
+                        "src",
+                        `https://media.valorant-api.com/agents/${match.agent.id}/displayicon.png`
+                      )
+                      .addClass("agent-icon");
+                    frame.append(agentIcon);
+
+                    const kdaWrapper = $("<div>")
+                      .addClass("text-kda-wrapper")
+                      .append(
+                        $("<div>")
+                          .addClass("kda-text")
+                          .text(
+                            `${match.kills}/${match.deaths}/${match.assists}`
+                          )
+                      )
+                      .append(
+                        $("<div>").addClass("acs").text(`ACS: ${match.acs}`)
+                      )
+                      .append(
+                        $("<div>")
+                          .addClass("rr")
+                          .text(
+                            `${match.rrChange > 0 ? "+" : ""}${
+                              match.rrChange
+                            } RR`
+                          )
+                          .css(
+                            "color",
+                            match.rrChange > 0 ? "#65c100" : "#f44336"
+                          )
+                      );
+                    frame.append(kdaWrapper);
+
+                    const scoreWrapper = $("<div>")
+                      .addClass(
+                        "text-score-wrapper d-flex flex-column align-items-center mx-auto"
+                      )
+                      .append(
+                        $("<div>")
+                          .addClass(
+                            `status-text ${match.won ? "victory" : "defeat"}`
+                          )
+                          .text(match.won ? "VICTORY" : "DEFEAT")
+                      )
+                      .append($("<div>").addClass("score").text(match.score))
+                      .append($("<div>").addClass("mode").text(match.mode));
+
+                    frame.append(scoreWrapper);
+
+                    if (!match.isDeathmatch) {
+                      const headshots = Number(match.headshots);
+
+                      const bodyshots = Number(match.bodyshots);
+
+                      const legshots = Number(match.legshots);
+
+                      const accuracy = $("<div>").addClass("accuracy");
+
+                      const svg = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "svg"
+                      );
+                      $(svg).attr("viewBox", "0 0 33.316 80").addClass("dummy");
+
+                      const g = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "g"
+                      );
+                      $(g).attr("transform", "translate(-636.875 -624)");
+
+                      const circle = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "circle"
+                      );
+                      $(circle).attr({
+                        cx: "6.153",
+                        cy: "6.153",
+                        r: "6.153",
+                        transform: "translate(647.387 624)",
+                        fill:
+                          headshots > bodyshots && headshots > legshots
+                            ? "#fff"
+                            : "rgba(255, 255, 255, 0.5)",
+                      });
+
+                      const path1 = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "path"
+                      );
+                      $(path1).attr({
+                        d: "M29.285,26.472,24.17,13.678l-1.352,6.831H10.512l-1.363-6.84-5.117,12.8A2.049,2.049,0,1,1,.072,25.411L6.441,1.639l.008,0A2.055,2.055,0,0,1,8.461,0h4.1L16.67,4.1l4.1-4.1h4.111a2.048,2.048,0,0,1,2.016,1.712l6.352,23.7a2.049,2.049,0,1,1-3.959,1.061Z",
+                        transform: "translate(636.875 638.36)",
+                        fill:
+                          bodyshots > headshots && bodyshots > legshots
+                            ? "#fff"
+                            : "rgba(255, 255, 255, 0.5)",
+                      });
+
+                      const path2 = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "path"
+                      );
+                      $(path2).attr({
+                        d: "M6.521,41.025h0l-6.52,0L5.863,0H18.756l5.857,41.021-6.508,0L12.307,8.2,6.521,41.024Z",
+                        transform: "translate(641.232 662.975)",
+                        fill:
+                          legshots > headshots && legshots > bodyshots
+                            ? "#fff"
+                            : "rgba(255, 255, 255, 0.5",
+                      });
+
+                      $(g).append(circle, path1, path2);
+                      $(svg).append(g);
+                      $(accuracy).append(svg);
+                      frame.append(accuracy);
+
+                      const accuracyText = $("<div>")
+                        .addClass("accuracy-text")
+                        .append(
+                          $("<span>").text(
+                            `${(Number(match.headshots) * 100).toFixed(2)}%`
+                          )
+                        )
+                        .append(
+                          $("<span>").text(
+                            `${(Number(match.bodyshots) * 100).toFixed(2)}%`
+                          )
+                        )
+                        .append(
+                          $("<span>").text(
+                            `${(Number(match.legshots) * 100).toFixed(2)}%`
+                          )
+                        );
+                      frame.append(accuracyText);
+                    } else scoreWrapper.css("left", "-8px");
+
+                    const mvp = $("<div>").addClass("mvp-badge competitive");
+                    const star = $("<div>").addClass("star-icon").text("★");
+                    const mvpText = $("<div>")
+                      .addClass("mvp-text")
+                      .text(match.mvp ? "MVP" : "TEAM MVP");
+
+                    mvp.append(star, mvpText);
+
+                    if (!match.teamMvp && !match.mvp) mvp.css("opacity", "0");
+
+                    const url = ranks.tiers.find(
+                      (x) => x.tier === match.tierAfterUpdate
+                    ).smallIcon;
+
+                    const rank = $("<img>").addClass("rank-c").attr("src", url);
+
+                    frame.append(rank);
+
+                    frame.append(mvp);
+
+                    $("#cMatchHistory").append(frame);
+                  }
+                }
               }
             }
 
             $("body").show();
 
-            setTimeout(() => pullData(token, channelId), 10000);
+            //setTimeout(() => pullData(token, channelId), 10000);
           },
           error: function (error) {
             setTimeout(() => pullData(token, channelId), 10000);
@@ -816,21 +1043,37 @@
     <script>
       const helper = window.Twitch.ext;
 
-      helper.onAuthorized(({ token, channelId }) => {
-        pullData(token, channelId);
+      helper.onAuthorized(async({ token, channelId }) => {
+        const ranks = await fetch(
+                      "https://valorant-api.com/v1/competitivetiers"
+                    ).then((res) => res.json()).then((res) => res.data.pop());
+
+      const borders = await fetch(
+                      "https://valorant-api.com/v1/levelborders"
+                    ).then((res) => res.json()).then((res) => res.data);
+        pullData(token, channelId, borders, ranks);
       });
     </script>
     <script>
       function showPlayerInfo() {
         document.getElementById("mainContent").style.display = "flex";
         document.getElementById("matchHistory").style.display = "none";
+        document.getElementById("cMatchHistory").style.display = "none";
         setActiveTab("playerInfoTab");
       }
 
       function showCasualMatches() {
         document.getElementById("mainContent").style.display = "none";
         document.getElementById("matchHistory").style.display = "flex";
+        document.getElementById("cMatchHistory").style.display = "none";
         setActiveTab("casualMatchesTab");
+      }
+
+      function showCompetitiveMatches() {
+        document.getElementById("mainContent").style.display = "none";
+        document.getElementById("matchHistory").style.display = "none";
+        document.getElementById("cMatchHistory").style.display = "flex";
+        setActiveTab("competitiveMatchesTab");
       }
 
       function setActiveTab(selectedTabId) {

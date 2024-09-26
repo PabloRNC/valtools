@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { GetResponses, ResponseParser, GetValorantAccountByUsernameResponse, GetValorantAccountByPuuidResponse, GetMatchListResponse, GetMMRResponse } from "./types";
+import { GetResponses, ResponseParser, GetValorantAccountByUsernameResponse, GetValorantAccountByPuuidResponse, GetMatchListResponse, GetMMRResponse, PostMMRHistoryRawBody, PostResponses, APIBody, PostMMRHistoryRawResponse, GetMatchResponse } from "./types";
 
 
 export class RequestManager {
@@ -11,6 +11,14 @@ export class RequestManager {
             throw new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}`);
         }
         return { ...await response.json(), headers: response.headers } ;
+    }
+
+    public static async post<T extends PostResponses>(endpoint: string, body: APIBody): Promise<T & { headers: Headers }> {
+        const response = await fetch(process.env.BASE_URL + endpoint, { method: 'POST', headers: this.makeHeaders(), body: JSON.stringify(body) });
+        if(!response.ok) {
+            throw new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}`);
+        }
+        return { ...await response.json(), headers: response.headers };
     }
 
     public static async getValorantAccountByUsername(username: string, tag: string) {
@@ -29,9 +37,13 @@ export class RequestManager {
         return await this.get<GetMMRResponse>(`v3/by-puuid/mmr/${region}/${platform}/${puuid}`);
     }
 
-    /*public static async getMMRHistory(puuid: string, region: string, platform: 'console' | 'pc'){
-        return await this.get<GetMMRResponse[]>(`v3/by-puuid/mmr-history/${region}/${platform}/${puuid}`);
-    }*/
+    public static async getMMRHistory(puuid: string, region: string, platform: 'console' | 'pc'){
+        return await this.post<PostMMRHistoryRawResponse>('v1/raw', { value: puuid, type: 'competitiveupdates', region, platform });
+    }
+
+    public static async getMatch(matchId: string, region: string){
+        return await this.get<GetMatchResponse>(`v4/match/${region}/${matchId}`);
+    }
 
     private static makeHeaders(): Headers {
         return new Headers({

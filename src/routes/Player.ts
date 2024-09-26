@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { GetValorantAccountByPuuidResponse, Redis, RedisMatchlist, RedisMMR, RequestManager } from "../lib";
+import { GetValorantAccountByPuuidResponse, Match, Redis, RedisMatchlist, RedisMMR, RedisMMRHistory, RequestManager } from "../lib";
 import { redis } from "..";
 import { User } from "../models";
 
@@ -13,7 +13,7 @@ router.get("/:channel_id", async (req, res) => {
   if (!user)
     return res.status(404).json({ status: 404, error: "User was not found" });
 
-  const data = await redis.hgetall(user.puuid) as { matchlist: string, player: string, mmr: string };
+  const data = await redis.hgetall(user.puuid) as { matchlist: string, player: string, mmr: string, mmrHistory: string };
 
   if (!data || !Object.keys(data).length) {
     
@@ -24,11 +24,13 @@ router.get("/:channel_id", async (req, res) => {
 
   const matchlist = user.match_history ? await checkMatchlist(user.puuid, user.region, user.platform, JSON.parse(data.matchlist)) : null;
 
+  const mmrHistory = user.match_history ? await checkMMRHistory(user.puuid, user.region, user.platform, JSON.parse(data.mmrHistory)) : null;
+
   const player = await checkPlayer(user.puuid, JSON.parse(data.player));
 
   const mmr = await checkMMR(user.puuid, user.region, user.platform, JSON.parse(data.mmr));
 
-  return res.status(200).json({ status: 200, data: { matchlist, player, mmr } });
+  return res.status(200).json({ status: 200, data: { matchlist, player, mmr, mmrHistory } });
 
 });
 
@@ -59,6 +61,7 @@ export async function checkMatchlist(
   
   
         return {
+          id: x.metadata.match_id,
           agent: player.agent,
           map: x.metadata.map,
           cluster: x.metadata.cluster,
@@ -132,12 +135,98 @@ export async function checkMMR(puuid: string, region: string, platform: 'pc' | '
     }
 }
 
+export async function checkMMRHistory(puuid: string, region: string, platform: 'pc' | 'console', history?: Redis<RedisMMRHistory[]>){
+
+    if((history?.updateAt || 0) > Date.now()){
+        return history;
+    } else {
+        const { Matches, headers } = await RequestManager.getMMRHistory(puuid, region, platform);
+
+        const matches = Matches.reverse();
+
+        const query: { updateAt: number, data: RedisMMRHistory[] } = {
+          updateAt: Date.now() + Number(headers.get("x-cache-ttl")) * 1000,
+          data: []
+        }
+
+        let acc = 0;
+
+        for(const match of matches.slice(0, 3)){
+
+          const data = history?.data.find((x) => x.id === match.MatchID);
+
+          if(data){
+            query.data.push({ ...data, tierAfterUpdate: match.TierAfterUpdate, tierBeforeUpdate: match.TierBeforeUpdate, rrChange: match.RankedRatingEarned });
+          } else {
+            
+            const parsed = await parseMatch(puuid, match, region, matches, acc);
+
+            if(parsed){
+              query.data.push(parsed);
+            } else continue;
+
+          }
+
+        }
+
+        await redis.hset(puuid, "mmrHistory", JSON.stringify(query));
+
+        return query;
+    }
+
+}
+
 
 export async function createEntry(puuid: string, region: string, platform: 'pc' | 'console', displayMatchlist: boolean){
   const mmr = await checkMMR(puuid, region, platform);
   const player = await checkPlayer(puuid);
   const matchlist = displayMatchlist ? await checkMatchlist(puuid, region, platform) : null
+  const mmrHistory = displayMatchlist ? await checkMMRHistory(puuid, region, platform) : null;
 
-  return { mmr, player, matchlist };
+  return { mmr, player, matchlist, mmrHistory };
 }
+
+async function parseMatch(puuid: string, match: Match, region: string, matches: Match[], acc: number){
+
+  const { data: matchData } = await RequestManager.getMatch(match.MatchID, region);
+
+  if(matchData.metadata.queue.id === 'competitive') {
+    const match = matches[4 + acc];
+    if(!match) return null;
+    acc++;
+    return parseMatch(puuid, match, region, matches, acc);
+  }
+
+  const player = matchData.players.find((_) => _.puuid === puuid)!;
+
+  const team = matchData.teams.find((_) => _.team_id === player.team_id)!;
+
+  const score = matchData.metadata.queue.id === 'deathmatch' ? player.stats.kills.toString() : `${team.rounds.won} - ${team.rounds.lost}`;
+
+  const shoots = player.stats.bodyshots + player.stats.headshots + player.stats.legshots;
+
+  return {
+    id: match.MatchID,
+    agent: player.agent,
+    map: matchData.metadata.map,
+    cluster: matchData.metadata.cluster,
+    mode: matchData.metadata.queue.name,
+    isDeathmatch: matchData.metadata.queue.id === "deathmatch",
+    score,
+    kills: player.stats.kills,
+    deaths: player.stats.deaths,
+    assists: player.stats.assists,
+    headshots: (player.stats.headshots / shoots).toFixed(2),
+    bodyshots: (player.stats.bodyshots / shoots).toFixed(2),
+    legshots: (player.stats.legshots / shoots).toFixed(2),
+    won: matchData.metadata.queue.id === "deathmatch" ? player.stats.kills >= 40 : team.rounds.won > team.rounds.lost,
+    acs: Math.round(player.stats.score / matchData.rounds.length),
+    mvp: matchData.metadata.queue.id === "deathmatch" ? false: matchData.players.sort((a, b) => b.stats.score - a.stats.score)[0].puuid === player.puuid,
+    teamMvp: matchData.metadata.queue.id === "deathmatch" ? false: matchData.players.filter((_) => _.team_id === player.team_id).sort((a, b) => b.stats.score - a.stats.score)[0].puuid === player.puuid,
+    tierAfterUpdate: match.TierAfterUpdate,
+    tierBeforeUpdate: match.TierBeforeUpdate,
+    rrChange: match.RankedRatingEarned
+  };
+}
+
 export { router as Player };
