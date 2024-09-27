@@ -8,17 +8,19 @@ export class RequestManager {
     public static async get<T extends GetResponses>(endpoint: string, params?: URLSearchParams): Promise<ResponseParser<T>> {
         const response = await fetch(process.env.BASE_URL + endpoint + (params? `?${params?.toString()}` : ''), { method: 'GET', headers: this.makeHeaders() });
         if(!response.ok) {
-            throw new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}`);
+            console.error(new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}`));
+            return { headers: response.headers, status: response.status } as any;
         }
         return { ...await response.json(), headers: response.headers } ;
     }
 
-    public static async post<T extends PostResponses>(endpoint: string, body: APIBody): Promise<T & { headers: Headers }> {
+    public static async post<T extends PostResponses>(endpoint: string, body: APIBody): Promise<T & { headers: Headers, status: number }> {
         const response = await fetch(process.env.BASE_URL + endpoint, { method: 'POST', headers: this.makeHeaders(), body: JSON.stringify(body) });
         if(!response.ok) {
-            throw new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}`);
+            console.error(new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}`));
+            return { headers: response.headers, status: response.status } as any;
         }
-        return { ...await response.json(), headers: response.headers };
+        return { ...await response.json(), headers: response.headers, status: response.status };
     }
 
     public static async getValorantAccountByUsername(username: string, tag: string) {
@@ -30,7 +32,7 @@ export class RequestManager {
     }
 
     public static async getMatchList(puuid: string, region: string, platform: 'console' | 'pc'){
-        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/${region}/${platform}/${puuid}`, new URLSearchParams({ size: '1000' }));
+        return await this.get<GetMatchListResponse[]>(`v4/by-puuid/matches/${region}/${platform}/${puuid}`, new URLSearchParams({ size: '10' }));
     }
 
     public static async getMMR(puuid: string, region: string, platform: 'console' | 'pc'){

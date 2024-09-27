@@ -3,7 +3,6 @@ import { connect } from 'mongoose';
 import { Redis } from 'ioredis';
 import { JWTPayload } from './lib';
 import { Api } from './routes';
-import { isAuthorized } from './middlewares';
 import 'dotenv/config';
 
 const app = express();
@@ -14,7 +13,7 @@ const PORT = Number(process.env.PORT) || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.use('/api', isAuthorized, Api);
+app.use('/api', Api);
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
