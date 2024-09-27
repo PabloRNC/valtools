@@ -15,8 +15,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use('/api', Api);
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
+app.get('/', (_req, res) => {
+    res.sendFile('views/index.html', { root: 'public'});
 });
 
 app.listen(PORT, async() => {
