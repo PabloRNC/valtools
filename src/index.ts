@@ -19,6 +19,14 @@ app.get('/', (_req, res) => {
     res.sendFile('views/index.html', { root: 'public'});
 });
 
+app.get('/tos', (_req, res) => {
+    res.sendFile('views/tos.html', { root: 'public'});
+});
+
+app.get('/privacy', (_req, res) => {
+    res.sendFile('views/privacy.html', { root: 'public' });
+});
+
 app.listen(PORT, async() => {
     console.log(`Server is running on ${PORT}`);
     await connect(process.env.DATABASE_URI, { dbName: 'main' });
