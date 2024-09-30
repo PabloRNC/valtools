@@ -492,8 +492,6 @@ $(document).ready(async function () {
         }
 
         $("body").show();
-
-        setTimeout(() => pullData(borders, ranks), 10000);
       },
       error: function (error) {
         setTimeout(() => pullData(borders, ranks), 10000);
