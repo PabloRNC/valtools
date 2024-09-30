@@ -13,6 +13,7 @@ const PORT = Number(process.env.PORT) || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+app.disable('x-powered-by');
 app.use('/api', Api);
 
 app.get('/', (_req, res) => {
