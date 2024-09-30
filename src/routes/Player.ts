@@ -69,7 +69,7 @@ export async function checkMatchlist(
     };
     
     
-    const filtered = data.filter((x) => x.metadata.queue.id !== 'competitive').slice(0, 3);
+    const filtered = data.filter((x) => !['competitive', 'console_competitive'].includes(x.metadata.queue.id)).slice(0, 3);
 
     const acc = 3 - filtered.length;
 
@@ -269,6 +269,7 @@ export async function createEntry(puuid: string, region: string, platform: 'pc' 
 
   return { mmr, player, matchlist, mmrHistory };
 }
+
 
 export function parseKey(key: string, platform: 'pc' | 'console'): `${string}_${'pc' | 'console'}` {
   return `${key}_${platform}`;

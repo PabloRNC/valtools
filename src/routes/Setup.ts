@@ -6,7 +6,13 @@ import {
   RequestManager,
 } from "../lib";
 import { User } from "../models";
-import { createEntry } from "./Player";
+import {
+  checkPlayer,
+  createEntry,
+  checkMMR,
+  checkMMRHistory,
+  checkMatchlist,
+} from "./Player";
 
 const router = Router();
 
@@ -30,20 +36,58 @@ router.post("/", async (req, res) => {
   RequestManager.getValorantAccountByUsername(body.username, body.tag).then(
     async ({ data }) => {
       if (!data.platforms.includes(body.platform.toLowerCase()))
-        return res
-          .status(400)
-          .json({
-            status: 400,
-            error:
-              "The user has not ever played on the platform you specified.",
-          });
+        return res.status(400).json({
+          status: 400,
+          error: "The user has not ever played on the platform you specified.",
+        });
 
-      if (!Object.keys(await redis.hgetall(data.puuid)).length) {
+      const savedData = await redis.hgetall(data.puuid);
+
+      if (!Object.keys(savedData).length) {
         await createEntry(
           data.puuid,
           data.region,
           body.platform,
           body.match_history
+        );
+      } else {
+        body.match_history
+          ? await checkMatchlist(
+              data.puuid,
+              data.region,
+              body.platform,
+              savedData[`matchlist_${body.platform}`]
+                ? JSON.parse(savedData[`matchlist_${body.platform}`]!)
+                : null
+            )
+          : null;
+
+        body.match_history
+          ? await checkMMRHistory(
+              data.puuid,
+              data.region,
+              body.platform,
+              savedData[`mmrHistory_${body.platform}`]
+                ? JSON.parse(savedData[`mmrHistory_${body.platform}`]!)
+                : null
+            )
+          : null;
+
+        await checkPlayer(
+          data.puuid,
+          body.platform,
+          savedData[`mmr_${body.platform}`]
+            ? JSON.parse(savedData.player)
+            : null
+        );
+
+        await checkMMR(
+          data.puuid,
+          data.region,
+          body.platform,
+          savedData[`mmr_${body.platform}`]
+            ? JSON.parse(savedData[`mmr_${body.platform}`]!)
+            : null
         );
       }
 
@@ -93,20 +137,58 @@ router.put("/", async (req, res) => {
   RequestManager.getValorantAccountByUsername(body.username, body.tag).then(
     async ({ data }) => {
       if (!data.platforms.includes(body.platform.toUpperCase()))
-        return res
-          .status(400)
-          .json({
-            status: 400,
-            error:
-              "The user has not ever played on the platform you specified.",
-          });
+        return res.status(400).json({
+          status: 400,
+          error: "The user has not ever played on the platform you specified.",
+        });
 
-      if (!Object.keys(await redis.hgetall(data.puuid)).length) {
+      const savedData = await redis.hgetall(data.puuid);
+
+      if (!Object.keys(savedData).length) {
         await createEntry(
           data.puuid,
           data.region,
           body.platform,
           body.match_history
+        );
+      } else {
+        body.match_history
+          ? await checkMatchlist(
+              data.puuid,
+              data.region,
+              body.platform,
+              savedData[`matchlist_${body.platform}`]
+                ? JSON.parse(savedData[`matchlist_${body.platform}`]!)
+                : null
+            )
+          : null;
+
+        body.match_history
+          ? await checkMMRHistory(
+              data.puuid,
+              data.region,
+              body.platform,
+              savedData[`mmrHistory_${body.platform}`]
+                ? JSON.parse(savedData[`mmrHistory_${body.platform}`]!)
+                : null
+            )
+          : null;
+
+        await checkPlayer(
+          data.puuid,
+          body.platform,
+          savedData[`mmr_${body.platform}`]
+            ? JSON.parse(savedData.player)
+            : null
+        );
+
+        await checkMMR(
+          data.puuid,
+          data.region,
+          body.platform,
+          savedData[`mmr_${body.platform}`]
+            ? JSON.parse(savedData[`mmr_${body.platform}`]!)
+            : null
         );
       }
 
