@@ -1,6 +1,8 @@
 import 'dotenv/config';
-import { GetResponses, ResponseParser, GetValorantAccountByUsernameResponse, GetValorantAccountByPuuidResponse, GetMatchListResponse, GetMMRResponse, PostMMRHistoryRawBody, PostResponses, APIBody, PostMMRHistoryRawResponse, GetMatchResponse } from "./types";
-
+import { GetResponses, GetValorantAccountByUsernameResponse, GetValorantAccountByPuuidResponse, GetMatchListResponse, GetMMRResponse, GetMatchResponse } from "./types/GetResponses";
+import { PostMMRHistoryRawResponse, PostResponses } from './types/PostResponses';
+import { ResponseParser } from './types/ResponseParser';
+import { APIBody, PostMMRHistoryRawBody } from './types/APIBody';
 
 export class RequestManager {
 

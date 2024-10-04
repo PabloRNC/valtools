@@ -5,9 +5,8 @@ export type Redis<T> = {
 
 export interface RedisMatchlist {
     id: string;
-    agent: { name: string, id: string };
-    map: { name: string, id: string };
-    cluster: string;
+    agentId: string
+    mapId: string
     mode: string;
     isDeathmatch: boolean;
     score: string;
@@ -21,17 +20,23 @@ export interface RedisMatchlist {
     acs: number;
     mvp: boolean;
     teamMvp: boolean;
+    competitiveTier: number;
+    puuid: string;
+    playerCard: string;
+    tagLine: string;
+    accountLevel: number;
 }
 
 export interface RedisMMR {
-    tier: { id: string, name: string };
-    rr: number;
+    tier: number;
+    rr: number | null;
     leaderboard_rank: number | null; 
-    account: { puuid: string, name: string, tag: string };
+    threshold: number | null;
 }
 
-export interface RedisMMRHistory extends RedisMatchlist {
-    tierAfterUpdate: number;
-    tierBeforeUpdate: number;
-    rrChange: number;
+export interface RedisPlayer {
+    puuid: string;
+    tagLine: string;
+    accountLevel: number;
+    playerCard: string;
 }

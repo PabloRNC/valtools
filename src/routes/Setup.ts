@@ -1,18 +1,11 @@
 import { Router } from "express";
-import { redis } from "..";
 import {
   PostSetupRequestBody,
   PutSetupRequestBody,
-  RequestManager,
+  RiotRequestManager,
 } from "../lib";
 import { User } from "../models";
-import {
-  checkPlayer,
-  createEntry,
-  checkMMR,
-  checkMMRHistory,
-  checkMatchlist,
-} from "./Player";
+
 
 const router = Router();
 
@@ -33,80 +26,31 @@ router.post("/", async (req, res) => {
   if (await User.exists({ channelId: body.channelId }))
     return res.status(400).json({ status: 400, error: "User already exists" });
 
-  RequestManager.getValorantAccountByUsername(body.username, body.tag).then(
-    async ({ data }) => {
-      if (!data.platforms.includes(body.platform.toLowerCase()))
-        return res.status(400).json({
-          status: 400,
-          error: "The user has not ever played on the platform you specified.",
-        });
+  RiotRequestManager.getValorantAccountByUsername(body.username, body.tag).then(
+    async (data) => {
+      
+      const shard = await RiotRequestManager.getAccountShard(data.puuid);
 
-      const savedData = await redis.hgetall(data.puuid);
+      console.log(shard);
 
-      if (!Object.keys(savedData).length) {
-        await createEntry(
-          data.puuid,
-          data.region,
-          body.platform,
-          body.match_history
-        );
-      } else {
-        body.match_history
-          ? await checkMatchlist(
-              data.puuid,
-              data.region,
-              body.platform,
-              savedData[`matchlist_${body.platform}`]
-                ? JSON.parse(savedData[`matchlist_${body.platform}`]!)
-                : null
-            )
-          : null;
-
-        body.match_history
-          ? await checkMMRHistory(
-              data.puuid,
-              data.region,
-              body.platform,
-              savedData[`mmrHistory_${body.platform}`]
-                ? JSON.parse(savedData[`mmrHistory_${body.platform}`]!)
-                : null
-            )
-          : null;
-
-        await checkPlayer(
-          data.puuid,
-          body.platform,
-          savedData[`mmr_${body.platform}`]
-            ? JSON.parse(savedData.player)
-            : null
-        );
-
-        await checkMMR(
-          data.puuid,
-          data.region,
-          body.platform,
-          savedData[`mmr_${body.platform}`]
-            ? JSON.parse(savedData[`mmr_${body.platform}`]!)
-            : null
-        );
-      }
-
+      if(shard.activeShard === 'kr' && body.platform === 'console') return res.status(400).json({ status: 400, error: "Korean shard is not supported in console." });
       await User.create({
         channelId: body.channelId,
         puuid: data.puuid,
-        region: data.region,
-        username: data.name,
-        tag: data.tag,
+        region: shard.activeShard,
+        username: data.gameName,
+        tag: data.tagLine,
         match_history: body.match_history,
         platform: body.platform,
       });
 
       return res.status(200).json({
         status: 200,
-        message: `${data.name}#${data.tag} was linked with this channel successfully!`,
+        message: `${data.gameName}#${data.tagLine} was linked with this channel successfully!`,
       });
     },
     (err) => {
+      throw err;
       return res.status(404).json({
         status: 404,
         error: `User ${body.username}#${body.tag} was not found.`,
@@ -134,69 +78,17 @@ router.put("/", async (req, res) => {
       .status(400)
       .json({ status: 400, error: "Invalid match history." });
 
-  RequestManager.getValorantAccountByUsername(body.username, body.tag).then(
-    async ({ data }) => {
-      if (!data.platforms.includes(body.platform.toUpperCase()))
-        return res.status(400).json({
-          status: 400,
-          error: "The user has not ever played on the platform you specified.",
-        });
+  RiotRequestManager.getValorantAccountByUsername(body.username, body.tag).then(
+    async (data) => {
 
-      const savedData = await redis.hgetall(data.puuid);
+      const shard = await RiotRequestManager.getAccountShard(data.puuid);
 
-      if (!Object.keys(savedData).length) {
-        await createEntry(
-          data.puuid,
-          data.region,
-          body.platform,
-          body.match_history
-        );
-      } else {
-        body.match_history
-          ? await checkMatchlist(
-              data.puuid,
-              data.region,
-              body.platform,
-              savedData[`matchlist_${body.platform}`]
-                ? JSON.parse(savedData[`matchlist_${body.platform}`]!)
-                : null
-            )
-          : null;
-
-        body.match_history
-          ? await checkMMRHistory(
-              data.puuid,
-              data.region,
-              body.platform,
-              savedData[`mmrHistory_${body.platform}`]
-                ? JSON.parse(savedData[`mmrHistory_${body.platform}`]!)
-                : null
-            )
-          : null;
-
-        await checkPlayer(
-          data.puuid,
-          body.platform,
-          savedData[`mmr_${body.platform}`]
-            ? JSON.parse(savedData.player)
-            : null
-        );
-
-        await checkMMR(
-          data.puuid,
-          data.region,
-          body.platform,
-          savedData[`mmr_${body.platform}`]
-            ? JSON.parse(savedData[`mmr_${body.platform}`]!)
-            : null
-        );
-      }
-
-      await user.updateOne({
+      if(shard.activeShard === 'kr' && body.platform === 'console') return res.status(400).json({ status: 400, error: "Korean shard is not supported in console." });
+        await user.updateOne({
         puuid: data.puuid,
-        region: data.region,
-        username: data.name,
-        tag: data.tag,
+        region: shard.activeShard,
+        username: data.gameName,
+        tag: data.tagLine,
         match_history: body.match_history,
         platform: body.platform,
       });
