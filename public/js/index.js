@@ -1,4 +1,12 @@
-$(document).ready(function () {
+$(document).ready(async function () {
+
+  const helper = window.Twitch.ext;
+
+  helper.onAuthorized(async ({ token, channelId }) => {
+    token = token;
+    channelId = channelId;
+  });
+
   async function pullData(token, channelId, borders, ranks) {
     $.ajax({
       url: `/api/players/${channelId}`,
@@ -504,18 +512,7 @@ $(document).ready(function () {
     });
   }
 
-  const helper = window.Twitch.ext;
-
-  helper.onAuthorized(async ({ token, channelId }) => {
-    const ranks = await fetch("https://valorant-api.com/v1/competitivetiers")
-      .then((res) => res.json())
-      .then((res) => res.data.pop());
-
-    const borders = await fetch("https://valorant-api.com/v1/levelborders")
-      .then((res) => res.json())
-      .then((res) => res.data);
-    pullData(token, channelId, borders, ranks);
-  });
+  
 
   function enableDrag() {
     const container = document.querySelector(".container-wrapper");
@@ -549,37 +546,46 @@ $(document).ready(function () {
   }
 
   enableDrag();
+
+  function handleClose() {
+    helper.actions.minimize();
+  }
+  
+  function showPlayerInfo() {
+    document.getElementById("mainContent").style.display = "flex";
+    document.getElementById("matchHistory").style.display = "none";
+    document.getElementById("cMatchHistory").style.display = "none";
+    setActiveTab("playerInfoTab");
+  }
+  
+  function showCasualMatches() {
+    document.getElementById("mainContent").style.display = "none";
+    document.getElementById("matchHistory").style.display = "flex";
+    document.getElementById("cMatchHistory").style.display = "none";
+    setActiveTab("casualMatchesTab");
+  }
+  
+  function showCompetitiveMatches() {
+    document.getElementById("mainContent").style.display = "none";
+    document.getElementById("matchHistory").style.display = "none";
+    document.getElementById("cMatchHistory").style.display = "flex";
+    setActiveTab("competitiveMatchesTab");
+  }
+  
+  function setActiveTab(selectedTabId) {
+    document.querySelectorAll(".nav-link").forEach((tab) => {
+      tab.classList.remove("active");
+    });
+  
+    document.getElementById(selectedTabId).classList.add("active");
+  }
+  
+    let channelId = null;
+    let token = null;
+  
+    while(!channelId || !token) return;
+  
+    pullData(token, channelId, borders, ranks);  
 });
 
-function handleClose() {
-  helper.actions.minimize();
-}
-
-function showPlayerInfo() {
-  document.getElementById("mainContent").style.display = "flex";
-  document.getElementById("matchHistory").style.display = "none";
-  document.getElementById("cMatchHistory").style.display = "none";
-  setActiveTab("playerInfoTab");
-}
-
-function showCasualMatches() {
-  document.getElementById("mainContent").style.display = "none";
-  document.getElementById("matchHistory").style.display = "flex";
-  document.getElementById("cMatchHistory").style.display = "none";
-  setActiveTab("casualMatchesTab");
-}
-
-function showCompetitiveMatches() {
-  document.getElementById("mainContent").style.display = "none";
-  document.getElementById("matchHistory").style.display = "none";
-  document.getElementById("cMatchHistory").style.display = "flex";
-  setActiveTab("competitiveMatchesTab");
-}
-
-function setActiveTab(selectedTabId) {
-  document.querySelectorAll(".nav-link").forEach((tab) => {
-    tab.classList.remove("active");
-  });
-
-  document.getElementById(selectedTabId).classList.add("active");
-}
+  

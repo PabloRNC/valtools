@@ -4,6 +4,7 @@ export type Redis<T> = {
 }
 
 export interface RedisMatchlist {
+    timestamp: Date;
     id: string;
     agentId: string
     mapId: string
@@ -25,6 +26,8 @@ export interface RedisMatchlist {
     playerCard: string;
     tagLine: string;
     accountLevel: number;
+    seasonId: string;
+    queueId: string;
 }
 
 export interface RedisMMR {

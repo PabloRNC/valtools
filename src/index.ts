@@ -1,11 +1,12 @@
 import express from 'express';
 import { connect } from 'mongoose';
+import Redis from 'ioredis';
 import { JWTPayload } from './lib';
 import { Api } from './routes';
 import 'dotenv/config';
 
 const app = express();
-//const redis = new Redis();
+const redis = new Redis();
 
 const PORT = Number(process.env.PORT) || 8080;
 
@@ -57,3 +58,5 @@ declare global {
 declare module 'jsonwebtoken' {
     export function verify(token: string, secret: string | Buffer, options?: VerifyOptions): JWTPayload;
 }
+
+export { redis };
