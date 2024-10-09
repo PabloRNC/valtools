@@ -22,6 +22,7 @@ export function isAuthorized(req: Request, res: Response, next: NextFunction) {
 
     next();
   } catch (error) {
+    console.error(error);
     return res.status(401).json({ status: 401, error: "Unauthorized" });
   }
 }

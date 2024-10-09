@@ -24,6 +24,7 @@ export interface RedisMatchlist {
     competitiveTier: number;
     puuid: string;
     playerCard: string;
+    username: string;
     tagLine: string;
     accountLevel: number;
     seasonId: string;

@@ -39,9 +39,7 @@ router.get("/:channel_id", async (req, res) => {
     cached
   );
 
-  const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0]);
-
-  console.log(cached)
+  const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.platform);
 
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).json({
     matchlist: user.match_history ? matchlist.data : null,
@@ -115,6 +113,8 @@ export async function checkMMR(
       threshold: number | null;
     } | null;
   }
+
+  if(!matchlist.length) return null;
 
   let leaderboardData: {
     rr: number;
@@ -204,12 +204,14 @@ export async function checkMMR(
 }
 
 
-export async function checkPlayer(data: RedisMatchlist) {
+export async function checkPlayer(data: RedisMatchlist, platform: "pc" | "console") {
   return {
     puuid: data.puuid,
     tagLine: data.tagLine,
+    username: data.username,
     accountLevel: data.accountLevel,
     playerCard: data.playerCard,
+    platform
   };
 }
 
@@ -295,6 +297,7 @@ export async function parseMatches(
       puuid: player.puuid,
       playerCard: player.playerCard,
       tagLine: player.tagLine,
+      username: player.gameName,
       accountLevel: player.accountLevel,
       timestamp: new Date(
         matchData.matchInfo.gameStartMillis +

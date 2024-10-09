@@ -31,8 +31,6 @@ router.post("/", async (req, res) => {
       
       const shard = await RiotRequestManager.getAccountShard(data.puuid);
 
-      console.log(shard);
-
       if(shard.activeShard === 'kr' && body.platform === 'console') return res.status(400).json({ status: 400, error: "Korean shard is not supported in console." });
       await User.create({
         channelId: body.channelId,
@@ -50,7 +48,6 @@ router.post("/", async (req, res) => {
       });
     },
     (err) => {
-      throw err;
       return res.status(404).json({
         status: 404,
         error: `User ${body.username}#${body.tag} was not found.`,
