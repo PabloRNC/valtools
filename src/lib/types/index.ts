@@ -6,3 +6,5 @@ export * from './Redis';
 export * from './PostResponses';
 export * from './APIBody';
 export * from './RiotGetResponses';
+export * from './WebSocketMessage';
+export * from './AuthJWTPayload';
