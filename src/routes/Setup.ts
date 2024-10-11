@@ -6,7 +6,6 @@ import {
 } from "../lib";
 import { User } from "../models";
 
-
 const router = Router();
 
 router.post("/", async (req, res) => {
@@ -28,18 +27,25 @@ router.post("/", async (req, res) => {
 
   RiotRequestManager.getValorantAccountByUsername(body.username, body.tag).then(
     async (data) => {
-      
       const shard = await RiotRequestManager.getAccountShard(data.puuid);
 
-      if(shard.activeShard === 'kr' && body.platform === 'console') return res.status(400).json({ status: 400, error: "Korean shard is not supported in console." });
+      if (shard.activeShard === "kr" && body.platform === "console")
+        return res
+          .status(400)
+          .json({
+            status: 400,
+            error: "Korean shard is not supported in console.",
+          });
       await User.create({
         channelId: body.channelId,
         puuid: data.puuid,
         region: shard.activeShard,
         username: data.gameName,
         tag: data.tagLine,
-        match_history: body.match_history,
-        platform: body.platform,
+        config: {
+          match_history: body.match_history,
+          platform: body.platform,
+        },
       });
 
       return res.status(200).json({
@@ -47,7 +53,7 @@ router.post("/", async (req, res) => {
         message: `${data.gameName}#${data.tagLine} was linked with this channel successfully!`,
       });
     },
-    (err) => {
+    () => {
       return res.status(404).json({
         status: 404,
         error: `User ${body.username}#${body.tag} was not found.`,
@@ -77,17 +83,24 @@ router.put("/", async (req, res) => {
 
   RiotRequestManager.getValorantAccountByUsername(body.username, body.tag).then(
     async (data) => {
-
       const shard = await RiotRequestManager.getAccountShard(data.puuid);
 
-      if(shard.activeShard === 'kr' && body.platform === 'console') return res.status(400).json({ status: 400, error: "Korean shard is not supported in console." });
-        await user.updateOne({
+      if (shard.activeShard === "kr" && body.platform === "console")
+        return res
+          .status(400)
+          .json({
+            status: 400,
+            error: "Korean shard is not supported in console.",
+          });
+      await user.updateOne({
         puuid: data.puuid,
         region: shard.activeShard,
         username: data.gameName,
         tag: data.tagLine,
-        match_history: body.match_history,
-        platform: body.platform,
+        config: {
+          match_history: body.match_history,
+          platform: body.platform,
+        },
       });
 
       return res

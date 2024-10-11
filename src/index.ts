@@ -4,9 +4,8 @@ import { connect } from 'mongoose';
 import Redis from 'ioredis';
 import { Server, WebSocket } from 'ws';
 import { sign, verify } from 'jsonwebtoken';
-import { User } from './models';
 import { AuthJWTPayload, JWTPayload, SessionAuth, WebSocketMessage } from './lib';
-import { Api } from './routes';
+import { Api, Auth } from './routes';
 import 'dotenv/config';
 
 
@@ -27,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.disable('x-powered-by');
 app.use('/api', Api);
+app.use('/auth', Auth);
 
 app.get('/', (_req, res) => {
     res.sendFile('views/index.html', { root: 'public' });
@@ -43,6 +43,8 @@ app.get('/privacy', (_req, res) => {
 ws.on('connection', (socket) => {
 
     const identity = randomBytes(16).toString('hex');
+
+    socket.on('close', () => connections.delete(identity));
 
     setTimeout(() => {
         if(!connections.has(identity)){
@@ -61,17 +63,20 @@ ws.on('connection', (socket) => {
                         // @ts-ignore
                         verify(message.payload.authorization, Buffer.from(process.env.JWT_SECRET, 'base64'), { algorithms: ['HS256'] }, (err, user: JWTPayload) => {
                             if(err){
-                                return socket.send(JSON.stringify({ status: 401, error: 'Unauthorized' }));
+                                socket.send(JSON.stringify({ status: 401, error: 'Unauthorized' }));
+                                return socket.close();
                             }
 
                             const payload = (message as SessionAuth).payload
 
                             if(user.channel_id !== payload.channelId){
-                                return socket.send(JSON.stringify({ status: 401, error: 'Unauthorized' }));
+                                socket.send(JSON.stringify({ status: 401, error: 'Unauthorized' }));
+                                return socket.close();
                             }
 
                             if(connections.has(identity)){
-                                return connections.get(user.channel_id)!.socket.close();
+                                connections.get(identity)!.socket.close();
+                                connections.delete(identity)
                             }
 
                             connections.set(identity, { socket, payload: user });
@@ -83,7 +88,8 @@ ws.on('connection', (socket) => {
 
                     case 'ready_for_auth': {
                         if(!connections.has(identity)){
-                            return socket.send(JSON.stringify({ status: 401, error: 'Unauthorized' }));
+                            socket.send(JSON.stringify({ status: 401, error: 'Unauthorized' }));
+                            return socket.close();
                         }
 
                         const state = sign({ channel_id: connections.get(identity)!.payload.channel_id, identity }, Buffer.from(process.env.AUTH_JWT_SECRET, 'base64'), { algorithm: 'HS256', expiresIn: '5min' });
@@ -94,15 +100,18 @@ ws.on('connection', (socket) => {
                             if(connections.has(identity)){
                                 const socket = connections.get(identity)!.socket;
                                 socket.send(JSON.stringify({ status: 401, error: 'Authorization transition expired' }));
+                                connections.delete(identity);
+                                return socket.close();
                             }
-                        }, 1000 * 5 * 60);
+                        }, 1000 * 60 * 5);
                     }
                 }
 
 
             } catch(e){
                 socket.send(JSON.stringify({ status: 400, error: 'Bad Request. Malformed message.' }));
-                return ws.close();
+                connections.delete(identity);
+                return socket.close();
             }
 
         }
@@ -131,6 +140,10 @@ declare global {
             JWT_SECRET: string
             AUTH_JWT_SECRET: string
             PROTOCOL: 'http' | 'https'
+            RSO_CLIENT_ID: string
+            RSO_CLIENT_SECRET: string
+            RSO_BASE_URL: string
+            RSO_REDIRECT_URI: string
         }
     }
 
@@ -145,4 +158,4 @@ declare module 'jsonwebtoken' {
     export function verify(token: string, secret: string | Buffer, options?: VerifyOptions): JWTPayload | AuthJWTPayload;
 }
 
-export { redis };
+export { redis, connections };

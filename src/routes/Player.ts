@@ -13,6 +13,7 @@ import {
 const router = Router();
 
 router.get("/:channel_id", async (req, res) => {
+
   const { channel_id } = req.params;
 
   const user = await User.findOne({ channelId: channel_id });
@@ -23,7 +24,7 @@ router.get("/:channel_id", async (req, res) => {
   const { data: matchlist, cached } = await checkMatchlist(
     user.puuid,
     user.region,
-    user.platform
+    user.config.platform
   );
 
   if (!matchlist.data.length && !matchlist.competitiveMatches.length)
@@ -34,18 +35,18 @@ router.get("/:channel_id", async (req, res) => {
   const mmr = await checkMMR(
     user.puuid,
     user.region,
-    user.platform,
+    user.config.platform,
     matchlist.competitiveMatches,
     cached
   );
 
-  const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.platform);
+  const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.config.platform);
 
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).json({
-    matchlist: user.match_history ? matchlist.data : null,
+    matchlist: user.config.match_history ? matchlist.data : null,
     mmr,
     player,
-    mmrHistory: user.match_history ? matchlist.competitiveMatches : null,
+    mmrHistory: user.config.match_history ? matchlist.competitiveMatches : null,
   });
 });
 

@@ -572,7 +572,7 @@ $(document).ready(async function () {
 });
 
 function handleClose() {
-  helper.actions.minimize();
+  window.Twitch.ext.actions.minimize();
 }
 
 function showPlayerInfo() {

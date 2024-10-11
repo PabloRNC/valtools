@@ -111,7 +111,6 @@
     </style>
 </head>
 <body>
-
     <section class="section-1">
         <div>
             <h1>Welcome to ValTools</h1>
@@ -160,5 +159,10 @@
         <a href="/privacy">Privacy Policy</a> | <a href="/tos">Terms of Service</a>
     </footer>
 
+    <script>
+        window.onload = () => {    
+            if(location.hash === '#afterLogin') alert('You have successfully logged in!');
+        }
+    </script>
 </body>
 </html>

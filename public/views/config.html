@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -15,6 +14,7 @@
       src="https://kit.fontawesome.com/941f548723.js"
       crossorigin="anonymous"
     ></script>
+    <script src="../js/config.js"></script>
     <style>
       body {
         background-color: #f8f9fa;
@@ -138,6 +138,66 @@
         top: 20px;
         right: 20px;
         min-width: 300px;
+        z-index: 9999;
+      }
+
+      .modal-header {
+        justify-content: center;
+      }
+
+      .modal-title {
+        text-align: center;
+        width: 100%;
+      }
+
+      #loginBtn,
+      #authBtn {
+        display: block;
+        margin: 0 auto;
+      }
+
+      .modal-footer {
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-spinner {
+        width: 2.5rem;
+        height: 2.5rem;
+        display: block;
+        margin: 0 auto;
+      }
+
+      .modal-body {
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        animation: fadeIn 0.5s;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+        margin-bottom: 30px;
+      }
+
+      .btn {
+        margin: 0 10px;
       }
     </style>
   </head>
@@ -145,14 +205,15 @@
     <div
       class="container d-flex flex-column justify-content-center align-items-center vh-100"
     >
-      <h1 class="display-1 mb-5 text-center">ValStats Configuration</h1>
+      <h1 class="display-1 mb-3 text-center">ValStats Configuration</h1>
       <div class="row g-3 w-75">
         <div class="col">
           <input
             type="text"
             class="form-control form-control-xl"
             id="username"
-            placeholder="Enter your username"
+            style="cursor: not-allowed"
+            disabled
           />
         </div>
         <div class="col">
@@ -160,9 +221,10 @@
             <span class="input-group-text">#</span>
             <input
               type="text"
-              class="form-control"
+              class="form-control disabled"
               id="tag"
-              placeholder="Enter your tag"
+              style="cursor: not-allowed"
+              disabled
             />
           </div>
         </div>
@@ -186,11 +248,18 @@
         </div>
       </div>
 
-      <button id="saveBtn" class="btn btn-save btn-lg mt-4" disabled>
-        <i class="fa-solid fa-floppy-disk"></i>
-        <span class="spinner-border" role="status" aria-hidden="true"></span>
-        <span class="tick-icon"><i class="fa-solid fa-check"></i></span>
-      </button>
+      <div class="button-container">
+        <button id="saveBtn" class="btn btn-save btn-lg" disabled>
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span class="spinner-border" role="status" aria-hidden="true"></span>
+          <span class="tick-icon"><i class="fa-solid fa-check"></i></span>
+        </button>
+
+        <button id="reauthorizeBtn" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          Reauthorize
+        </button>
+      </div>
 
       <div
         class="toast toast-success"
@@ -215,6 +284,7 @@
       <div
         class="toast toast-fail"
         role="alert"
+        tabindex="-1"
         aria-live="assertive"
         aria-atomic="true"
         data-delay="5000"
@@ -232,144 +302,66 @@
         </div>
         <div class="toast-body" id="failToastBody"></div>
       </div>
+
+      <div
+        class="modal fade"
+        id="authModal"
+        tabindex="0"
+        role="dialog"
+        aria-labelledby="authModalLabel"
+        aria-hidden="true"
+        data-backdrop="static"
+        data-keyboard="false"
+      >
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="authModalLabel">
+                Riot Games Login Required
+              </h5>
+              <button type="button" class="close" id="closeModalBtn" data-dismiss="modal" aria-label="Close" style="display: none;">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" id="modalContent">
+              <p id="statuText">
+                You need to log in with your Riot Games account to continue.
+              </p>
+              <button id="loginBtn" class="btn btn-primary">Log In</button>
+            </div>
+            <div id="loadingContent" class="text-center d-none modal-body">
+              <div
+                class="modal-spinner spinner-border text-primary"
+                role="status"
+              >
+                <span class="sr-only">Loading...</span>
+              </div>
+            </div>
+
+            <div id="authContent" class="text-center d-none modal-body">
+              <a
+                id="authBtn"
+                class="btn btn-primary btn-lg w-100"
+                target="_blank"
+              >
+                Click to authorize
+              </a>
+              <small
+                ><i
+                  >Do not share this link with anyone except if you want someone to
+                  remotely authorize with the extension.</i
+                ></small
+              >
+            </div>
+            <div class="modal-footer">
+              <small
+                >This extension uses Offical Riot Sign On (RSO) for
+                authorization.</small
+              >
+            </div>
+          </div>
+        </div>      
+      </div>
     </div>
-
-    <script>
-      $(document).ready(function () {
-        window.Twitch.ext.onContext(({ theme }) => {
-          if (theme === "light") {
-            $("body").css("background-color", "#f8f9fa");
-            $("h1").css("color", "#343a40");
-          } else {
-            $("body").css("background-color", "#343a40");
-            $("h1").css("color", "#f8f9fa");
-          }
-        });
-
-        let token = null;
-        let channelId = null;
-        let firstAuth = true;
-
-        const usernameInput = $("#username");
-        const tagInput = $("#tag");
-        const matchHistoryToggle = $("#matchHistoryToggle");
-        const platformSelect = $("#platformSelect");
-        const saveBtn = $("#saveBtn");
-        const toastSuccess = $(".toast-success").toast({ delay: 5000 });
-        const toastFail = $(".toast-fail").toast({ delay: 5000 });
-        const toastSuccessBody = $("#successToastBody");
-        const toastFailBody = $("#failToastBody");
-
-        let initialUsername = "";
-        let initialTag = "";
-        let initialMatchHistory = true;
-        let initialPlatform = "pc";
-
-        window.Twitch.ext.onAuthorized(function (data) {
-          console.log(data.token);
-          token = data.token;
-          channelId = data.channelId;
-
-          if (firstAuth) {
-            firstAuth = false;
-            fetchInitialData();
-          }
-        });
-
-        function fetchInitialData() {
-          $.ajax({
-            url: `/api/setup?channel_id=${channelId}`,
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            success: function (response) {
-              initialUsername = response.data.username || "";
-              initialTag = response.data.tag || "";
-              initialMatchHistory =
-                response.data.match_history !== undefined
-                  ? response.data.match_history
-                  : true;
-              initialPlatform = response.data.platform || "pc";
-
-              usernameInput.val(initialUsername);
-              tagInput.val(initialTag);
-              matchHistoryToggle.prop("checked", initialMatchHistory);
-              platformSelect.val(initialPlatform);
-
-              checkInputs();
-            },
-          });
-        }
-
-        function checkInputs() {
-          const currentUsername = usernameInput.val().trim();
-          const currentTag = tagInput.val().trim();
-          const currentMatchHistory = matchHistoryToggle.is(":checked");
-          const currentPlatform = platformSelect.val();
-          const isModified =
-            currentUsername &&
-            currentTag &&
-            (currentUsername !== initialUsername ||
-              currentTag !== initialTag ||
-              currentMatchHistory !== initialMatchHistory ||
-              currentPlatform !== initialPlatform);
-
-          saveBtn.prop("disabled", !isModified);
-        }
-
-        usernameInput.on("input", checkInputs);
-        tagInput.on("input", checkInputs);
-        matchHistoryToggle.on("change", checkInputs);
-        platformSelect.on("change", checkInputs);
-
-        saveBtn.click(function () {
-          saveBtn.addClass("loading").prop("disabled", true);
-          const requestMethod = initialUsername || initialTag ? "PUT" : "POST";
-          const requestUrl = "/api/setup";
-
-          $.ajax({
-            url: `/api/setup`,
-            method: requestMethod,
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            data: JSON.stringify({
-              username: usernameInput.val().trim(),
-              tag: tagInput.val().trim(),
-              match_history: matchHistoryToggle.is(":checked"),
-              platform: platformSelect.val(),
-              channelId,
-            }),
-            success: function ({ message }) {
-              saveBtn.removeClass("loading").addClass("loaded");
-              saveBtn.css("background-color", "#28a745");
-
-              setTimeout(() => {
-                saveBtn.removeClass("loaded");
-                checkInputs();
-              }, 2000);
-
-              initialUsername = usernameInput.val().trim();
-              initialTag = tagInput.val().trim();
-              initialMatchHistory = matchHistoryToggle.is(":checked");
-              initialPlatform = platformSelect.val();
-              toastSuccessBody.text(message);
-
-              toastSuccess.toast("show");
-            },
-            error: function ({ responseText }) {
-              toastFailBody.text(JSON.parse(responseText).error);
-              toastFail.toast("show");
-              saveBtn
-                .removeClass("loading")
-                .prop("disabled", false)
-                .css("background-color", "#dc3545");
-            },
-          });
-        });
-      });
-    </script>
   </body>
 </html>
