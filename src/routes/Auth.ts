@@ -25,9 +25,9 @@ router.get('/callback', async(req, res) => {
             return res.status(401).json({ status: 401, error: 'Unauthorized' });
         }
 
-        await User.findOneAndUpdate({ channelId: connection.payload.channel_id }, { puuid: '67_jP', region: 'eu', username: 'username', tag: 'tag' }, { upsert: true, new: true, setDefaultsOnInsert: true})
+        await User.findOneAndUpdate({ channelId: connection.payload.channel_id }, { puuid: 'TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', region: 'eu', username: 'PabloRNC', tag: '4675' }, { upsert: true, new: true, setDefaultsOnInsert: true})
 
-        connection.socket.send(JSON.stringify({ metadata: { type: 'auth_complete' }, payload: { puuid: '67_jP', gameName: 'username', tagLine: 'tag'} }));
+        connection.socket.send(JSON.stringify({ metadata: { type: 'auth_complete' }, payload: { puuid: 'TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', gameName: 'PabloRNC', tagLine: '4675'} }));
 
         connection.socket.close();
 

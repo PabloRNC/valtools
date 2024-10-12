@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { DateTime } from 'luxon';
 import { User } from "../models";
 import { redis } from "..";
 import {
@@ -7,8 +8,18 @@ import {
   RiotGetValorantContent,
   RiotGetMatchResponse,
   Redis,
-  BaseMatch,
+  BaseMatch
 } from "../lib";
+
+
+const regionTimeZones = {
+  ap: 'Asia/Tokyo',
+  br: 'America/Sao_Paulo',
+  eu: 'Europe/Berlin',
+  kr: 'Asia/Seoul',
+  latam: 'America/Mexico_City',
+  na: 'America/New_York'
+};
 
 const router = Router();
 
@@ -49,11 +60,16 @@ router.get("/:channel_id", async (req, res) => {
 
   const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.config.platform);
 
+  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, user.config.daily.only_competitive, cached) : null;
+
+  console.log(daily);
+
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).json({
     matchlist: user.config.match_history ? matchlist.data : null,
     mmr,
     player,
     mmrHistory: user.config.match_history ? matchlist.competitiveMatches : null,
+    daily
   });
 });
 
@@ -231,6 +247,76 @@ export function parseKey(key: string, platform: string) {
   return `${platform}_${key}`;
 }
 
+export async function checkDaily(puuid: string, region: string, platform: "pc" | "console", only_competitive: boolean, useCache: boolean = true) {
+  
+  if(useCache) {
+    const cache = await redis.get(parseKey(`daily:${puuid}`, platform));
+    return JSON.parse(cache!) as {
+      won: number;
+      lost: number;
+      streak: number;
+    }
+  }
+
+
+  const matchlist = await RiotRequestManager.getMatchlist(puuid, region, platform);
+
+  const daily = matchlist.history.sort((a, b) => b.gameStartTimeMillis - a.gameStartTimeMillis).filter((x) => {
+    if((only_competitive && x.queueId !== parseQueue("competitive", platform)) || x.queueId === '') return false;
+
+    const nowInRegion = DateTime.now().setZone(regionTimeZones[region as 'eu' | 'br' | 'na' | 'kr' | 'latam' | 'ap']).startOf('day');
+
+    const matchTime = DateTime.fromMillis(x.gameStartTimeMillis).setZone(regionTimeZones[region as 'eu' | 'br' | 'na' | 'kr' | 'latam' | 'ap']).startOf('day');
+
+    return nowInRegion.equals(matchTime);    
+
+  }).reverse();
+
+  const obj = {
+    won: 0,
+    lost: 0,
+    streak: 0
+  }
+
+  for (const match of daily) {
+
+    let matchData = 
+    ((await redis.get(
+      `match:${match.matchId}`
+    )) as RiotGetMatchResponse | null) ||
+    (await RiotRequestManager.getMatch(match.matchId, region, platform));
+
+    if(typeof matchData === "string") matchData = JSON.parse(matchData);
+
+    const player = matchData.players.find((x) => x.puuid === puuid)!;
+
+    const team = matchData.teams.find((x) => x.teamId === player.teamId)!;
+
+    const won = team.won;
+
+    if(won){
+      obj.won++;
+      obj.streak++;
+    } else {
+      if(matchData.teams.reduce((acc: boolean, x) => {
+        if(!acc) return acc;
+        if(x.won) acc = false;
+        return acc;
+      }, true)) return;
+
+      obj.streak = 0;
+      obj.lost++;
+    }
+
+    await redis.set(`match:${match.matchId}`, JSON.stringify(matchData));
+
+  }
+
+  await redis.set(parseKey(`daily:${puuid}`, platform), JSON.stringify(obj));
+
+  return obj;
+}
+
 export async function parseMatches(
   puuid: string,
   region: string,
@@ -296,7 +382,7 @@ export async function parseMatches(
       bodyshots: (damage.bodyshots / shots).toFixed(2),
       legshots: (damage.legshots / shots).toFixed(2),
       won: team.won,
-      acs: Math.round(player.stats.score / team.roundsPlayed),
+      acs: Math.round(player.stats.score / player.stats.roundsPlayed),
       mvp: isDeathmatch ? false : allScores[0].puuid === puuid,
       teamMvp: isDeathmatch
         ? false

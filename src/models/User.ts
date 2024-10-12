@@ -6,7 +6,7 @@ export interface IUser {
   region: string;
   username: string;
   tag: string;
-  config: { match_history: boolean; platform: "pc" | "console" };
+  config: { match_history: boolean; platform: "pc" | "console", daily: { enabled: boolean, only_competitive: boolean } };
 }
 
 export const UserSchema = new Schema<IUser>({
@@ -19,6 +19,14 @@ export const UserSchema = new Schema<IUser>({
     type: {
       match_history: { type: Boolean, required: true },
       platform: { type: String, required: true, enum: ["pc", "console"] },
+      daily: {
+        type: {
+          enabled: { type: Boolean, required: true },
+          only_competitive: { type: Boolean, required: true }
+        },
+        required: false,
+        default: { enabled: true, only_competitive: false }
+      }
     },
     required: false,
     default: { match_history: true, platform: "pc" }

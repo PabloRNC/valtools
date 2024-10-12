@@ -1,66 +1,8 @@
 import { Router } from "express";
-import {
-  PostSetupRequestBody,
-  PutSetupRequestBody,
-  RiotRequestManager,
-} from "../lib";
+import { PutSetupRequestBody, RiotRequestManager } from "../lib";
 import { User } from "../models";
 
 const router = Router();
-
-router.post("/", async (req, res) => {
-  const body = req.body as PostSetupRequestBody;
-
-  if (body.channelId !== req.payload.channel_id)
-    return res.status(401).json({ status: 401, error: "Unauthorized" });
-
-  if (!["pc", "console"].includes(body.platform))
-    return res.status(400).json({ status: 400, error: "Invalid platform" });
-
-  if (typeof body.match_history !== "boolean")
-    return res
-      .status(400)
-      .json({ status: 400, error: "Invalid match history" });
-
-  if (await User.exists({ channelId: body.channelId }))
-    return res.status(400).json({ status: 400, error: "User already exists" });
-
-  RiotRequestManager.getValorantAccountByUsername(body.username, body.tag).then(
-    async (data) => {
-      const shard = await RiotRequestManager.getAccountShard(data.puuid);
-
-      if (shard.activeShard === "kr" && body.platform === "console")
-        return res
-          .status(400)
-          .json({
-            status: 400,
-            error: "Korean shard is not supported in console.",
-          });
-      await User.create({
-        channelId: body.channelId,
-        puuid: data.puuid,
-        region: shard.activeShard,
-        username: data.gameName,
-        tag: data.tagLine,
-        config: {
-          match_history: body.match_history,
-          platform: body.platform,
-        },
-      });
-
-      return res.status(200).json({
-        status: 200,
-        message: `${data.gameName}#${data.tagLine} was linked with this channel successfully!`,
-      });
-    },
-    () => {
-      return res.status(404).json({
-        status: 404,
-        error: `User ${body.username}#${body.tag} was not found.`,
-      });
-    }
-  );
-});
 
 router.put("/", async (req, res) => {
   const body = req.body as PutSetupRequestBody;
@@ -81,39 +23,26 @@ router.put("/", async (req, res) => {
       .status(400)
       .json({ status: 400, error: "Invalid match history." });
 
-  RiotRequestManager.getValorantAccountByUsername(body.username, body.tag).then(
-    async (data) => {
-      const shard = await RiotRequestManager.getAccountShard(data.puuid);
+  const shard = await RiotRequestManager.getAccountShard(user.puuid);
 
-      if (shard.activeShard === "kr" && body.platform === "console")
-        return res
-          .status(400)
-          .json({
-            status: 400,
-            error: "Korean shard is not supported in console.",
-          });
-      await user.updateOne({
-        puuid: data.puuid,
-        region: shard.activeShard,
-        username: data.gameName,
-        tag: data.tagLine,
-        config: {
-          match_history: body.match_history,
-          platform: body.platform,
-        },
-      });
+  if (shard.activeShard === "kr" && body.platform === "console")
+    return res.status(400).json({
+      status: 400,
+      error: "Korean shard is not supported in console.",
+  });
 
-      return res
-        .status(200)
-        .json({ status: 200, message: `Changes were save sucessfully!` });
+  await user.updateOne({
+    region: shard.activeShard,
+    config: {
+      match_history: body.match_history,
+      platform: body.platform,
+      daily: body.daily
     },
-    () => {
-      return res.status(404).json({
-        status: 404,
-        error: `User ${body.username}#${body.tag} was not found.`,
-      });
-    }
-  );
+  });
+
+  return res
+    .status(200)
+    .json({ status: 200, message: `Changes were save sucessfully!` });
 });
 
 router.get<"/", any, any, any, { channel_id: string }>(
@@ -124,10 +53,7 @@ router.get<"/", any, any, any, { channel_id: string }>(
     if (channel_id !== req.payload.channel_id)
       return res.status(401).json({ status: 401, error: "Unauthorized" });
 
-    const user = await User.findOne(
-      { channelId: channel_id },
-      { _id: 0, __v: 0, puuid: 0, region: 0 }
-    );
+    const user = await User.findOne({ channelId: channel_id });
 
     if (!user)
       return res.status(404).json({ status: 404, error: "User was not found" });
@@ -136,15 +62,16 @@ router.get<"/", any, any, any, { channel_id: string }>(
   }
 );
 
-router.delete('/', async(req, res) => {
+router.delete("/", async (req, res) => {
+  const user = await User.findOneAndDelete({
+    channelId: req.payload.channel_id,
+  });
 
-  const user = await User.findOneAndDelete({ channelId: req.payload.channel_id });
-
-  if(!user){
-      return res.status(404).json({ status: 404, error: 'Not Found' });
+  if (!user) {
+    return res.status(404).json({ status: 404, error: "Not Found" });
   }
 
   return res.sendStatus(200);
-})
+});
 
 export { router as Setup };
