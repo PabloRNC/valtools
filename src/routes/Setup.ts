@@ -136,4 +136,15 @@ router.get<"/", any, any, any, { channel_id: string }>(
   }
 );
 
+router.delete('/', async(req, res) => {
+
+  const user = await User.findOneAndDelete({ channelId: req.payload.channel_id });
+
+  if(!user){
+      return res.status(404).json({ status: 404, error: 'Not Found' });
+  }
+
+  return res.sendStatus(200);
+})
+
 export { router as Setup };
