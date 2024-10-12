@@ -2,7 +2,7 @@ import { Router } from "express";
 import { verify } from "jsonwebtoken";
 import { connections } from "..";
 import { AuthJWTPayload, RiotRequestManager, RSORequestManager } from "../lib";
-import { User } from "../models";
+import { User, Auth } from "../models";
 import 'dotenv/config';
 
 const router = Router();
@@ -44,6 +44,8 @@ router.get('/callback', async(req, res) => {
         
         //@ts-expect-error
         connection.socket.send(JSON.stringify({ metadata: { type: 'auth_complete' }, payload: { user } }));
+
+        await Auth.findOneAndUpdate({ puuid: user.puuid }, { puuid: user.puuid, access_token: authData.access_token, refresh_token: authData.refresh_token }, { upsert: true, new: true });
 
         return res.sendStatus(200);
 

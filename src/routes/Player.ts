@@ -21,6 +21,13 @@ router.get("/:channel_id", async (req, res) => {
   if (!user)
     return res.status(404).json({ status: 404, error: "User not found" });
 
+  const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
+
+  if(user.region !== activeShard) {
+    user.region = activeShard;
+    await user.save();
+  }
+
   const { data: matchlist, cached } = await checkMatchlist(
     user.puuid,
     user.region,

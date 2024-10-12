@@ -44,7 +44,9 @@ ws.on('connection', (socket) => {
 
     const identity = randomBytes(16).toString('hex');
 
-    socket.on('close', () => connections.delete(identity));
+    socket.on('close', () => {
+        connections.delete(identity)
+    });
 
     setTimeout(() => {
         if(!connections.has(identity)){
