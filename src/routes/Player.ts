@@ -62,8 +62,6 @@ router.get("/:channel_id", async (req, res) => {
 
   const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, user.config.daily.only_competitive, cached) : null;
 
-  console.log(daily);
-
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).json({
     matchlist: user.config.match_history ? matchlist.data : null,
     mmr,
@@ -262,7 +260,10 @@ export async function checkDaily(puuid: string, region: string, platform: "pc" |
   const matchlist = await RiotRequestManager.getMatchlist(puuid, region, platform);
 
   const daily = matchlist.history.sort((a, b) => b.gameStartTimeMillis - a.gameStartTimeMillis).filter((x) => {
-    if((only_competitive && x.queueId !== parseQueue("competitive", platform)) || x.queueId === '') return false;
+   
+    if(x.queueId === '') return false;
+
+    if(only_competitive && x.queueId !== parseQueue("competitive", platform)) return false
 
     const nowInRegion = DateTime.now().setZone(regionTimeZones[region as 'eu' | 'br' | 'na' | 'kr' | 'latam' | 'ap']).startOf('day');
 
@@ -369,6 +370,7 @@ export async function parseMatches(
     );
 
     const pushData = {
+      startedAt: new Date(matchData.matchInfo.gameStartMillis),
       id: match.matchId,
       agentId: player.characterId,
       mapId: matchData.matchInfo.mapId,
