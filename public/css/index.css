@@ -153,10 +153,14 @@ html {
   min-width: 80px;
 }
 .frame.victory {
-  background-color: rgba(76, 175, 80, 0.8);
+  background-color: rgba(76, 175, 79, 0.9);
+}
+
+.frame.draw {
+  background-color: rgba(194, 197, 201, 0.9);
 }
 .frame.defeat {
-  background-color: rgba(244, 67, 54, 0.8);
+  background-color: rgba(244, 67, 54, 0.9);
 }
 .status-text {
   position: relative;
@@ -181,6 +185,11 @@ html {
 .defeat {
   color: red;
 }
+
+.draw {
+  color: #c2c5c9;
+}
+
 .kda-text {
   font-size: 18px;
   color: white;
@@ -196,6 +205,7 @@ html {
 }
 
 .number-image-wrapper img {
+  height: 25px;
   display: block;
 }
 
@@ -204,19 +214,19 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 0.8em;
+  font-size: 0.7em;
   color: white;
 }
 
 .center-container {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 8px;
   height: auto;
   box-sizing: border-box;
   flex-shrink: 0;
-  margin-left: 200px;
+  margin-left: 230px;
 }
 .rank-container {
   display: flex;
@@ -225,8 +235,54 @@ html {
   text-align: center;
   background-color: transparent;
   position: relative;
-  width: 140px;
+  width: 80px;
+  margin-top: 5px;
 }
+
+.display-container {
+  width: 200px;
+  flex-direction: column;
+  display: flex;
+  align-items: center;
+}
+
+.circle-container {
+  display: inline-block;
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.circle-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.circle-bg {
+  fill: none;
+  stroke: red;
+  stroke-width: 3.8;
+}
+
+.circle-fg {
+  fill: none;
+  stroke: #4caf50;
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.5s;
+}
+
+.circle-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2em;
+  font-weight: bold;
+  color: white;
+}
+
 .rank-image-wrapper {
   padding: 3px;
   box-sizing: border-box;
@@ -235,15 +291,16 @@ html {
   border: 2px solid white;
 }
 .rank {
-  width: 40px;
-  height: 40px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
 }
 .rank-name {
-  font-size: 16px;
+  font-size: 12px;
   color: white;
   font-weight: bold;
   margin-bottom: 6px;
+  width: 100px;
 }
 
 .rank-c {
@@ -289,13 +346,13 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 10px;
   color: white;
   text-align: center;
   font-weight: bold;
 }
 .progress-text span {
-  font-size: 12px;
+  font-size: 11px;
   color: #a2f3a2;
   font-weight: normal;
   margin-left: 5px;
@@ -324,14 +381,14 @@ html {
 .tag {
   background-color: #000;
   color: white;
-  padding: 1px 6px;
-  height: 14px;
+  padding: 3px 6px;
+  height: 20px;
   border-radius: 3px;
   font-size: 12px;
   font-weight: bold;
   display: flex;
   align-items: center;
-  border: 1px solid #444;
+  border: 3px solid #444;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
 }
 

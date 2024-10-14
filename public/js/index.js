@@ -1,14 +1,23 @@
 $(document).ready(async function () {
-
   const helper = window.Twitch.ext;
 
-  const borders = await fetch('https://valorant-api.com/v1/levelborders').then((res) => res.json()).then((res) => res.data);
+  const borders = await fetch("https://valorant-api.com/v1/levelborders")
+    .then((res) => res.json())
+    .then((res) => res.data);
 
-  const ranks = await fetch('https://valorant-api.com/v1/competitivetiers').then((res) => res.json()).then((res) => res.data).then((res) => res.pop()).then(((res) => res.tiers));
+  const ranks = await fetch("https://valorant-api.com/v1/competitivetiers")
+    .then((res) => res.json())
+    .then((res) => res.data)
+    .then((res) => res.pop())
+    .then((res) => res.tiers);
 
-  const gameModes = await fetch('https://valorant-api.com/v1/gamemodes').then((res) => res.json()).then((res) => res.data);
+  const gameModes = await fetch("https://valorant-api.com/v1/gamemodes")
+    .then((res) => res.json())
+    .then((res) => res.data);
 
-  const maps = await fetch('https://valorant-api.com/v1/maps').then((res) => res.json()).then((res) => res.data);
+  const maps = await fetch("https://valorant-api.com/v1/maps")
+    .then((res) => res.json())
+    .then((res) => res.data);
 
   let firstAuth = true;
   let channelId = null;
@@ -32,8 +41,7 @@ $(document).ready(async function () {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      success: async function ({ matchlist, mmr, player, mmrHistory }) {
-
+      success: async function ({ matchlist, mmr, player, mmrHistory, daily }) {
         $("#accountName").text(player.username);
         $("#accountTag").text(`#${player.tagLine}`);
         $("#accountLevel").text(player.accountLevel);
@@ -50,7 +58,9 @@ $(document).ready(async function () {
             `https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/${mmr.tier}/smallicon.png`
           );
           const tierData = ranks.find((x) => x.tier === mmr.tier);
-          const tierName = tierData.tierName.charAt(0) + tierData.tierName.toLowerCase().slice(1);
+          const tierName =
+            tierData.tierName.charAt(0) +
+            tierData.tierName.toLowerCase().slice(1);
           $("#rankName").text(
             mmr.leaderboard_rank
               ? `${tierName} #${mmr.leaderboard_rank}`
@@ -64,7 +74,7 @@ $(document).ready(async function () {
             $(".progress-container").show();
             $("#progressBar").css(
               "width",
-              `${mmr.threshold ? mmr.rr / mmr.threshold * 100 : 100}%`
+              `${mmr.threshold ? (mmr.rr / mmr.threshold) * 100 : 100}%`
             );
             $("#progressText").html(
               mmr.threshold
@@ -88,6 +98,60 @@ $(document).ready(async function () {
 
         $("#levelBorder").attr("src", border.levelNumberAppearance);
 
+        $(".circle-container").remove();
+
+          const circleContainer = $("<div>").addClass("circle-container");
+
+          $(".center-container").append(circleContainer);
+
+          if(daily){
+
+          const circleText = $("<div>")
+            .addClass("circle-text")
+            .text(`${daily.won}W/${daily.lost}L`);
+
+          const circleSvg = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg"
+          );
+
+          $(circleSvg).attr("viewBox", "0 0 36 36").addClass("circle-svg");
+
+          const circleBg = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+          );
+
+          $(circleBg)
+            .attr({
+              d: "M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831",
+            })
+            .addClass("circle-bg");
+
+          const circleFg = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+          );
+
+          if(daily.won + daily.lost === 0) circleFg.style.stroke = "white";
+
+          if(daily.won === 0) $(circleFg).hide();
+
+          $(circleFg)
+            .attr({
+              d: "M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831",
+              "stroke-dasharray": `${
+                (daily.won + daily.lost === 0 ? 1 : daily.won / (daily.won + daily.lost)) * 100
+              }, 100`,
+            })
+            .addClass("circle-fg");
+
+          $(circleSvg).append(circleBg, circleFg);
+
+          circleContainer.append(circleText, circleSvg);
+
+          } else circleContainer.opacity = 0;
+
         if (!matchlist) {
           $("#matchHistory").html(`<div class="info-container">
           <div class="info-icon">ℹ️</div>
@@ -103,9 +167,8 @@ $(document).ready(async function () {
         </div>`);
           } else {
             for (const match of matchlist) {
-
               const frame = $("<div>").addClass(
-                "frame victory d-flex align-items-center justify-content-between"
+                `frame ${match.won ? "victory" : match.drawn ? "draw" : "defeat"} d-flex align-items-center justify-content-between`
               );
 
               const map = maps.find((x) => x.mapUrl === match.mapId);
@@ -117,10 +180,7 @@ $(document).ready(async function () {
                 .css("position", "absolute")
                 .css("border-radius", "0 0 10px 10px")
                 .css("left", "0px")
-                .css(
-                  "background-image",
-                  `url(${map.listViewIcon})`
-                )
+                .css("background-image", `url(${map.listViewIcon})`)
                 .css("background-size", "cover")
                 .css("filter", "blur(2px)")
                 .css("-webkit-filter", "blur(2px)")
@@ -147,9 +207,16 @@ $(document).ready(async function () {
                 .append($("<div>").addClass("acs").text(`ACS: ${match.acs}`));
               frame.append(kdaWrapper);
 
-              const mode = gameModes.find((x) => x.assetPath.includes(match.mode.split('/')[match.queueId === 'swiftplay' ? 4 : 3]))
+              const mode = gameModes.find((x) =>
+                x.assetPath.includes(
+                  match.mode.split("/")[match.queueId === "swiftplay" ? 4 : 3]
+                )
+              );
 
-              const displayName = mode.displayName.toLowerCase() === 'standard' ? match.queueId : mode.displayName;
+              const displayName =
+                mode.displayName.toLowerCase() === "standard"
+                  ? match.queueId
+                  : mode.displayName;
 
               const scoreWrapper = $("<div>")
                 .addClass(
@@ -157,8 +224,8 @@ $(document).ready(async function () {
                 )
                 .append(
                   $("<div>")
-                    .addClass(`status-text ${match.won ? "victory" : "defeat"}`)
-                    .text(match.won ? "VICTORY" : "DEFEAT")
+                    .addClass(`status-text ${match.won ? "victory" : match.drawn? "draw" : "defeat"}`)
+                    .text(match.won ? "VICTORY" : match.drawn ? "drawn" : "DEFEAT")
                 )
                 .append($("<div>").addClass("score").text(match.score))
                 .append($("<div>").addClass("mode").text(displayName));
@@ -283,7 +350,7 @@ $(document).ready(async function () {
               $("#cMatchHistory").empty();
               for (const match of mmrHistory) {
                 const frame = $("<div>").addClass(
-                  "frame victory d-flex align-items-center justify-content-between"
+                  `frame ${match.won ? "victory" : match.drawn ? "draw" : "defeat"} d-flex align-items-center justify-content-between`
                 );
 
                 const map = maps.find((x) => x.mapUrl === match.mapId);
@@ -295,10 +362,7 @@ $(document).ready(async function () {
                   .css("position", "absolute")
                   .css("border-radius", "0 0 10px 10px")
                   .css("left", "0px")
-                  .css(
-                    "background-image",
-                    `url(${map.listViewIcon})`
-                  )
+                  .css("background-image", `url(${map.listViewIcon})`)
                   .css("background-size", "cover")
                   .css("filter", "blur(2px)")
                   .css("-webkit-filter", "blur(2px)")
@@ -333,99 +397,99 @@ $(document).ready(async function () {
                   .append(
                     $("<div>")
                       .addClass(
-                        `status-text ${match.won ? "victory" : "defeat"}`
+                        `status-text ${match.won ? "victory" : match.drawn ? "draw" : "defeat"}`
                       )
-                      .text(match.won ? "VICTORY" : "DEFEAT")
+                      .text(match.won ? "VICTORY" : match.drawn ? "draw" : "DEFEAT")
                   )
                   .append($("<div>").addClass("score").text(match.score))
-                  .append($("<div>").addClass("mode").text('competitive'));
+                  .append($("<div>").addClass("mode").text("competitive"));
 
                 frame.append(scoreWrapper);
 
-                  const headshots = Number(match.headshots);
+                const headshots = Number(match.headshots);
 
-                  const bodyshots = Number(match.bodyshots);
+                const bodyshots = Number(match.bodyshots);
 
-                  const legshots = Number(match.legshots);
+                const legshots = Number(match.legshots);
 
-                  const accuracy = $("<div>").addClass("accuracy");
+                const accuracy = $("<div>").addClass("accuracy");
 
-                  const svg = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "svg"
-                  );
-                  $(svg).attr("viewBox", "0 0 33.316 80").addClass("dummy");
+                const svg = document.createElementNS(
+                  "http://www.w3.org/2000/svg",
+                  "svg"
+                );
+                $(svg).attr("viewBox", "0 0 33.316 80").addClass("dummy");
 
-                  const g = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "g"
-                  );
-                  $(g).attr("transform", "translate(-636.875 -624)");
+                const g = document.createElementNS(
+                  "http://www.w3.org/2000/svg",
+                  "g"
+                );
+                $(g).attr("transform", "translate(-636.875 -624)");
 
-                  const circle = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "circle"
-                  );
-                  $(circle).attr({
-                    cx: "6.153",
-                    cy: "6.153",
-                    r: "6.153",
-                    transform: "translate(647.387 624)",
-                    fill:
-                      headshots > bodyshots && headshots > legshots
-                        ? "#fff"
-                        : "rgba(255, 255, 255, 0.5)",
-                  });
+                const circle = document.createElementNS(
+                  "http://www.w3.org/2000/svg",
+                  "circle"
+                );
+                $(circle).attr({
+                  cx: "6.153",
+                  cy: "6.153",
+                  r: "6.153",
+                  transform: "translate(647.387 624)",
+                  fill:
+                    headshots > bodyshots && headshots > legshots
+                      ? "#fff"
+                      : "rgba(255, 255, 255, 0.5)",
+                });
 
-                  const path1 = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "path"
-                  );
-                  $(path1).attr({
-                    d: "M29.285,26.472,24.17,13.678l-1.352,6.831H10.512l-1.363-6.84-5.117,12.8A2.049,2.049,0,1,1,.072,25.411L6.441,1.639l.008,0A2.055,2.055,0,0,1,8.461,0h4.1L16.67,4.1l4.1-4.1h4.111a2.048,2.048,0,0,1,2.016,1.712l6.352,23.7a2.049,2.049,0,1,1-3.959,1.061Z",
-                    transform: "translate(636.875 638.36)",
-                    fill:
-                      bodyshots > headshots && bodyshots > legshots
-                        ? "#fff"
-                        : "rgba(255, 255, 255, 0.5)",
-                  });
+                const path1 = document.createElementNS(
+                  "http://www.w3.org/2000/svg",
+                  "path"
+                );
+                $(path1).attr({
+                  d: "M29.285,26.472,24.17,13.678l-1.352,6.831H10.512l-1.363-6.84-5.117,12.8A2.049,2.049,0,1,1,.072,25.411L6.441,1.639l.008,0A2.055,2.055,0,0,1,8.461,0h4.1L16.67,4.1l4.1-4.1h4.111a2.048,2.048,0,0,1,2.016,1.712l6.352,23.7a2.049,2.049,0,1,1-3.959,1.061Z",
+                  transform: "translate(636.875 638.36)",
+                  fill:
+                    bodyshots > headshots && bodyshots > legshots
+                      ? "#fff"
+                      : "rgba(255, 255, 255, 0.5)",
+                });
 
-                  const path2 = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "path"
-                  );
-                  $(path2).attr({
-                    d: "M6.521,41.025h0l-6.52,0L5.863,0H18.756l5.857,41.021-6.508,0L12.307,8.2,6.521,41.024Z",
-                    transform: "translate(641.232 662.975)",
-                    fill:
-                      legshots > headshots && legshots > bodyshots
-                        ? "#fff"
-                        : "rgba(255, 255, 255, 0.5",
-                  });
+                const path2 = document.createElementNS(
+                  "http://www.w3.org/2000/svg",
+                  "path"
+                );
+                $(path2).attr({
+                  d: "M6.521,41.025h0l-6.52,0L5.863,0H18.756l5.857,41.021-6.508,0L12.307,8.2,6.521,41.024Z",
+                  transform: "translate(641.232 662.975)",
+                  fill:
+                    legshots > headshots && legshots > bodyshots
+                      ? "#fff"
+                      : "rgba(255, 255, 255, 0.5",
+                });
 
-                  $(g).append(circle, path1, path2);
-                  $(svg).append(g);
-                  $(accuracy).append(svg);
-                  frame.append(accuracy);
+                $(g).append(circle, path1, path2);
+                $(svg).append(g);
+                $(accuracy).append(svg);
+                frame.append(accuracy);
 
-                  const accuracyText = $("<div>")
-                    .addClass("accuracy-text")
-                    .append(
-                      $("<span>").text(
-                        `${(Number(match.headshots) * 100).toFixed(2)}%`
-                      )
+                const accuracyText = $("<div>")
+                  .addClass("accuracy-text")
+                  .append(
+                    $("<span>").text(
+                      `${(Number(match.headshots) * 100).toFixed(2)}%`
                     )
-                    .append(
-                      $("<span>").text(
-                        `${(Number(match.bodyshots) * 100).toFixed(2)}%`
-                      )
+                  )
+                  .append(
+                    $("<span>").text(
+                      `${(Number(match.bodyshots) * 100).toFixed(2)}%`
                     )
-                    .append(
-                      $("<span>").text(
-                        `${(Number(match.legshots) * 100).toFixed(2)}%`
-                      )
-                    );
-                  frame.append(accuracyText);
+                  )
+                  .append(
+                    $("<span>").text(
+                      `${(Number(match.legshots) * 100).toFixed(2)}%`
+                    )
+                  );
+                frame.append(accuracyText);
 
                 const mvp = $("<div>").addClass("mvp-badge competitive");
                 const star = $("<div>").addClass("star-icon").text("★");
@@ -568,7 +632,6 @@ $(document).ready(async function () {
   }
 
   enableDrag();
-
 });
 
 function handleClose() {

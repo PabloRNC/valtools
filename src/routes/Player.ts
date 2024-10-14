@@ -256,7 +256,6 @@ export async function checkDaily(puuid: string, region: string, platform: "pc" |
     }
   }
 
-
   const matchlist = await RiotRequestManager.getMatchlist(puuid, region, platform);
 
   const daily = matchlist.history.sort((a, b) => b.gameStartTimeMillis - a.gameStartTimeMillis).filter((x) => {
@@ -366,8 +365,14 @@ export async function parseMatches(
     const shots = damage.headshots + damage.bodyshots + damage.legshots;
 
     const allScores = matchData.players.sort(
-      (a, b) => b.stats?.score || 0 - a.stats?.score || 0
+      (a, b) => (b.stats?.score || 0) - (a.stats?.score || 0)
     );
+
+    const drawn = matchData.teams.reduce((acc: boolean, x) => {
+      if(!acc) return acc;
+      if(x.won) acc = false;
+      return acc;
+    }, true)
 
     const pushData = {
       startedAt: new Date(matchData.matchInfo.gameStartMillis),
@@ -384,6 +389,7 @@ export async function parseMatches(
       bodyshots: (damage.bodyshots / shots).toFixed(2),
       legshots: (damage.legshots / shots).toFixed(2),
       won: team.won,
+      drawn,
       acs: Math.round(player.stats.score / player.stats.roundsPlayed),
       mvp: isDeathmatch ? false : allScores[0].puuid === puuid,
       teamMvp: isDeathmatch
