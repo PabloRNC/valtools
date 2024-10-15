@@ -17,6 +17,9 @@ importers:
       express-status-monitor:
         specifier: ^1.3.4
         version: 1.3.4
+      http-auth:
+        specifier: ^4.2.0
+        version: 4.2.0
       ioredis:
         specifier: ^5.4.1
         version: 5.4.1
@@ -39,6 +42,9 @@ importers:
       '@types/express-status-monitor':
         specifier: ^1.3.3
         version: 1.3.3
+      '@types/http-auth':
+        specifier: ^4.1.4
+        version: 4.1.4
       '@types/jsonwebtoken':
         specifier: ^9.0.7
         version: 9.0.7
@@ -80,6 +86,9 @@ packages:
 
   '@types/express@4.17.21':
     resolution: {integrity: sha512-ejlPM315qwLpaQlQDTjPdsUFSc6ZsP4AN6AlWnogPjQ7CVi7PYF3YVz+CY3jE2pwYf7E/7HlDAN0rV2GxTG0HQ==}
+
+  '@types/http-auth@4.1.4':
+    resolution: {integrity: sha512-GAauuTx8//Gdrer7cO+T8tqApY68Bn1KzQiFCDaZu+0Twx4PRybag5an0nzcpJKJcaY2zMSzn4xmFvCCeR3iyg==}
 
   '@types/http-errors@2.0.4':
     resolution: {integrity: sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==}
@@ -134,6 +143,14 @@ packages:
   after@0.8.2:
     resolution: {integrity: sha512-QbJ0NTQ/I9DI3uSJA4cbexiwQeRAfjPScqIbSjUDd9TOrcg6pTkdgziesOqxBMBzit8vFCTwrP27t13vFOORRA==}
 
+  apache-crypt@1.2.6:
+    resolution: {integrity: sha512-072WetlM4blL8PREJVeY+WHiUh1R5VNt2HfceGS8aKqttPHcmqE5pkKuXPz/ULmJOFkc8Hw3kfKl6vy7Qka6DA==}
+    engines: {node: '>=8'}
+
+  apache-md5@1.1.8:
+    resolution: {integrity: sha512-FCAJojipPn0bXjuEpjOOOMN8FZDkxfWWp4JGN9mifU2IhxvKyXZYqpzPHdnTSUpmPDy+tsslB6Z1g+Vg6nVbYA==}
+    engines: {node: '>=8'}
+
   array-flatten@1.1.1:
     resolution: {integrity: sha512-PCVAQswWemu6UdxsDFFX/+gVeYqKAod3D3UVm91jHwynguOwAvYPhx8nNlM++NqRcK6CxxpUafjmhIdKiHibqg==}
 
@@ -153,6 +170,9 @@ packages:
   base64id@2.0.0:
     resolution: {integrity: sha512-lGe34o6EHj9y3Kts9R4ZYs/Gr+6N7MCaMlIFA3F1R2O5/m7K06AxfSeO5530PEERE6/WyEg3lsuyw4GHlPZHog==}
     engines: {node: ^4.5.0 || >= 5.9}
+
+  bcryptjs@2.4.3:
+    resolution: {integrity: sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==}
 
   blob@0.0.5:
     resolution: {integrity: sha512-gaqbzQPqOoamawKg0LGVd7SzLgXS+JH61oWprSLH+P+abTczqJbhTR8CmJ2u9/bUYNmHTGJx/UEmn6doAvvuig==}
@@ -372,6 +392,10 @@ packages:
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
+
+  http-auth@4.2.0:
+    resolution: {integrity: sha512-trIkGI7dgnFJ5k8YaQFSr1Q5uq9c19vK6Y9ZCjlY0zBEQgdJpXZU3Cyrmk4nwrAGy4pKJhs599o7q6eicbVnhw==}
+    engines: {node: '>=8'}
 
   http-errors@2.0.0:
     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
@@ -674,6 +698,9 @@ packages:
   undici-types@6.19.8:
     resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
 
+  unix-crypt-td-js@1.1.4:
+    resolution: {integrity: sha512-8rMeVYWSIyccIJscb9NdCfZKSRBKYTeVnwmiRYT2ulE3qd1RaDQ0xQDP+rI3ccIWbhu/zuo5cgN8z73belNZgw==}
+
   unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
     engines: {node: '>= 0.8'}
@@ -681,6 +708,10 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  uuid@8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
 
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
@@ -770,6 +801,10 @@ snapshots:
       '@types/qs': 6.9.16
       '@types/serve-static': 1.15.7
 
+  '@types/http-auth@4.1.4':
+    dependencies:
+      '@types/node': 22.5.5
+
   '@types/http-errors@2.0.4': {}
 
   '@types/jsonwebtoken@9.0.7':
@@ -832,6 +867,12 @@ snapshots:
 
   after@0.8.2: {}
 
+  apache-crypt@1.2.6:
+    dependencies:
+      unix-crypt-td-js: 1.1.4
+
+  apache-md5@1.1.8: {}
+
   array-flatten@1.1.1: {}
 
   arraybuffer.slice@0.0.7: {}
@@ -847,6 +888,8 @@ snapshots:
   base64-arraybuffer@0.1.4: {}
 
   base64id@2.0.0: {}
+
+  bcryptjs@2.4.3: {}
 
   blob@0.0.5: {}
 
@@ -1108,6 +1151,13 @@ snapshots:
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
+
+  http-auth@4.2.0:
+    dependencies:
+      apache-crypt: 1.2.6
+      apache-md5: 1.1.8
+      bcryptjs: 2.4.3
+      uuid: 8.3.2
 
   http-errors@2.0.0:
     dependencies:
@@ -1432,9 +1482,13 @@ snapshots:
 
   undici-types@6.19.8: {}
 
+  unix-crypt-td-js@1.1.4: {}
+
   unpipe@1.0.0: {}
 
   utils-merge@1.0.1: {}
+
+  uuid@8.3.2: {}
 
   vary@1.1.2: {}
 

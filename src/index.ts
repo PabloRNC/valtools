@@ -2,7 +2,9 @@ import express from "express";
 import { connect } from "mongoose";
 import Redis from "ioredis";
 import { Server, WebSocket } from "ws";
+import { basic } from 'http-auth';
 import statusMonitor from 'express-status-monitor';
+import { WebSocketManager } from "./WebSocket";
 import {
   AuthJWTPayload,
   JWTPayload,
@@ -28,7 +30,16 @@ const redis = new Redis();
 
 const PORT = Number(process.env.PORT) || 8080;
 
-app.use(statusMonitor());
+const basicLogin = basic({
+  realm: "Restricted Access! Please login to proceed",
+}, (username, passwd, callback) => callback(username === process.env.MONITOR_USER && passwd === process.env.MONITOR_PASS));
+
+const monitor = statusMonitor({ path: '' });
+
+// @ts-expect-error
+app.use(monitor.middleware);
+// @ts-expect-error
+app.get('/root/status', basicLogin.check(monitor.pageRoute));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -48,9 +59,7 @@ app.get("/privacy", (_req, res) => {
   res.sendFile("views/privacy.html", { root: "public" });
 });
 
-ws.on("connection", (socket) => {
-  
-});
+ws.on("connection", WebSocketManager)
 
 server.on("listening", async () => {
   console.log(`Server is running on ${PORT}`);
@@ -78,6 +87,8 @@ declare global {
       RSO_CLIENT_SECRET: string;
       RSO_BASE_URL: string;
       RSO_REDIRECT_URI: string;
+      MONITOR_USER: string;
+      MONITOR_PASS: string;
     }
   }
 

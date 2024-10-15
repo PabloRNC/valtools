@@ -64,11 +64,8 @@ export class RiotRequestManager {
     puuid: string,
     region: string,
     platform: "pc" | "console",
-    queue?: string
   ) {
     const params = new URLSearchParams({ platformType: "playstation" });
-
-    if (queue) params.set("queue", queue);
 
     const data = await this.get<RiotGetValorantMatchlist>(
       `val/match${

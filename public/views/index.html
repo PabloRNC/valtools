@@ -48,6 +48,10 @@
             background: linear-gradient(135deg, #ff9a9e, #fecfef);
         }
 
+        .section-7 {
+            background: linear-gradient(135deg, #2193b0, #6dd5ed);
+        }
+
         h1 {
             font-size: 50px;
             margin-bottom: 20px;
@@ -108,6 +112,7 @@
         footer a:hover {
             text-decoration: underline;
         }
+
     </style>
 </head>
 <body>
@@ -149,6 +154,13 @@
 
     <section class="section-6">
         <div>
+            <h1>Not endorsed with Riot Games</h1>
+            <p>ValTools is an independent tool and is not affiliated with or endorsed by Riot Games. Riot Games is not responsible for the development, support, or functionality of this extension.</p>
+        </div>
+    </section>
+
+    <section class="section-7">
+        <div>
             <h1>Ready to Try ValTools?</h1>
             <p>Don't miss out on the chance to elevate your Twitch experience with ValTools.</p>
             <button class="button">Try it!</button>
@@ -162,6 +174,7 @@
     <script>
         window.onload = () => {    
             if(location.hash === '#afterLogin') alert('You have successfully logged in!');
+            if(location.hash === '#noValorantAccount') alert('Your login was not successful because you do not have played any single match in any platform.');
         }
     </script>
 </body>

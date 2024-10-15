@@ -675,12 +675,55 @@ $(document).ready(async function () {
         $("#authModal").modal("hide");
         pullData();
       }
+       break;
+
+       case "no_valorant_account": {
+        console.log("RSO WebSocket no Valorant account.");
+        toastFailBody.text(
+          "No Valorant account found. Please make sure you have played at least a match in the game with any platform."
+        );
+        toastFail.toast("show");
+        if (usernameInput.val() !== "") {
+          $("#authModal").modal("hide");
+        } else {
+          $("#modalContent").removeClass("d-none");
+          $("#loadingContent").addClass("d-none");
+          $("#authContent").addClass("d-none");
+        }
+      }
+
+      break;
+
+      default: {
+        if (
+          data.status === 401 &&
+          data.error.toLowerCase() === "authorization transition expired"
+        ) {
+          console.log(
+            "RSO WebSocket authorization transition expired. Reconnecting."
+          );
+          toastFailBody.text(
+            "The authorization process run out of time. Please try again."
+          );
+          toastFail.toast("show");
+          if(usernameInput.val() === "") {
+            $("#modalContent").removeClass("d-none");
+            $("#loadingContent").addClass("d-none");
+            $("#authContent").addClass("d-none");
+          } else {
+            $("#authModal").modal("hide");
+          }
+        }
+      }
+    
     }
   }
 
   function onWebSocketClose() {
     console.log("RSO WebSocket is closed.");
   }
+
+  
 });
 
 function handleClose() {

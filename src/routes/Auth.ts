@@ -26,6 +26,22 @@ router.get("/callback", async (req, res) => {
       return res.status(401).json({ status: 401, error: "Unauthorized" });
     }
 
+    let platform = 'pc'
+
+    const pc = await RiotRequestManager.getMatchlist('TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', 'eu', 'pc').catch(() => false)
+
+    if(!pc){
+      const console = await RiotRequestManager.getMatchlist('TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', 'eu', 'console').catch(() => false)
+
+      if(!console){
+        connection.socket.send(JSON.stringify({ metadata: { type: "no_valorant_account" } }));
+        connection.socket.close();
+        return res.redirect("/#noValorantAccount");
+      }
+
+      platform = 'console'
+    }
+
     await User.findOneAndUpdate(
       { channelId: connection.payload.channel_id },
       {
@@ -34,6 +50,14 @@ router.get("/callback", async (req, res) => {
         region: "eu",
         username: "PabloRNC",
         tag: "4675",
+        config: {
+          platform,
+          match_history: true,
+          daily: {
+            enabled: true,
+            only_competitive: false,
+          }
+        }
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
@@ -115,6 +139,23 @@ router.get("/mock_callback", async (req, res) => {
       return res.status(401).json({ status: 401, error: "Unauthorized" });
     }
 
+    let platform = 'pc'
+
+    const pc = await RiotRequestManager.getMatchlist('TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', 'eu', 'pc').catch(() => false)
+
+    if(!pc){
+      const console = await RiotRequestManager.getMatchlist('TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', 'eu', 'console').catch(() => false)
+
+      if(!console){
+        connection.socket.send(JSON.stringify({ metadata: { type: "no_valorant_account" } }));
+        connection.socket.close();
+        return res.redirect("/#noValorantAccount");
+      }
+
+      platform = 'console'
+    }
+
+
     await User.findOneAndUpdate(
       { channelId: connection.payload.channel_id },
       {
@@ -124,8 +165,12 @@ router.get("/mock_callback", async (req, res) => {
         username: "PabloRNC",
         tag: "4675",
         config: {
-            platform: "console",
+            platform,
             match_history: true,
+            daily: {
+                enabled: true,
+                only_competitive: false,
+            }
         },
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -138,7 +183,7 @@ router.get("/mock_callback", async (req, res) => {
           puuid:
             "TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA",
           gameName: "PabloRNC",
-          tagLine: "4675",
+          tagLine: "4675"
         },
       })
     );
