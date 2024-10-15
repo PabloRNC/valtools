@@ -117,8 +117,9 @@ export class RiotRequestManager {
   private static makeHeaders(token?: string): Headers {
     const headers = new Headers({
       "Content-Type": "application/json",
-      "X-Riot-Token": process.env.RIOT_API_KEY,
     });
+
+    if(!token) headers.set("X-Riot-Token", process.env.RIOT_API_KEY!);
 
     if (token) headers.set("Authorization", `Bearer ${token}`);
 

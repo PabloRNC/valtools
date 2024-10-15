@@ -26,81 +26,59 @@ router.get("/callback", async (req, res) => {
       return res.status(401).json({ status: 401, error: "Unauthorized" });
     }
 
-    let platform = 'pc'
-
-    const pc = await RiotRequestManager.getMatchlist('TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', 'eu', 'pc').catch(() => false)
-
-    if(!pc){
-      const console = await RiotRequestManager.getMatchlist('TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', 'eu', 'console').catch(() => false)
-
-      if(!console){
-        connection.socket.send(JSON.stringify({ metadata: { type: "no_valorant_account" } }));
-        connection.socket.close();
-        return res.redirect("/#noValorantAccount");
-      }
-
-      platform = 'console'
-    }
-
-    await User.findOneAndUpdate(
-      { channelId: connection.payload.channel_id },
-      {
-        puuid:
-          "TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA",
-        region: "eu",
-        username: "PabloRNC",
-        tag: "4675",
-        config: {
-          platform,
-          match_history: true,
-          daily: {
-            enabled: true,
-            only_competitive: false,
-          }
-        }
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    connection.socket.send(
-      JSON.stringify({
-        metadata: { type: "auth_complete" },
-        payload: {
-          puuid:
-            "TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA",
-          gameName: "PabloRNC",
-          tagLine: "4675",
-        },
-      })
-    );
-
-    connection.socket.close();
-
-    return res.redirect("/#afterLogin");
-
     const authData = await RSORequestManager.getToken(code);
 
     const user = await RiotRequestManager.getValorantAccount(
       authData.access_token
     );
 
-    const shard = await RiotRequestManager.getAccountShard(user.puuid);
+    const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
+
+    const platforms = [];
+
+    const pc = await RiotRequestManager.getMatchlist(
+      user.puuid,
+      activeShard,
+      "pc"
+    ).catch(() => false);
+
+    if (pc) platforms.push("pc");
+
+    const _console = await RiotRequestManager.getMatchlist(
+      user.puuid,
+      activeShard,
+      "console"
+    ).catch(() => false);
+
+    if (_console) platforms.push("console");
+
+    if (!_console && !pc) {
+      connection.socket.send(
+        JSON.stringify({ metadata: { type: "no_valorant_account" } })
+      );
+      connection.socket.close();
+      return res.redirect("/#noValorantAccount");
+    }
 
     await User.findOneAndUpdate(
-        // @ts-expect-error
       { channelId: connection.payload.channel_id },
       {
-        puuid: user.puuid,
-        region: shard.activeShard,
+        puuid:
+          user.puuid,
+        region: activeShard,
         username: user.gameName,
         tag: user.tagLine,
+        config: {
+          platform: platforms[0],
+          match_history: true,
+          daily: {
+            enabled: true,
+            only_competitive: false,
+          },
+        },
+        platforms
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    //@ts-expect-error
-    connection.socket.send(
-      JSON.stringify({ metadata: { type: "auth_complete" }, payload: { user } })
     );
 
     await Auth.findOneAndUpdate(
@@ -113,14 +91,30 @@ router.get("/callback", async (req, res) => {
       { upsert: true, new: true }
     );
 
-    return res.sendStatus(200);
+    connection.socket.send(
+      JSON.stringify({
+        metadata: { type: "auth_complete" },
+        payload: {
+          puuid:
+            user.puuid,
+          gameName: user.gameName,
+          tagLine: user.tagLine,
+        },
+      })
+    );
+
+    connection.socket.close();
+
+    return res.redirect("/#afterLogin");
+
   } catch (e) {
     console.error(e);
     return res.status(401).json({ status: 401, error: "Unauthorized" });
   }
 });
 
-router.get("/mock_callback", async (req, res) => {
+router.get("/mockcallback", async (req, res) => {
+  
   const { state, code } = req.query as { state: string; code: string };
 
   if (!state || !code) {
@@ -139,82 +133,59 @@ router.get("/mock_callback", async (req, res) => {
       return res.status(401).json({ status: 401, error: "Unauthorized" });
     }
 
-    let platform = 'pc'
-
-    const pc = await RiotRequestManager.getMatchlist('TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', 'eu', 'pc').catch(() => false)
-
-    if(!pc){
-      const console = await RiotRequestManager.getMatchlist('TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA', 'eu', 'console').catch(() => false)
-
-      if(!console){
-        connection.socket.send(JSON.stringify({ metadata: { type: "no_valorant_account" } }));
-        connection.socket.close();
-        return res.redirect("/#noValorantAccount");
-      }
-
-      platform = 'console'
-    }
-
-
-    await User.findOneAndUpdate(
-      { channelId: connection.payload.channel_id },
-      {
-        puuid:
-          "TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA",
-        region: "eu",
-        username: "PabloRNC",
-        tag: "4675",
-        config: {
-            platform,
-            match_history: true,
-            daily: {
-                enabled: true,
-                only_competitive: false,
-            }
-        },
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    connection.socket.send(
-      JSON.stringify({
-        metadata: { type: "auth_complete" },
-        payload: {
-          puuid:
-            "TCZBcNYj5Wn04CPJwKtuN9HiFPQfFqxiCMunqu1RXaoum1Pdlj4uW8V4r6Gtco4wUF6Z3gYZYoHEqA",
-          gameName: "PabloRNC",
-          tagLine: "4675"
-        },
-      })
-    );
-
-    connection.socket.close();
-
-    return res.redirect("/#afterLogin");
-
-    const authData = await RSORequestManager.getToken(code);
+    const authData = await RSORequestManager.getToken(code, process.env.RSO_REDIRECT_URI.split('/').slice(0, -1).join('/') + '/mockcallback');
 
     const user = await RiotRequestManager.getValorantAccount(
       authData.access_token
     );
 
-    const shard = await RiotRequestManager.getAccountShard(user.puuid);
+    const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
+
+    const platforms = [];
+
+    const pc = await RiotRequestManager.getMatchlist(
+      user.puuid,
+      activeShard,
+      "pc"
+    ).catch(() => false);
+
+    if (pc) platforms.push("pc");
+
+    const _console = await RiotRequestManager.getMatchlist(
+      user.puuid,
+      activeShard,
+      "console"
+    ).catch(() => false);
+
+    if (_console) platforms.push("console");
+
+    if (!_console && !pc) {
+      connection.socket.send(
+        JSON.stringify({ metadata: { type: "no_valorant_account" } })
+      );
+      connection.socket.close();
+      return res.redirect("/#noValorantAccount");
+    }
 
     await User.findOneAndUpdate(
-      // @ts-expect-error
-      { channelId: connection.payload.channel_id },
+      { channelId: 'mock' },
       {
-        puuid: user.puuid,
-        region: shard.activeShard,
+        puuid:
+          user.puuid,
+        region: activeShard,
         username: user.gameName,
         tag: user.tagLine,
+        config: {
+          platform: platforms[0],
+          match_history: true,
+          daily: {
+            enabled: true,
+            only_competitive: false,
+          },
+        },
+        platforms
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    //@ts-expect-error
-    connection.socket.send(
-      JSON.stringify({ metadata: { type: "auth_complete" }, payload: { user } })
     );
 
     await Auth.findOneAndUpdate(
@@ -227,11 +198,27 @@ router.get("/mock_callback", async (req, res) => {
       { upsert: true, new: true }
     );
 
-    return res.sendStatus(200);
+    connection.socket.send(
+      JSON.stringify({
+        metadata: { type: "auth_complete" },
+        payload: {
+          puuid:
+            user.puuid,
+          gameName: user.gameName,
+          tagLine: user.tagLine,
+        },
+      })
+    );
+
+    connection.socket.close();
+
+    return res.redirect("/#afterLogin");
+
   } catch (e) {
     console.error(e);
     return res.status(401).json({ status: 401, error: "Unauthorized" });
   }
+
 });
 
 export { router as Auth };

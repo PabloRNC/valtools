@@ -1,5 +1,9 @@
 $(document).ready(async function () {
-  const helper = window.Twitch.ext;
+  
+  const toastSuccess = $(".toast-success").toast({ delay: 5000 });
+  const toastFail = $(".toast-fail").toast({ delay: 5000 });
+  const toastSuccessBody = $("#successToastBody");
+  const toastFailBody = $("#failToastBody");
 
   const borders = await fetch("https://valorant-api.com/v1/levelborders")
     .then((res) => res.json())
@@ -662,7 +666,7 @@ $(document).ready(async function () {
           console.log("RSO WebSocket is ready for authentication.");
           $("#authBtn").attr(
             "href",
-            `/auth/mock_callback?state=${data.payload.state}&code=fjifijjiji`
+            `https://auth.riotgames.com/authorize?client_id=c1602cae-32e4-4e50-bdeb-550f1f5f7b24&redirect_uri=https://just-formerly-pegasus.ngrok-free.app/auth/mockcallback&response_type=code&scope=openid&state=${data.payload.state}`
           );
           $("#loadingContent").addClass("d-none");
           $("#authContent").removeClass("d-none");
@@ -673,6 +677,8 @@ $(document).ready(async function () {
       case "auth_complete": {
         console.log("RSO WebSocket authentication complete.");
         $("#authModal").modal("hide");
+        toastSuccessBody.text(`Authorization successful as ${data.payload.gameName}#${data.payload.tagLine}.`);
+        toastSuccess.toast("show");
         pullData();
       }
        break;

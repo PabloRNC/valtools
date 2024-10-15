@@ -15,7 +15,7 @@ router.put("/", async (req, res) => {
   if (!user)
     return res.status(404).json({ status: 404, error: "User was not found." });
 
-  if (!["pc", "console"].includes(body.platform))
+  if (!["pc", "console"].includes(body.platform) || !user.platforms.includes(body.platform))
     return res.status(400).json({ status: 400, error: "Invalid platform." });
 
   if (typeof body.match_history !== "boolean")
@@ -57,6 +57,16 @@ router.get<"/", any, any, any, { channel_id: string }>(
 
     if (!user)
       return res.status(404).json({ status: 404, error: "User was not found" });
+
+    if(!user.platforms.includes('console') && await RiotRequestManager.getMatchlist(user.puuid, user.region, 'console').catch(() => false)){
+      user.platforms.push('console');
+      await user.save();
+    }
+
+    if(!user.platforms.includes('pc') && await RiotRequestManager.getMatchlist(user.puuid, user.region, 'pc').catch(() => false)){
+      user.platforms.push('pc');
+      await user.save();
+    }
 
     return res.status(200).json({ status: 200, data: user });
   }
