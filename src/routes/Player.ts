@@ -23,6 +23,7 @@ const regionTimeZones = {
 
 const router = Router();
 
+
 router.get("/:channel_id", async (req, res) => {
 
   const { channel_id } = req.params;
@@ -153,12 +154,17 @@ export async function checkMMR(
 
   const tier = matchlist[0].competitiveTier;
 
+  const actId = (
+    await RiotRequestManager.get<RiotGetValorantContent>("val/content/v1/contents", "eu")
+  ).acts.find((x) => x.isActive)!.id;
+
   if (tier >= 24) {
     const leaderboard = await RiotRequestManager.getLeaderboard(
       1,
       1,
       region,
-      platform
+      platform,
+      actId
     );
 
     if (leaderboard.players[0].puuid === puuid) {
@@ -180,7 +186,8 @@ export async function checkMMR(
           200,
           index,
           region,
-          platform
+          platform,
+          actId
         );
 
         const player = players.players.find((x) => x.puuid === puuid);
@@ -193,7 +200,7 @@ export async function checkMMR(
           : null;
 
           if(tier === 26){
-            const lastRadiant = await RiotRequestManager.getLeaderboard(1, leaderboard.tierDetails['26'].startingIndex - 1, region, platform);
+            const lastRadiant = await RiotRequestManager.getLeaderboard(1, leaderboard.tierDetails['26'].startingIndex - 1, region, platform, actId);
             threshold = lastRadiant.players[0].rankedRating + 1;
           }
 

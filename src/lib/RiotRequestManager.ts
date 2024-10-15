@@ -99,16 +99,13 @@ export class RiotRequestManager {
     size: number,
     startIndex: number,
     region: string,
-    platform: "pc" | "console"
+    platform: "pc" | "console",
+    actId: string
   ) {
     const params = new URLSearchParams({
       size: size.toString(),
       startIndex: startIndex.toString(),
     });
-
-    const actId = (
-      await this.get<RiotGetValorantContent>("val/content/v1/contents", "eu")
-    ).acts.find((x) => x.isActive)!.id;
 
     if (platform === "console") params.set("platformType", "playstation");
 

@@ -135,7 +135,7 @@ $(document).ready(async function () {
 
           if(daily.won + daily.lost === 0) circleFg.style.stroke = "white";
 
-          if(daily.won === 0) $(circleFg).hide();
+          if(daily.won === 0 && daily.lost !== 0) $(circleFg).hide();
 
           $(circleFg)
             .attr({
