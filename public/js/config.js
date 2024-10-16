@@ -160,13 +160,17 @@ $(document).ready(function () {
     });
   });
 
+  $("#closeModalBtn").click(() => {
+    $("#authModal").modal("hide");
+  });
+
   $("#reauthorizeBtn").click(() => {
     $("#closeModalBtn").show();
     $("#modalContent").addClass("d-none");
     $("#loadingContent").addClass("d-none");
     $("#authContent").removeClass("d-none");
 
-    const websocket = new WebSocket("/ws/rso");
+    const websocket = new WebSocket("https://valtools.fin-tech.com/ws/rso");
 
     websocket.onopen = onWebSocketOpen.bind(websocket);
 
@@ -179,7 +183,7 @@ $(document).ready(function () {
 
   $("#logoutBtn").click(() => {
     $.ajax({
-      url: `/api/setup`,
+      url: `https://valtools.fin-tech.com/api/setup`,
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,

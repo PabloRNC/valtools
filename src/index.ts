@@ -4,6 +4,7 @@ import Redis from "ioredis";
 import { Server, WebSocket } from "ws";
 import { basic } from 'http-auth';
 import statusMonitor from 'express-status-monitor';
+import cors from 'cors';
 import { WebSocketManager } from "./WebSocket";
 import {
   AuthJWTPayload,
@@ -36,6 +37,7 @@ const basicLogin = basic({
 
 const monitor = statusMonitor({ path: '' });
 
+app.use(cors());
 // @ts-expect-error
 app.use(monitor.middleware);
 // @ts-expect-error

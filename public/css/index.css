@@ -228,6 +228,16 @@ html {
   flex-shrink: 0;
   margin-left: 200px;
 }
+
+.overlay-icon {
+  width: 30px;
+  fill: white;
+}
+.overlay-icon-desktop {
+  width: 23px;
+  fill: white;
+}
+
 .rank-container {
   display: flex;
   flex-direction: column;

@@ -5,21 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
       rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      href="../bootstrap/css/bootstrap.min.css"
     />
     <link rel="stylesheet" href="../css/index.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
-    <script
-      src="https://kit.fontawesome.com/941f548723.js"
-      crossorigin="anonymous"
-    ></script>
     <script src="../js/index.js"></script>
   </head>
   <body style="display: none">
     <div class="container-wrapper">
-      <div class="close-button" onclick="handleClose()">✖</div>
+      <div class="close-button" id="closeButton">✖</div>
       <div class="tabs-wrapper">
         <ul class="nav nav-tabs">
           <li class="nav-item">
@@ -27,7 +23,6 @@
               class="nav-link active"
               id="playerInfoTab"
               href="#"
-              onclick="showPlayerInfo()"
               >Player Info</a
             >
           </li>
@@ -36,7 +31,6 @@
               class="nav-link"
               id="casualMatchesTab"
               href="#"
-              onclick="showCasualMatches()"
               >Casual Matches</a
             >
           </li>
@@ -45,7 +39,6 @@
               class="nav-link"
               id="competitiveMatchesTab"
               href="#"
-              onclick="showCompetitiveMatches()"
               >Ranked Matches</a
             >
           </li>

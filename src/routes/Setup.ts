@@ -42,7 +42,7 @@ router.put("/", async (req, res) => {
 
   return res
     .status(200)
-    .json({ status: 200, message: `Changes were save sucessfully!` });
+    .json({ status: 200, message: `Changes were saved sucessfully!` });
 });
 
 router.get<"/", any, any, any, { channel_id: string }>(

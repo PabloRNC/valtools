@@ -45,11 +45,7 @@ $(document).ready(async function () {
         $("#accountName").text(player.username);
         $("#accountTag").text(`#${player.tagLine}`);
         $("#accountLevel").text(player.accountLevel);
-        $("#platformIcon")
-          .removeClass()
-          .addClass(
-            `fa-solid fa-${player.platform === "pc" ? "desktop" : "gamepad"}`
-          );
+        $("#platformIcon").html(player.platform === "pc" ? '<svg xmlns="http://www.w3.org/2000/svg" class="overlay-icon-desktop" viewBox="0 0 576 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M64 0C28.7 0 0 28.7 0 64L0 352c0 35.3 28.7 64 64 64l176 0-10.7 32L160 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l256 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-69.3 0L336 416l176 0c35.3 0 64-28.7 64-64l0-288c0-35.3-28.7-64-64-64L64 0zM512 64l0 224L64 288 64 64l448 0z"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" class="overlay-icon" viewBox="0 0 640 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M192 64C86 64 0 150 0 256S86 448 192 448l256 0c106 0 192-86 192-192s-86-192-192-192L192 64zM496 168a40 40 0 1 1 0 80 40 40 0 1 1 0-80zM392 304a40 40 0 1 1 80 0 40 40 0 1 1 -80 0zM168 200c0-13.3 10.7-24 24-24s24 10.7 24 24l0 32 32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0 0 32c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-32-32 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l32 0 0-32z"/></svg>')
 
         if (mmr) {
           $(".rank-container").show();
@@ -150,6 +146,8 @@ $(document).ready(async function () {
 
           circleContainer.append(circleText, circleSvg);
 
+          $(".streak").remove();
+
           if(daily.streak){
 
             const streak = document.createElementNS(
@@ -190,7 +188,10 @@ $(document).ready(async function () {
             $('.container').append(streak);
           }
 
-          } else circleContainer.opacity = 0;
+          } else {
+            circleContainer.opacity = 0;
+            $(".streak").remove();
+          }
 
 
         if (!matchlist) {
@@ -376,11 +377,13 @@ $(document).ready(async function () {
             }
           }
 
+        }
+
           if (!mmrHistory) {
             $("#cMatchHistory").html(`<div class="info-container">
           <div class="info-icon">ℹ️</div>
           <div class="info-text">The streamer has disabled match history.</div>
-        </div>'`);
+        </div>`);
           } else {
             if (!mmrHistory?.length) {
               $("#cMatchHistory").html(`<div class="info-container">
@@ -561,13 +564,12 @@ $(document).ready(async function () {
               }
             }
           }
-        }
-
         $("body").show();
 
         setTimeout(() => pullData(), 5000);
       },
       error: function (error) {
+        if(error.status === 404) $("body").hide();
         setTimeout(() => pullData(), 5000);
       },
     });
@@ -604,38 +606,39 @@ $(document).ready(async function () {
     });
   }
 
+  $('#closeButton').on('click', () => {
+    window.Twitch.ext.actions.minimize();
+  })
+  
+  $('#playerInfoTab').on('click', () => {
+    document.getElementById("mainContent").style.display = "flex";
+    document.getElementById("matchHistory").style.display = "none";
+    document.getElementById("cMatchHistory").style.display = "none";
+    setActiveTab("playerInfoTab");
+  })
+  
+  $('#casualMatchesTab').on('click', () =>{
+    document.getElementById("mainContent").style.display = "none";
+    document.getElementById("matchHistory").style.display = "flex";
+    document.getElementById("cMatchHistory").style.display = "none";
+    setActiveTab("casualMatchesTab");
+  })
+  
+  $('#competitiveMatchesTab').on('click', () => {
+    document.getElementById("mainContent").style.display = "none";
+    document.getElementById("matchHistory").style.display = "none";
+    document.getElementById("cMatchHistory").style.display = "flex";
+    setActiveTab("competitiveMatchesTab");
+  })
+  
+  function setActiveTab(selectedTabId) {
+    document.querySelectorAll(".nav-link").forEach((tab) => {
+      tab.classList.remove("active");
+    });
+  
+    document.getElementById(selectedTabId).classList.add("active");
+  }
+
   enableDrag();
 });
 
-function handleClose() {
-  window.Twitch.ext.actions.minimize();
-}
-
-function showPlayerInfo() {
-  document.getElementById("mainContent").style.display = "flex";
-  document.getElementById("matchHistory").style.display = "none";
-  document.getElementById("cMatchHistory").style.display = "none";
-  setActiveTab("playerInfoTab");
-}
-
-function showCasualMatches() {
-  document.getElementById("mainContent").style.display = "none";
-  document.getElementById("matchHistory").style.display = "flex";
-  document.getElementById("cMatchHistory").style.display = "none";
-  setActiveTab("casualMatchesTab");
-}
-
-function showCompetitiveMatches() {
-  document.getElementById("mainContent").style.display = "none";
-  document.getElementById("matchHistory").style.display = "none";
-  document.getElementById("cMatchHistory").style.display = "flex";
-  setActiveTab("competitiveMatchesTab");
-}
-
-function setActiveTab(selectedTabId) {
-  document.querySelectorAll(".nav-link").forEach((tab) => {
-    tab.classList.remove("active");
-  });
-
-  document.getElementById(selectedTabId).classList.add("active");
-}
