@@ -75,10 +75,8 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       DATABASE_URI: string;
-      API_KEY: string;
       RIOT_API_KEY: string;
       PORT: string;
-      BASE_URL: string;
       RIOT_BASE_URL: string;
       JWT_SECRET: string;
       AUTH_JWT_SECRET: string;
@@ -87,6 +85,7 @@ declare global {
       RSO_CLIENT_SECRET: string;
       RSO_BASE_URL: string;
       RSO_REDIRECT_URI: string;
+      RSO_REDIRECT_MOCK_URI: string;
       MONITOR_USER: string;
       MONITOR_PASS: string;
     }

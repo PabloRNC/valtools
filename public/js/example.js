@@ -666,7 +666,7 @@ $(document).ready(async function () {
           console.log("RSO WebSocket is ready for authentication.");
           $("#authBtn").attr(
             "href",
-            `https://auth.riotgames.com/authorize?client_id=c1602cae-32e4-4e50-bdeb-550f1f5f7b24&redirect_uri=https://just-formerly-pegasus.ngrok-free.app/auth/mockcallback&response_type=code&scope=openid&state=${data.payload.state}`
+            data.payload.url
           );
           $("#loadingContent").addClass("d-none");
           $("#authContent").removeClass("d-none");

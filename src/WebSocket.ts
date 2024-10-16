@@ -102,7 +102,7 @@ export function WebSocketManager(socket: WebSocket){
             socket.send(
               JSON.stringify({
                 metadata: { type: "auth_ready" },
-                payload: { state },
+                payload: { url: connections.get(identity)!.payload.channel_id === 'mock' ? `https://auth.riotgames.com/authorize?client_id=${process.env.RSO_CLIENT_ID}&redirect_uri=${process.env.RSO_REDIRECT_MOCK_URI}&response_type=code&scope=openid&state=${state}` :`https://auth.riotgames.com/authorize?client_id=${process.env.RSO_CLIENT_ID}&redirect_uri=${process.env.RSO_REDIRECT_URI}&response_type=code&scope=openid&state=${state}` },
               })
             );
 

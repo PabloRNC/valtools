@@ -226,7 +226,7 @@ html {
   height: auto;
   box-sizing: border-box;
   flex-shrink: 0;
-  margin-left: 230px;
+  margin-left: 200px;
 }
 .rank-container {
   display: flex;
@@ -528,4 +528,12 @@ html {
   font-size: 6px;
   font-weight: bold;
   color: #333;
+}
+
+.streak {
+  position: absolute;
+  width: 35px;
+  height: auto;
+  transform: translate(120%, 110%);
+  left: 367px;
 }
