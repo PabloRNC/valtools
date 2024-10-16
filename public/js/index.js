@@ -36,7 +36,7 @@ $(document).ready(async function () {
 
   async function pullData() {
     $.ajax({
-      url: `/api/players/${channelId}`,
+      url: `https://valtools.fin-tech.com/api/players/${channelId}`,
       type: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -151,12 +151,6 @@ $(document).ready(async function () {
           circleContainer.append(circleText, circleSvg);
 
           if(daily.streak){
-            /*
-            <svg class="streak" xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="#FF4500" viewBox="0 0 16 16">
-            <path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16m0-1c-1.657 0-3-1-3"/>
-            <text x="50%" y="70%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="8" fill="white">1</text>
-          </svg>
-            */
 
             const streak = document.createElementNS(
               "http://www.w3.org/2000/svg",
@@ -551,74 +545,6 @@ $(document).ready(async function () {
                 const url = ranks.find(
                   (x) => x.tier === match.competitiveTier
                 ).smallIcon;
-
-                /*
-                let rankSvg;
-
-                const index = mmrHistory.findIndex((x) => x.matchId === match.matchId);
-
-                if (matchlist[index - 1]?.competitiveTier > match.competitiveTier) {
-                  rankSvg = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "svg"
-                  );
-
-                  $(rankSvg)
-                    .addClass("arrow-down")
-                    .attr("viewBox", "0 0 24 24")
-                    .css("fill", "red")
-                    .css("text-shadow", "2px 2px rgba(0, 0, 0, 0.7)");
-
-                  const path1 = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "path"
-                  );
-
-                  $(path1).attr({
-                    d: "M12 22L3 11h6V2h6v9h6l-9 11z",
-                    stroke: "black",
-                    "stroke-width": "1",
-                  });
-
-                  $(rankSvg).append(path1);
-                } else if (matchlist[index - 1]?.competitiveTier < match.competitiveTier) {
-                  rankSvg = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "svg"
-                  );
-
-                  $(rankSvg)
-                    .addClass("arrow-up")
-                    .attr("viewBox", "0 0 24 24")
-                    .css("fill", "green");
-
-                  const path1 = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "path"
-                  );
-
-                  $(path1).attr({
-                    d: "M12 2L3 13h6v9h6v-9h6L12 2z",
-                    stroke: "black",
-                    "stroke-width": "1",
-                  });
-
-                  $(rankSvg).append(path1);
-                }
-
-                const rank = $("<div>")
-                  .addClass("rank-c")
-                  .append($("<img>").attr("src", url));
-
-                if (rankSvg) {
-                  rank.append(rankSvg);
-                } else {
-                  rank
-                    .css("display", "block")
-                    .css("justify-content", "center")
-                    .css("align-items", "center");
-                }
-                */
 
                 const rank = $("<div>")
                   .addClass("rank-c")

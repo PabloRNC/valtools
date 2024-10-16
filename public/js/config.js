@@ -45,7 +45,7 @@ $(document).ready(function () {
     usernameInput.val("");
     tagInput.val("");
     $.ajax({
-      url: `/api/setup?channel_id=${channelId}`,
+      url: `https://valtools.fin-tech.com/api/setup?channel_id=${channelId}`,
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -82,7 +82,7 @@ $(document).ready(function () {
             $("#modalContent").addClass("d-none");
             $("#loadingContent").removeClass("d-none");
 
-            const websocket = new WebSocket("/ws/rso");
+            const websocket = new WebSocket("https://valtools.fin-tech.com/ws/rso");
 
             websocket.onopen = onWebSocketOpen.bind(websocket);
 
@@ -116,7 +116,7 @@ $(document).ready(function () {
     saveBtn.addClass("loading").prop("disabled", true);
 
     $.ajax({
-      url: `/api/setup`,
+      url: `https://valtools.fin-tech.com/api/setup`,
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
