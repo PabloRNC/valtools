@@ -23,8 +23,11 @@ async function fetchLeaderboardPage(actId: string, page: number, region: string,
       ? rateLimitHeader.split(":").map(Number)
       : [0, 10];
     const rateLimitInfo = { requestsUsed, limit };
+
     const data = await response.json();
-    return { data: data.players, rateLimitInfo, thresholds: data.tierDetails };
+    console.log(data.tierDetails);
+    redis.set(`leaderboard:${platform}:${region}:thresholds`, JSON.stringify(data.tierDetails));
+    return { data: data.players, rateLimitInfo };
   } catch (error) {
     return null;
   }
