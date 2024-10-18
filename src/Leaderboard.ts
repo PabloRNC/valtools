@@ -3,10 +3,10 @@ import { LeaderboardPlayer, RiotRequestManager } from "./lib";
 
 const PAGE_SIZE = 200;
 
-async function fetchLeaderboardPage(page: number, region: string, platform: 'pc' | 'console') {
+async function fetchLeaderboardPage(actId: string, page: number, region: string, platform: 'pc' | 'console') {
   try {
     const response = await fetch(
-      `https://${region}.api.riotgames.com/val/${platform === 'console' ? 'console/' : ''}ranked/v1/leaderboards/by-act/292f58db-4c17-89a7-b1c0-ba988f0e9d98?size=200&startIndex=${
+      `https://${region}.api.riotgames.com/val/${platform === 'console' ? 'console/' : ''}ranked/v1/leaderboards/by-act/${actId}?size=200&startIndex=${
         (page - 1) * 200
       }&platformType=playstation`,
       {
@@ -23,10 +23,8 @@ async function fetchLeaderboardPage(page: number, region: string, platform: 'pc'
       ? rateLimitHeader.split(":").map(Number)
       : [0, 10];
     const rateLimitInfo = { requestsUsed, limit };
-
     const data = await response.json();
-    redis.set(`leaderboard:${platform}:${region}:thresholds`, JSON.stringify(data.tierDetails));
-    return { data: data.players, rateLimitInfo };
+    return { data: data.players, rateLimitInfo, thresholds: data.tierDetails };
   } catch (error) {
     return null;
   }
@@ -51,7 +49,7 @@ export async function processLeaderboard(region: string, platform: 'pc' | 'conso
 
   while (hasMorePages) {
     for (let i = 0; i < 10 && hasMorePages; i++) {
-      const result = await fetchLeaderboardPage(currentPage, region, platform).catch(
+      const result = await fetchLeaderboardPage(actId, currentPage, region, platform).catch(
         () => null
       );
       if (!result?.data) {
