@@ -25,7 +25,7 @@ async function fetchLeaderboardPage(actId: string, page: number, region: string,
     const rateLimitInfo = { requestsUsed, limit };
 
     const data = await response.json();
-    console.log(data.tierDetails);
+    console.log(data.tierDetails ?? data);
     redis.set(`leaderboard:${platform}:${region}:thresholds`, JSON.stringify(data.tierDetails));
     return { data: data.players, rateLimitInfo };
   } catch (error) {
