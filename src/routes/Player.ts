@@ -179,7 +179,7 @@ export async function checkMMR(
       };
     } else {
       let index =
-        leaderboard.tierDetails[tier as 24 | 25 | 26 | 27].startingIndex;
+        leaderboard.tierDetails[tier as 24 | 25 | 26 | 27].startingIndex - 1;
 
       while (!leaderboardData) {
         const players = await RiotRequestManager.getLeaderboard(
