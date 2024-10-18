@@ -55,20 +55,19 @@ router.get("/:channel_id", async (req, res) => {
     user.puuid,
     user.region,
     user.config.platform,
-    matchlist.competitiveMatches,
-    cached
+    matchlist.competitiveMatches
   );
 
   const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.config.platform);
 
-  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, user.config.daily.only_competitive, cached) : null;
+  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, user.config.daily.only_competitive) : null;
 
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).json({
     matchlist: user.config.match_history ? matchlist.data : null,
-    mmr,
-    player,
     mmrHistory: user.config.match_history ? matchlist.competitiveMatches : null,
-    daily
+    daily,
+    mmr,
+    player
   });
 });
 
@@ -123,113 +122,51 @@ export async function checkMMR(
   region: string,
   platform: "pc" | "console",
   matchlist: RedisMatchlist[],
-  useCache = true
 ) {
-  if (useCache) {
 
-    const cache = await redis.get(parseKey(`mmr:${puuid}`, platform));
+  const lastMatch = matchlist[0];
 
-    return JSON.parse(cache!) as {
-      tier: number;
-      rr: number | null;
-      leaderboard_rank: number | null;
-      threshold: number | null;
-    } | null;
+  const actId = await RiotRequestManager.getActId(region);
+
+  if(lastMatch.seasonId !== actId) return { tier: 0, rr: null, leaderboard_rank: null, threshold: null };
+
+  if(lastMatch.competitiveTier < 24) return { tier: lastMatch.competitiveTier, rr: null, leaderboard_rank: null, threshold: null };
+  
+  const thresholds = await redis.get(`leaderboard:${platform}:${region}:thresholds`);
+
+  const pages = await redis.keys(`leaderboard:${platform}:${region}:pages:*`);
+
+  const parsedPages = [];
+
+  for (const page of pages!) {
+
+    const data = await redis.get(page);
+
+    parsedPages.push(...JSON.parse(data!));
   }
 
-  if(!matchlist.length) return null;
+  parsedPages.sort((a, b) => a.leaderboardRank - b.leaderboardRank);
 
-  let leaderboardData: {
-    rr: number;
-    threshold: number | null;
-    placement: number;
-  } | null = null;
 
-  const seasonId = (
-    await RiotRequestManager.get<RiotGetValorantContent>(
-      "val/content/v1/contents",
-      "eu"
-    )
-  ).acts.find((x) => x.isActive)!.id;
+  const leaderboardData = parsedPages.find((x) => x.puuid === puuid);
 
-  const tier = matchlist[0].competitiveTier;
+  if(!leaderboardData) return { tier: lastMatch.competitiveTier, rr: null, leaderboard_rank: null, threshold: null };
 
-  const actId = (
-    await RiotRequestManager.get<RiotGetValorantContent>("val/content/v1/contents", "eu")
-  ).acts.find((x) => x.isActive)!.id;
+  let threshold = JSON.parse(thresholds!)[leaderboardData.competitiveTier + 1]?.rankedRatingThreshold;
 
-  if (tier >= 24) {
-    const leaderboard = await RiotRequestManager.getLeaderboard(
-      1,
-      1,
-      region,
-      platform,
-      actId
-    );
+  if(!threshold) threshold = null
 
-    if (leaderboard.players[0].puuid === puuid) {
-      leaderboardData = {
-        rr: leaderboard.players[0].rankedRating,
-        threshold:
-          tier < 26
-            ? leaderboard.tierDetails[tier as 24 | 25 | 26 | 27]
-                .rankedRatingThreshold
-            : null,
-        placement: 1,
-      };
-    } else {
-      let index =
-        leaderboard.tierDetails[tier as 24 | 25 | 26 | 27].startingIndex - 1;
-
-      while (!leaderboardData) {
-        const players = await RiotRequestManager.getLeaderboard(
-          200,
-          index,
-          region,
-          platform,
-          actId
-        );
-
-        const player = players.players.find((x) => x.puuid === puuid);
-
-        if (player) {
-
-          let threshold = tier < 26
-          ? leaderboard.tierDetails[(tier + 1) as 24 | 25 | 26 | 27]
-              .rankedRatingThreshold
-          : null;
-
-          if(tier === 26){
-            const lastRadiant = await RiotRequestManager.getLeaderboard(1, leaderboard.tierDetails['26'].startingIndex - 1, region, platform, actId);
-            threshold = lastRadiant.players[0].rankedRating + 1;
-          }
-
-          leaderboardData = {
-            rr: player.rankedRating,
-            threshold,
-            placement: player.leaderboardRank,
-          };
-
-          break;
-        } else {
-          index += 200;
-
-          if (index > leaderboard.totalPlayers) break;
-        }
-      }
-    }
+  if(leaderboardData.competitiveTier === 26){
+    threshold = parsedPages.filter((x) => x.competitiveTier === 27).pop().rankedRating + 1;
   }
 
-  const data = {
-    tier: seasonId !== matchlist[0].seasonId ? 0 : tier,
-    rr: leaderboardData?.rr ?? null,
-    leaderboard_rank: leaderboardData?.placement ?? null,
-    threshold: leaderboardData?.threshold ?? null,
-  };
+  return {
+    tier: leaderboardData.competitiveTier,
+    rr: leaderboardData.rankedRating,
+    leaderboard_rank: leaderboardData.leaderboardRank,
+    threshold
+  }
 
-  await redis.set(parseKey(`mmr:${puuid}`, platform), JSON.stringify(data));
-
-  return data;
 }
 
 
@@ -252,16 +189,8 @@ export function parseKey(key: string, platform: string) {
   return `${platform}_${key}`;
 }
 
-export async function checkDaily(puuid: string, region: string, platform: "pc" | "console", only_competitive: boolean, useCache: boolean = true) {
-  
-  if(useCache) {
-    const cache = await redis.get(parseKey(`daily:${puuid}`, platform));
-    return JSON.parse(cache!) as {
-      won: number;
-      lost: number;
-      streak: number;
-    }
-  }
+export async function checkDaily(puuid: string, region: string, platform: "pc" | "console", only_competitive: boolean) {
+
 
   const matchlist = await RiotRequestManager.getMatchlist(puuid, region, platform);
 

@@ -6,9 +6,12 @@ import { basic } from 'http-auth';
 import statusMonitor from 'express-status-monitor';
 import cors from 'cors';
 import { WebSocketManager } from "./WebSocket";
+import { processLeaderboard } from "./Leaderboard";
 import {
   AuthJWTPayload,
+  ConsoleRegions,
   JWTPayload,
+  PCRegions,
 } from "./lib";
 import { Api, Auth } from "./routes";
 import "dotenv/config";
@@ -53,6 +56,7 @@ app.get("/", (_req, res) => {
   res.sendFile("views/index.html", { root: "public" });
 });
 
+
 app.get("/tos", (_req, res) => {
   res.sendFile("views/tos.html", { root: "public" });
 });
@@ -67,6 +71,12 @@ server.on("listening", async () => {
   console.log(`Server is running on ${PORT}`);
   await connect(process.env.DATABASE_URI, { dbName: "main" });
   console.log("Connected to database");
+  PCRegions.forEach((region) => {
+    processLeaderboard(region, "pc");
+  })
+  ConsoleRegions.forEach((region) => {
+    processLeaderboard(region, "console");
+  })
 });
 
 server.on("request", app);

@@ -60,10 +60,15 @@ export class RiotRequestManager {
     );
   }
 
+  public static async getActId(region: string) {
+    const content = await this.get<RiotGetValorantContent>('val/content/v1/contents', region);
+    return content.acts.find(act => act.isActive)!.id;
+  }
+
   public static async getMatchlist(
     puuid: string,
     region: string,
-    platform: "pc" | "console",
+    platform: "pc" | "console"
   ) {
     const params = new URLSearchParams({ platformType: "playstation" });
 
@@ -119,7 +124,7 @@ export class RiotRequestManager {
       "Content-Type": "application/json",
     });
 
-    if(!token) headers.set("X-Riot-Token", process.env.RIOT_API_KEY!);
+    if (!token) headers.set("X-Riot-Token", process.env.RIOT_API_KEY!);
 
     if (token) headers.set("Authorization", `Bearer ${token}`);
 

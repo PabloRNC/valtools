@@ -38,12 +38,11 @@ router.get('/players/mock', async(req, res) => {
     user.region,
     user.config.platform,
     matchlist.competitiveMatches,
-    cached
   );
 
   const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.config.platform);
 
-  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, user.config.daily.only_competitive, cached) : null;
+  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, user.config.daily.only_competitive) : null;
 
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).json({
     matchlist: user.config.match_history ? matchlist.data : null,
