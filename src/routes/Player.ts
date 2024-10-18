@@ -134,6 +134,8 @@ export async function checkMMR(
   
   const thresholds = await redis.get(`leaderboard:${platform}:${region}:thresholds`);
 
+  console.log(thresholds, 'leaderboard:${platform}:${region}:thresholds')
+
   const pages = await redis.keys(`leaderboard:${platform}:${region}:pages:*`);
 
   const parsedPages = [];
