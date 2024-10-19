@@ -3,10 +3,17 @@ import { LeaderboardPlayer, RiotRequestManager } from "./lib";
 
 const PAGE_SIZE = 200;
 
-async function fetchLeaderboardPage(actId: string, page: number, region: string, platform: 'pc' | 'console') {
+async function fetchLeaderboardPage(
+  actId: string,
+  page: number,
+  region: string,
+  platform: "pc" | "console"
+) {
   try {
     const response = await fetch(
-      `https://${region}.api.riotgames.com/val/${platform === 'console' ? 'console/' : ''}ranked/v1/leaderboards/by-act/${actId}?size=200&startIndex=${
+      `https://${region}.api.riotgames.com/val/${
+        platform === "console" ? "console/" : ""
+      }ranked/v1/leaderboards/by-act/${actId}?size=200&startIndex=${
         (page - 1) * 200
       }&platformType=playstation`,
       {
@@ -16,14 +23,20 @@ async function fetchLeaderboardPage(actId: string, page: number, region: string,
       }
     );
 
-    const rateLimit = response.headers.get("X-Method-Rate-Limit") || response.headers.get("x-method-rate-limit");
-    const rateLimitCount = response.headers.get("X-Method-Rate-Limit-Count") || response.headers.get("x-method-rate-limit-count");
+    const rateLimit =
+      response.headers.get("X-Method-Rate-Limit") ||
+      response.headers.get("x-method-rate-limit");
+    const rateLimitCount =
+      response.headers.get("X-Method-Rate-Limit-Count") ||
+      response.headers.get("x-method-rate-limit-count");
     const retryAfter = response.headers.get("retry-after");
 
     const rateLimitInfo = parseRateLimitHeaders(rateLimit, rateLimitCount);
 
     if (response.status === 429 && retryAfter) {
-      console.log(`Rate limited on ${region} ${platform} leaderboard, waiting ${retryAfter}s...`);
+      console.log(
+        `Rate limited on ${region} ${platform} leaderboard, waiting ${retryAfter}s...`
+      );
       const waitTime = parseInt(retryAfter, 10) * 1000;
       await new Promise((resolve) => setTimeout(resolve, waitTime));
       console.log("Retrying leaderboard fetch...");
@@ -31,17 +44,27 @@ async function fetchLeaderboardPage(actId: string, page: number, region: string,
     }
 
     const data = await response.json();
-    
-    if(data.tierDetails) await redis.set(`leaderboard:${platform}:${region}:thresholds`, JSON.stringify(data.tierDetails));
+
+    if (data.tierDetails)
+      await redis.set(
+        `leaderboard:${platform}:${region}:thresholds`,
+        JSON.stringify(data.tierDetails)
+      );
     return { data: data.players, rateLimitInfo, count: data.totalPlayers };
   } catch (error) {
     return null;
   }
 }
 
-function parseRateLimitHeaders(rateLimit: string | null, rateLimitCount: string | null) {
-  const limits = rateLimit?.split(",").map(limit => limit.split(":").map(Number)) || [];
-  const usages = rateLimitCount?.split(",").map(count => count.split(":").map(Number)) || [];
+function parseRateLimitHeaders(
+  rateLimit: string | null,
+  rateLimitCount: string | null
+) {
+  const limits =
+    rateLimit?.split(",").map((limit) => limit.split(":").map(Number)) || [];
+  const usages =
+    rateLimitCount?.split(",").map((count) => count.split(":").map(Number)) ||
+    [];
 
   return limits.map(([limitRequests, limitSeconds], index) => {
     const [usedRequests] = usages[index] || [0];
@@ -49,16 +72,28 @@ function parseRateLimitHeaders(rateLimit: string | null, rateLimitCount: string 
   });
 }
 
-async function handleRateLimit(rateLimitInfo: Array<{ usedRequests: number; limitRequests: number; limitSeconds: number }>) {
-  const exceeded = rateLimitInfo.some(({ usedRequests, limitRequests }) => usedRequests >= limitRequests);
+async function handleRateLimit(
+  rateLimitInfo: Array<{
+    usedRequests: number;
+    limitRequests: number;
+    limitSeconds: number;
+  }>
+) {
+  const exceeded = rateLimitInfo.some(
+    ({ usedRequests, limitRequests }) => usedRequests >= limitRequests
+  );
 
   if (exceeded) {
-    const waitTime = Math.max(...rateLimitInfo.map(({ limitSeconds }) => limitSeconds)) * 1000;
+    const waitTime =
+      Math.max(...rateLimitInfo.map(({ limitSeconds }) => limitSeconds)) * 1000;
     await new Promise((resolve) => setTimeout(resolve, waitTime));
   }
 }
 
-export async function processLeaderboard(region: string, platform: 'pc' | 'console') {
+export async function processLeaderboard(
+  region: string,
+  platform: "pc" | "console"
+) {
   const actId = await RiotRequestManager.getActId(region);
   const accTable = [];
   let currentPage = 1;
@@ -66,7 +101,12 @@ export async function processLeaderboard(region: string, platform: 'pc' | 'conso
 
   while (hasMorePages) {
     for (let i = 0; i < 10 && hasMorePages; i++) {
-      const result = await fetchLeaderboardPage(actId, currentPage, region, platform).catch(() => null);
+      const result = await fetchLeaderboardPage(
+        actId,
+        currentPage,
+        region,
+        platform
+      ).catch(() => null);
       if (!result?.data) {
         hasMorePages = false;
         currentPage = 1;
@@ -83,12 +123,14 @@ export async function processLeaderboard(region: string, platform: 'pc' | 'conso
         accTable.push(...pageData);
 
         await handleRateLimit(result.rateLimitInfo);
-        await saveLeaderboardToRedis(currentPage, pageData, region, platform);
         currentPage++;
       }
 
-      if (result.data.length < PAGE_SIZE || result.count <= result.data.pop().leaderboardRank) {
-        console.log('Leaderboard page size')
+      if (
+        result.data.length < PAGE_SIZE ||
+        result.count <= result.data.pop().leaderboardRank
+      ) {
+        console.log("Leaderboard page size");
         hasMorePages = false;
         currentPage = 1;
         break;
@@ -99,7 +141,12 @@ export async function processLeaderboard(region: string, platform: 'pc' | 'conso
   await saveFinalLeaderboardToRedis(accTable, region, platform);
 }
 
-async function saveLeaderboardToRedis(page: number, pageData: LeaderboardPlayer[], region: string, platform: 'pc' | 'console') {
+export async function saveLeaderboardToRedis(
+  page: number,
+  pageData: LeaderboardPlayer[],
+  region: string,
+  platform: "pc" | "console"
+) {
   const pageKey = `leaderboard:${platform}:${region}:pages:${page}`;
   try {
     await redis.set(pageKey, JSON.stringify(pageData));
@@ -108,8 +155,24 @@ async function saveLeaderboardToRedis(page: number, pageData: LeaderboardPlayer[
   }
 }
 
-async function saveFinalLeaderboardToRedis(leaderboardArray: LeaderboardPlayer[], region: string, platform: 'pc' | 'console') {
+async function saveFinalLeaderboardToRedis(
+  leaderboardArray: LeaderboardPlayer[],
+  region: string,
+  platform: "pc" | "console"
+) {
   try {
+    for (let i = 0; i < Math.floor(leaderboardArray.length / 200); i++) {
+      const pageKey = `leaderboard:${platform}:${region}:pages:${i + 1}`;
+      try {
+        await redis.set(
+          pageKey,
+          JSON.stringify(leaderboardArray.slice(i * 200, (i + 1) * 200))
+        );
+      } catch (error) {
+        throw new Error(`Error caching leaderboard page ${i + 1}: ${error}`);
+      }
+    }
+
     await redis.set(
       `leaderboard:${platform}:${region}:total`,
       JSON.stringify(leaderboardArray)
