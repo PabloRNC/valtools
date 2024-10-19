@@ -135,6 +135,12 @@ export async function processLeaderboard(
         break;
       }
     }
+
+    await redis.set(
+      `leaderboard:${platform}:${region}:thresholds`,
+      JSON.stringify(thresholds)
+    );
+
   }
   console.log(`Leaderboard for ${region} ${platform} has been processed.`);
   await saveFinalLeaderboardToRedis(accTable, thresholds, region, platform);
