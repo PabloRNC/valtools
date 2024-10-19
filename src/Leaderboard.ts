@@ -45,12 +45,7 @@ async function fetchLeaderboardPage(
 
     const data = await response.json();
 
-    if (data.tierDetails)
-      await redis.set(
-        `leaderboard:${platform}:${region}:thresholds`,
-        JSON.stringify(data.tierDetails)
-      );
-    return { data: data.players, rateLimitInfo, count: data.totalPlayers };
+    return { data: data.players, rateLimitInfo, count: data.totalPlayers, tierDetais: data.tierDetails };
   } catch (error) {
     return null;
   }
@@ -98,6 +93,7 @@ export async function processLeaderboard(
   const accTable = [];
   let currentPage = 1;
   let hasMorePages = true;
+  let thresholds = {};
 
   while (hasMorePages) {
     for (let i = 0; i < 10 && hasMorePages; i++) {
@@ -112,6 +108,9 @@ export async function processLeaderboard(
         currentPage = 1;
         break;
       }
+
+      thresholds = result.tierDetais;
+
       if (result && result.data) {
         const pageData = result.data;
         if (pageData.length < PAGE_SIZE) {
@@ -138,7 +137,7 @@ export async function processLeaderboard(
     }
   }
   console.log(`Leaderboard for ${region} ${platform} has been processed.`);
-  await saveFinalLeaderboardToRedis(accTable, region, platform);
+  await saveFinalLeaderboardToRedis(accTable, thresholds, region, platform);
 }
 
 export async function saveLeaderboardToRedis(
@@ -157,8 +156,9 @@ export async function saveLeaderboardToRedis(
 
 async function saveFinalLeaderboardToRedis(
   leaderboardArray: LeaderboardPlayer[],
+  thresholds: {},
   region: string,
-  platform: "pc" | "console"
+  platform: "pc" | "console",
 ) {
   try {
     for (let i = 0; i < Math.floor(leaderboardArray.length / 200); i++) {
@@ -172,6 +172,11 @@ async function saveFinalLeaderboardToRedis(
         throw new Error(`Error caching leaderboard page ${i + 1}: ${error}`);
       }
     }
+
+    await redis.set(
+      `leaderboard:${platform}:${region}:thresholds`,
+      JSON.stringify(thresholds)
+    );
 
     await redis.set(
       `leaderboard:${platform}:${region}:total`,
