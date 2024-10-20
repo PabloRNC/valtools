@@ -148,6 +148,8 @@ $(document).ready(function () {
         toastSuccessBody.text(message);
 
         toastSuccess.toast("show");
+
+        fetchInitialData();
       },
       error: function ({ responseText }) {
         toastFailBody.text(JSON.parse(responseText).error);

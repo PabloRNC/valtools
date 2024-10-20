@@ -2,7 +2,7 @@ import { Router } from "express";
 import { verify } from "jsonwebtoken";
 import { connections } from "..";
 import { AuthJWTPayload, RiotRequestManager, RSORequestManager } from "../lib";
-import { User, Auth } from "../models";
+import { User } from "../models";
 import "dotenv/config";
 
 const router = Router();
@@ -29,7 +29,8 @@ router.get("/callback", async (req, res) => {
     const authData = await RSORequestManager.getToken(code);
 
     const user = await RiotRequestManager.getValorantAccount(
-      authData.access_token
+      authData.access_token,
+      authData.refresh_token
     );
 
     const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
@@ -76,19 +77,13 @@ router.get("/callback", async (req, res) => {
             only_competitive: false,
           },
         },
-        platforms
+        platforms,
+        auth: {
+          access_token: authData.access_token,
+          refresh_token: authData.refresh_token,
+        }
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    await Auth.findOneAndUpdate(
-      { puuid: user.puuid },
-      {
-        puuid: user.puuid,
-        access_token: authData.access_token,
-        refresh_token: authData.refresh_token,
-      },
-      { upsert: true, new: true }
     );
 
     connection.socket.send(
@@ -136,7 +131,8 @@ router.get("/mockcallback", async (req, res) => {
     const authData = await RSORequestManager.getToken(code, process.env.RSO_REDIRECT_URI.split('/').slice(0, -1).join('/') + '/mockcallback');
 
     const user = await RiotRequestManager.getValorantAccount(
-      authData.access_token
+      authData.access_token,
+      authData.refresh_token
     );
 
     const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
@@ -183,19 +179,13 @@ router.get("/mockcallback", async (req, res) => {
             only_competitive: false,
           },
         },
-        platforms
+        platforms,
+        auth: {
+          access_token: authData.access_token,
+          refresh_token: authData.refresh_token
+        }
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    await Auth.findOneAndUpdate(
-      { puuid: user.puuid },
-      {
-        puuid: user.puuid,
-        access_token: authData.access_token,
-        refresh_token: authData.refresh_token,
-      },
-      { upsert: true, new: true }
     );
 
     connection.socket.send(

@@ -7,6 +7,7 @@ import {
   RiotGetValorantContent,
   RiotGetValorantMatchlist,
 } from "./types";
+import { RSORequestManager } from "./RSORequestManager";
 import { parseURL } from "./ParseURL";
 import "dotenv/config";
 
@@ -15,16 +16,22 @@ export class RiotRequestManager {
     endpoint: string,
     region: string,
     params?: URLSearchParams | null,
-    token?: string
+    auth?: { accessToken: string; refreshToken: string },
+    refreshed = false
   ): Promise<T> {
     const response = await fetch(
       parseURL(process.env.RIOT_BASE_URL, region) +
         endpoint +
         (params ? `?${params?.toString()}` : ""),
-      { method: "GET", headers: this.makeHeaders(token) }
+      { method: "GET", headers: this.makeHeaders(auth?.accessToken) }
     );
 
     if (!response.ok)
+
+      if(auth && !refreshed && response.status === 401){
+        const newToken = await RSORequestManager.refreshToken(auth.refreshToken);
+        return await this.get(endpoint, region, params, { accessToken: newToken.access_token, refreshToken: newToken.refresh_token }, true);
+      }
       throw new Error(
         `${response.statusText}\nURL: ${response.url}\nStatus: ${
           response.status
@@ -34,12 +41,12 @@ export class RiotRequestManager {
     return await response.json();
   }
 
-  public static async getValorantAccount(token: string) {
+  public static async getValorantAccount(accessToken: string, refreshToken: string) {
     return await this.get<RiotGetValorantAccount>(
       `riot/account/v1/accounts/me`,
       "europe",
       null,
-      token
+      { accessToken, refreshToken }
     );
   }
 

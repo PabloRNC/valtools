@@ -15,7 +15,10 @@ router.put("/", async (req, res) => {
   if (!user)
     return res.status(404).json({ status: 404, error: "User was not found." });
 
-  if (!["pc", "console"].includes(body.platform) || !user.platforms.includes(body.platform))
+  if (
+    !["pc", "console"].includes(body.platform) ||
+    !user.platforms.includes(body.platform)
+  )
     return res.status(400).json({ status: 400, error: "Invalid platform." });
 
   if (typeof body.match_history !== "boolean")
@@ -29,14 +32,27 @@ router.put("/", async (req, res) => {
     return res.status(400).json({
       status: 400,
       error: "Korean shard is not supported in console.",
-  });
+    });
+
+  const account = await RiotRequestManager.getValorantAccount(
+    user.auth.access_token,
+    user.auth.refresh_token
+  );
+
+  console.log(account);
+
+  if (user.tag !== account.tagLine || user.username !== account.gameName) {
+    user.tag = account.tagLine;
+    user.username = account.gameName;
+    await user.save();
+  }
 
   await user.updateOne({
     region: shard.activeShard,
     config: {
       match_history: body.match_history,
       platform: body.platform,
-      daily: body.daily
+      daily: body.daily,
     },
   });
 
@@ -58,16 +74,42 @@ router.get<"/", any, any, any, { channel_id: string }>(
     if (!user)
       return res.status(404).json({ status: 404, error: "User was not found" });
 
-    if(!user.platforms.includes('console') && await RiotRequestManager.getMatchlist(user.puuid, user.region, 'console').catch(() => false)){
-      user.platforms.push('console');
+    if (
+      !user.platforms.includes("console") &&
+      (await RiotRequestManager.getMatchlist(
+        user.puuid,
+        user.region,
+        "console"
+      ).catch(() => false))
+    ) {
+      user.platforms.push("console");
       await user.save();
     }
 
-    if(!user.platforms.includes('pc') && await RiotRequestManager.getMatchlist(user.puuid, user.region, 'pc').catch(() => false)){
-      user.platforms.push('pc');
+    if (
+      !user.platforms.includes("pc") &&
+      (await RiotRequestManager.getMatchlist(
+        user.puuid,
+        user.region,
+        "pc"
+      ).catch(() => false))
+    ) {
+      user.platforms.push("pc");
       await user.save();
     }
 
+    const account = await RiotRequestManager.getValorantAccount(
+      user.auth.access_token,
+      user.auth.refresh_token
+    );
+
+
+    console.log(account);
+    if (user.tag !== account.tagLine || user.username !== account.gameName) {
+      user.tag = account.tagLine;
+      user.username = account.gameName;
+      await user.save();
+    }
     return res.status(200).json({ status: 200, data: user });
   }
 );

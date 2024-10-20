@@ -8,6 +8,7 @@ export interface IUser {
   tag: string;
   config: { match_history: boolean; platform: "pc" | "console", daily: { enabled: boolean, only_competitive: boolean } };
   platforms: ["pc", "console"];
+  auth: { access_token: string, refresh_token: string };
 }
 
 export const UserSchema = new Schema<IUser>({
@@ -36,6 +37,13 @@ export const UserSchema = new Schema<IUser>({
     type: [String],
     required: true,
     enum: ["pc", "console"]
+  },
+  auth: {
+    type: {
+      access_token: { type: String, required: true },
+      refresh_token: { type: String, required: true }
+    },
+    required: true
   }
 });
 
