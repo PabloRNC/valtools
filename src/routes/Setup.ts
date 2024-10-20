@@ -106,7 +106,10 @@ router.get<"/", any, any, any, { channel_id: string }>(
       user.username = account.gameName;
       await user.save();
     }
-    return res.status(200).json({ status: 200, data: user });
+
+    const { auth, ...rest } = user.toObject({ versionKey: false });
+
+    return res.status(200).json({ status: 200, data: rest });
   }
 );
 
