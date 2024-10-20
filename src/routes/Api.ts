@@ -1,11 +1,37 @@
 import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { Setup } from './Setup';
 import { Player, checkDaily, checkMMR, checkMatchlist, checkPlayer } from './Player';
-import { RiotRequestManager } from '../lib';
+import { ConsoleRegions, PCRegions, RiotRequestManager } from '../lib';
 import { User } from '../models';
 import { isAuthorized } from '../middlewares';
+import { redis } from '..';
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { status: 429, error: "Too many requests, please try again later." }
+})
 
 const router = Router();
+
+router.get('/leaderboard/:platform/:region', limiter, async(req, res) => {
+ 
+  const { platform, region } = req.params;
+
+  const obj = {
+    "pc": PCRegions,
+    "console": ConsoleRegions
+  }
+
+  if(!["pc", "console"].includes(platform) || obj[platform as 'pc' | 'console'].includes(region))
+    return res.status(400).json({ status: 400, error: "Invalid platform or region" });
+
+  const leaderboard = await redis.get(`leaderboard:${platform}:${region}`);
+
+  return res.json(leaderboard);
+
+});
 
 router.get('/players/mock', async(req, res) => {
 
