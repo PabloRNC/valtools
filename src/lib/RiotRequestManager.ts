@@ -26,17 +26,20 @@ export class RiotRequestManager {
       { method: "GET", headers: this.makeHeaders(auth?.accessToken) }
     );
 
-    if (!response.ok)
+    if (!response.ok) {
 
       if(auth && !refreshed && response.status === 401){
         const newToken = await RSORequestManager.refreshToken(auth.refreshToken);
         return await this.get(endpoint, region, params, { accessToken: newToken.access_token, refreshToken: newToken.refresh_token }, true);
       }
+      
       throw new Error(
         `${response.statusText}\nURL: ${response.url}\nStatus: ${
           response.status
         }\n${await response.text()}`
       );
+
+    }
 
     return await response.json();
   }
