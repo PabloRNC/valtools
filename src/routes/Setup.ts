@@ -39,8 +39,6 @@ router.put("/", async (req, res) => {
     user.auth.refresh_token
   );
 
-  console.log(account);
-
   if (user.tag !== account.tagLine || user.username !== account.gameName) {
     user.tag = account.tagLine;
     user.username = account.gameName;
@@ -103,8 +101,6 @@ router.get<"/", any, any, any, { channel_id: string }>(
       user.auth.refresh_token
     );
 
-
-    console.log(account);
     if (user.tag !== account.tagLine || user.username !== account.gameName) {
       user.tag = account.tagLine;
       user.username = account.gameName;

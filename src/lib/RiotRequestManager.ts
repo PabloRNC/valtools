@@ -10,6 +10,7 @@ import {
 import { RSORequestManager } from "./RSORequestManager";
 import { parseURL } from "./ParseURL";
 import "dotenv/config";
+import { User } from "../models";
 
 export class RiotRequestManager {
   public static async get<T extends RiotGetResponses>(
@@ -30,6 +31,8 @@ export class RiotRequestManager {
 
       if(auth && !refreshed && response.status === 401){
         const newToken = await RSORequestManager.refreshToken(auth.refreshToken);
+        console.log('refreshed', newToken, auth);
+        await User.updateOne({ 'auth.access_token': auth.accessToken }, { 'auth.access_token': newToken.access_token, 'auth.refresh_token': newToken.refresh_token });
         return await this.get(endpoint, region, params, { accessToken: newToken.access_token, refreshToken: newToken.refresh_token }, true);
       }
       
