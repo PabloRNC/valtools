@@ -27,9 +27,17 @@ router.get('/leaderboard/:platform/:region', limiter, async(req, res) => {
   if(!["pc", "console"].includes(platform) || !obj[platform as 'pc' | 'console'].includes(region))
     return res.status(400).json({ status: 400, error: "Invalid platform or region" });
 
-  const leaderboard = await redis.get(`leaderboard:${platform}:${region}:total`);
+  const leaderboard = JSON.parse(await redis.get(`leaderboard:${platform}:${region}:total`) as string);
 
-  return res.json(leaderboard);
+  const parsedLeaderboard = leaderboard.map((entry: any) => {
+    const { puuid, ...rest } = entry;
+
+    return {
+      ...rest
+    }
+  })
+
+  return res.json(parsedLeaderboard);
 
 });
 
