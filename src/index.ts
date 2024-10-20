@@ -53,8 +53,6 @@ app.disable("x-powered-by");
 app.use("/api", Api);
 app.use("/auth", Auth);
 
-app.get("/ip", (req) => console.log(req.ip))
-
 app.get("/", (_req, res) => {
   res.sendFile("views/index.html", { root: "public" });
 });
