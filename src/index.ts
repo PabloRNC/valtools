@@ -45,6 +45,7 @@ app.use(cors());
 app.use(monitor.middleware);
 // @ts-expect-error
 app.get('/root/status', basicLogin.check(monitor.pageRoute));
+app.set('trust proxy', 1)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -52,10 +53,11 @@ app.disable("x-powered-by");
 app.use("/api", Api);
 app.use("/auth", Auth);
 
+app.get("/ip", (req) => console.log(req.ip))
+
 app.get("/", (_req, res) => {
   res.sendFile("views/index.html", { root: "public" });
 });
-
 
 app.get("/tos", (_req, res) => {
   res.sendFile("views/tos.html", { root: "public" });

@@ -24,8 +24,7 @@ router.get('/leaderboard/:platform/:region', limiter, async(req, res) => {
     "console": ConsoleRegions
   }
 
-  if(!["pc", "console"].includes(platform) || obj[platform as 'pc' | 'console'].includes(region))
-    console.log(!["pc", "console"].includes(platform), obj[platform as 'pc' | 'console'].includes(region), platform, region)
+  if(!["pc", "console"].includes(platform) || !obj[platform as 'pc' | 'console'].includes(region))
     return res.status(400).json({ status: 400, error: "Invalid platform or region" });
 
   const leaderboard = await redis.get(`leaderboard:${platform}:${region}`);
