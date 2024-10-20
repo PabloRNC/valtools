@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leaderboard Pagination with Search</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            color: #4a90e2;
+        }
+
+        .leaderboard {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 700px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .leaderboard li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            background-color: #fafafa;
+            border-left: 4px solid #4a90e2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .leaderboard li:nth-child(odd) {
+            background-color: #e6f7ff;
+        }
+
+        .leaderboard li .position {
+            font-weight: bold;
+            color: #4a90e2;
+            width: 50px;
+        }
+
+        .leaderboard li .name {
+            font-weight: normal;
+            color: #333;
+            flex-grow: 1;
+            text-align: left;
+            padding-left: 15px;
+        }
+
+        .leaderboard li .image-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .leaderboard li .image-container img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .leaderboard li .image-container .info-text {
+            font-size: 14px;
+            color: #777;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-container input {
+            width: 400px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .autocomplete-suggestions {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 400px;
+            background-color: white;
+            position: absolute;
+            z-index: 10;
+        }
+
+        .autocomplete-suggestions div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .autocomplete-suggestions div:hover {
+            background-color: #f0f0f0;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .pagination button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background-color: #357abd;
+        }
+
+        .pagination span {
+            font-size: 16px;
+            padding: 10px;
+            color: #333;
+        }
+
+        .highlight {
+            background-color: rgba(255, 255, 0, 0.5) !important;
+            transition: background-color 0.3s ease !important;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Leaderboard</h1>
+
+    <div class="search-container">
+        <input type="text" id="search" placeholder="Search player by name..." autocomplete="off" />
+        <div id="autocomplete-list" class="autocomplete-suggestions"></div>
+    </div>
+
+    <div class="leaderboard">
+        <ul id="leaderboard-list"></ul>
+    </div>
+
+    <div class="pagination">
+        <button id="prev" disabled>Previous</button>
+        <span id="page-info">Page 1</span>
+        <button id="next">Next</button>
+    </div>
+
+    <script>
+        fetch("https://valtools.fin-tech.com/api/leaderboard/pc/eu")
+            .then((res) => res.json())
+            .then((leaderboardData) => {
+                const itemsPerPage = 100;
+                let currentPage = 1;
+                const totalPages = Math.ceil(leaderboardData.length / itemsPerPage);
+
+                function renderPage(page) {
+                    const start = (page - 1) * itemsPerPage;
+                    const end = page * itemsPerPage;
+                    const pageItems = leaderboardData.slice(start, end);
+
+                    const list = document.getElementById("leaderboard-list");
+                    list.innerHTML = "";
+
+                    pageItems.forEach((item, index) => {
+                        const listItem = document.createElement("li");
+                        listItem.innerHTML = `
+                <span class="position">${start + index + 1}.</span>
+                <span class="name">${item.gameName ? `${item.gameName}#${item.tagLine}` : "-"
+                            }</span>
+                <div class="image-container">
+                    <img src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/${item.competitiveTier
+                            }/largeicon.png" alt="${item.name}">
+                    <span class="info-text">${item.rankedRating}</span>
+                </div>
+            `;
+                        list.appendChild(listItem);
+                    });
+
+                    document.getElementById(
+                        "page-info"
+                    ).textContent = `Page ${currentPage}`;
+                    document.getElementById("prev").disabled = currentPage === 1;
+                    document.getElementById("next").disabled =
+                        currentPage === totalPages;
+                }
+
+                document.getElementById("prev").addEventListener("click", () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderPage(currentPage);
+                    }
+                });
+
+                document.getElementById("next").addEventListener("click", () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderPage(currentPage);
+                    }
+                });
+
+                // Autocomplete search
+                const searchInput = document.getElementById("search");
+                const autocompleteList = document.getElementById("autocomplete-list");
+
+                searchInput.addEventListener('input', function () {
+                    const searchValue = searchInput.value.toLowerCase();
+                    autocompleteList.innerHTML = '';
+
+                    if (searchValue) {
+                        const filtered = leaderboardData.filter(item =>
+                            item.gameName && item.tagLine && (
+                                item.gameName.toLowerCase().startsWith(searchValue) ||
+                                (item.gameName + '#' + item.tagLine).toLowerCase().startsWith(searchValue)
+                            )
+                        );
+
+                        filtered.slice(0, 10).forEach(item => {
+                            const suggestion = document.createElement('div');
+                            suggestion.textContent = `${item.gameName}#${item.tagLine}`;
+                            suggestion.addEventListener('click', () => {
+                                const index = leaderboardData.findIndex(leader => leader.gameName === item.gameName && leader.tagLine === item.tagLine);
+                                const page = Math.floor(index / itemsPerPage) + 1;
+                                const rowIndexOnPage = index % itemsPerPage;
+
+                                currentPage = page;
+                                renderPage(currentPage);
+
+                                setTimeout(() => {
+                                    const listItems = document.querySelectorAll('.leaderboard li');
+                                    const targetRow = listItems[rowIndexOnPage];
+
+                                    if (targetRow) {
+                                        targetRow.classList.add('highlight');
+                                        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                                        setTimeout(() => {
+                                            targetRow.classList.remove('highlight');
+                                        }, 2000); // Mantener el resaltado durante 2 segundos
+                                    }
+                                }, 100);
+                            });
+                            autocompleteList.appendChild(suggestion);
+                        });
+                    }
+                });
+
+
+                renderPage(currentPage);
+            });
+    </script>
+</body>
+
+</html>
