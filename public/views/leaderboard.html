@@ -4,28 +4,70 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Leaderboard Pagination with Search</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <title>ValTools - Leaderboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
+        :root {
+            --arrow-bg: rgba(255, 255, 255, 0.3);
+            --arrow-icon: url(https://upload.wikimedia.org/wikipedia/commons/9/9d/Caret_down_font_awesome_whitevariation.svg);
+            --option-bg: #2a2a3d;
+            --select-bg: rgba(255, 255, 255, 0.2);
+        }
+
         body {
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #1e1e2f;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             margin: 0;
             padding: 20px;
-            color: #333;
+            color: #f0f0f0;
         }
 
         h1 {
-            color: #4a90e2;
+            color: #ffab00;
+        }
+
+        .select-container {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .platform-select {
+            display: flex;
+            justify-content: center;
+            margin-top: 5px;
+            margin-right: 20px;
+        }
+
+        .platform-button {
+            background-color: #2a2a3d;
+            color: #f0f0f0;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .platform-button.selected {
+            background-color: #ffab00;
+        }
+
+        .region-select {
+            margin-top: 10px;
+            text-align: center;
         }
 
         .leaderboard {
-            background-color: #fff;
+            background-color: #2a2a3d;
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             width: 700px;
             padding: 20px;
             margin-bottom: 20px;
@@ -37,6 +79,35 @@
             margin: 0;
         }
 
+        select {
+            appearance: none;
+            border: 0;
+            outline: 0;
+            font: inherit;
+            width: 20rem;
+            padding: 1rem 4rem 1rem 1rem;
+            background: var(--arrow-icon) no-repeat right 0.8em center / 1.4em,
+                linear-gradient(to left, var(--arrow-bg) 3em, var(--select-bg) 3em);
+            color: white;
+            border-radius: 0.25em;
+            box-shadow: 0 0 1em 0 rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+
+            &::-ms-expand {
+                display: none;
+            }
+
+            &:focus {
+                outline: none;
+            }
+
+        }
+
+        option {
+            color: inherit;
+            background-color: var(--option-bg);
+        }
+
         .leaderboard li {
             display: flex;
             justify-content: space-between;
@@ -44,64 +115,97 @@
             padding: 10px 15px;
             margin: 5px 0;
             border-radius: 8px;
-            background-color: #fafafa;
-            border-left: 4px solid #4a90e2;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            background-color: #34344a;
+            border-left: 4px solid #ffab00;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .leaderboard li:nth-child(odd) {
-            background-color: #e6f7ff;
+            background-color: #2a2a3d;
         }
 
         .leaderboard li .position {
             font-weight: bold;
-            color: #4a90e2;
-            width: 50px;
+            color: #ffab00;
+            min-width: 10px;
         }
 
         .leaderboard li .name {
             font-weight: normal;
-            color: #333;
+            color: #f0f0f0;
             flex-grow: 1;
             text-align: left;
-            padding-left: 15px;
+            margin-left: 15px;
         }
 
         .leaderboard li .image-container {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
+            flex-grow: 1;
+        }
+
+        .leaderboard li .image-container .rank-img {
+            background-color: #0f1923;
+            border-radius: 50%;
+            padding: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .leaderboard li .image-container img {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            margin-right: 10px;
         }
 
         .leaderboard li .image-container .info-text {
             font-size: 14px;
-            color: #777;
+            color: #f0f0f0;
+            margin-left: 20px;
+            font-weight: bold;
+            width: 50px;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
         }
 
         .search-container {
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
 
         .search-container input {
             width: 400px;
             padding: 10px;
-            border: 1px solid #ccc;
+            border: 1px solid #444;
             border-radius: 5px;
+            background-color: #2a2a3d;
+            color: #f0f0f0;
+        }
+
+        #autocomplete-list {
+            display: none;
+            position: absolute;
+            top: 100%;
         }
 
         .autocomplete-suggestions {
-            border: 1px solid #ccc;
+            border: 1px solid #444;
             border-radius: 5px;
             max-height: 150px;
             overflow-y: auto;
             width: 400px;
-            background-color: white;
+            background-color: #2a2a3d;
             position: absolute;
             z-index: 10;
         }
@@ -109,11 +213,12 @@
         .autocomplete-suggestions div {
             padding: 10px;
             cursor: pointer;
-            border-bottom: 1px solid #eaeaea;
+            border-bottom: 1px solid #444;
+            color: #f0f0f0;
         }
 
         .autocomplete-suggestions div:hover {
-            background-color: #f0f0f0;
+            background-color: #444;
         }
 
         .pagination {
@@ -123,7 +228,7 @@
         }
 
         .pagination button {
-            background-color: #4a90e2;
+            background-color: #ffab00;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -140,24 +245,226 @@
         }
 
         .pagination button:hover:not(:disabled) {
-            background-color: #357abd;
+            background-color: #d99b00;
         }
 
         .pagination span {
             font-size: 16px;
             padding: 10px;
-            color: #333;
+            color: #f0f0f0;
         }
 
         .highlight {
-            background-color: rgba(255, 255, 0, 0.5) !important;
+            background-color: rgba(255, 171, 0, 0.5) !important;
             transition: background-color 0.3s ease !important;
+        }
+
+        .first {
+            border-radius: 10px 0 0 10px;
+        }
+
+        .second {
+            border-radius: 0 10px 10px 0;
+        }
+
+        .lds-default {
+            color: #1c4c5b
+        }
+
+        .lds-default,
+        .lds-default div {
+            box-sizing: border-box;
+        }
+
+        .lds-default {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .lds-default div {
+            color: white;
+            position: absolute;
+            width: 6.4px;
+            height: 6.4px;
+            background: currentColor;
+            border-radius: 50%;
+            animation: lds-default 1.2s linear infinite;
+        }
+
+        .lds-default div:nth-child(1) {
+            animation-delay: 0s;
+            top: 36.8px;
+            left: 66.24px;
+        }
+
+        .lds-default div:nth-child(2) {
+            animation-delay: -0.1s;
+            top: 22.08px;
+            left: 62.29579px;
+        }
+
+        .lds-default div:nth-child(3) {
+            animation-delay: -0.2s;
+            top: 11.30421px;
+            left: 51.52px;
+        }
+
+        .lds-default div:nth-child(4) {
+            animation-delay: -0.3s;
+            top: 7.36px;
+            left: 36.8px;
+        }
+
+        .lds-default div:nth-child(5) {
+            animation-delay: -0.4s;
+            top: 11.30421px;
+            left: 22.08px;
+        }
+
+        .lds-default div:nth-child(6) {
+            animation-delay: -0.5s;
+            top: 22.08px;
+            left: 11.30421px;
+        }
+
+        .lds-default div:nth-child(7) {
+            animation-delay: -0.6s;
+            top: 36.8px;
+            left: 7.36px;
+        }
+
+        .lds-default div:nth-child(8) {
+            animation-delay: -0.7s;
+            top: 51.52px;
+            left: 11.30421px;
+        }
+
+        .lds-default div:nth-child(9) {
+            animation-delay: -0.8s;
+            top: 62.29579px;
+            left: 22.08px;
+        }
+
+        .lds-default div:nth-child(10) {
+            animation-delay: -0.9s;
+            top: 66.24px;
+            left: 36.8px;
+        }
+
+        .lds-default div:nth-child(11) {
+            animation-delay: -1s;
+            top: 62.29579px;
+            left: 51.52px;
+        }
+
+        .lds-default div:nth-child(12) {
+            animation-delay: -1.1s;
+            top: 51.52px;
+            left: 62.29579px;
+        }
+
+        @keyframes lds-default {
+
+            0%,
+            20%,
+            80%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.5);
+            }
+        }
+
+        .loading-div {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .pagination-container button {
+            background-color: #2a2a3d;
+            border: none;
+            color: white;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border-radius: 12px;
+            font-size: 16px;
+            min-width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pagination-container button.arrow {
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 50%;
+            background-color: grey;
+        }
+
+        .pagination-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .pagination-container button.active {
+            background-color: #ffab00;
+        }
+
+        .pagination-container button.disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .rr-text {
+            font-size: 11px;
+            color: #a2f3a2;
+            font-weight: normal;
+            margin-left: 5px;
         }
     </style>
 </head>
 
 <body>
-    <h1>Leaderboard</h1>
+    <h1>Valorant Leaderboard</h1>
+
+    <div class="select-container">
+        <div class="platform-select">
+            <button class="platform-button first selected" id="pc-button" data-value="pc">
+                <i class="fa-solid fa-laptop"></i>
+            </button>
+            <button class="platform-button second" id="console-button" style="padding: 10px;" data-value="console">
+                <div>
+                    <i class="fa-brands fa-playstation"></i> +
+                    <i class="fa-brands fa-xbox"></i>
+                </div>
+            </button>
+        </div>
+        <select id="region-select" class="region-select">
+            <option value="global">Global</option>
+            <option value="eu">Europe</option>
+            <option value="na">North America</option>
+            <option value="ap">Asia Pacific</option>
+            <option value="kr" class="pc">Korea</option>
+            <option value="br" class="pc">Brazil</option>
+            <option value="latam" class="pc">Latin America</option>
+        </select>
+    </div>
 
     <div class="search-container">
         <input type="text" id="search" placeholder="Search player by name..." autocomplete="off" />
@@ -165,117 +472,238 @@
     </div>
 
     <div class="leaderboard">
+        <div class="loading-div">
+            <div class="lds-default">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
         <ul id="leaderboard-list"></ul>
     </div>
 
-    <div class="pagination">
-        <button id="prev" disabled>Previous</button>
-        <span id="page-info">Page 1</span>
-        <button id="next">Next</button>
+    <div class="pagination-container">
+        <button id="prev" class="arrow disabled"><i class="fas fa-chevron-left"></i></button>
+        <button class="page-number active">1</button>
+        <button class="page-number">2</button>
+        <button class="page-number">3</button>
+        <button class="page-number">4</button>
+        <button class="page-number">5</button>
+        <button id="next" class="arrow"><i class="fas fa-chevron-right"></i></button>
     </div>
 
     <script>
-        fetch("https://valtools.fin-tech.com/api/leaderboard/pc/eu")
-            .then((res) => res.json())
-            .then((leaderboardData) => {
-                const itemsPerPage = 100;
-                let currentPage = 1;
-                const totalPages = Math.ceil(leaderboardData.length / itemsPerPage);
+        let leaderboardData = [];
+        const itemsPerPage = 100;
+        let currentPage = 1;
+        let maxPages = 100;
 
-                function renderPage(page) {
-                    const start = (page - 1) * itemsPerPage;
-                    const end = page * itemsPerPage;
-                    const pageItems = leaderboardData.slice(start, end);
+        function updatePagination() {
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(maxPages, startPage + 4);
 
-                    const list = document.getElementById("leaderboard-list");
-                    list.innerHTML = "";
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
 
-                    pageItems.forEach((item, index) => {
-                        const listItem = document.createElement("li");
-                        listItem.innerHTML = `
-                <span class="position">${start + index + 1}.</span>
-                <span class="name">${item.gameName ? `${item.gameName}#${item.tagLine}` : "-"
-                            }</span>
-                <div class="image-container">
-                    <img src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/${item.competitiveTier
-                            }/largeicon.png" alt="${item.name}">
-                    <span class="info-text">${item.rankedRating}</span>
-                </div>
-            `;
-                        list.appendChild(listItem);
-                    });
+            const pageButtons = document.querySelectorAll('.page-number');
 
-                    document.getElementById(
-                        "page-info"
-                    ).textContent = `Page ${currentPage}`;
-                    document.getElementById("prev").disabled = currentPage === 1;
-                    document.getElementById("next").disabled =
-                        currentPage === totalPages;
+            pageButtons.forEach((button, index) => {
+                const pageNumber = startPage + index;
+                button.textContent = pageNumber;
+                button.classList.toggle('active', pageNumber === currentPage);
+                button.style.display = pageNumber <= maxPages ? 'inline-block' : 'none';
+
+            });
+
+            document.getElementById('prev').classList.toggle('disabled', currentPage === 1);
+            document.getElementById('next').classList.toggle('disabled', currentPage === maxPages);
+        }
+
+        document.querySelectorAll('.page-number').forEach(button => {
+            button.addEventListener('click', () => {
+                currentPage = parseInt(button.textContent);
+                renderPage(leaderboardData, currentPage);
+                updatePagination();
+            });
+        });
+
+        document.getElementById("next").addEventListener("click", () => {
+            if (currentPage < Math.ceil(leaderboardData.length / itemsPerPage)) {
+                currentPage++;
+                renderPage(leaderboardData, currentPage);
+                updatePagination();
+            }
+        });
+
+        document.getElementById("prev").addEventListener("click", () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage(leaderboardData, currentPage);
+                updatePagination();
+            }
+        });
+
+        document.getElementById("search").addEventListener("input", function () {
+            document.getElementById("autocomplete-list").style.display = this.value ? "block" : "none";
+            const value = this.value.toLowerCase();
+            const suggestions = leaderboardData.filter((item) =>
+                (item.gameName ? item.gameName.toLowerCase() : "").includes(value)
+            );
+
+            const suggestionsList = document.getElementById("autocomplete-list");
+            suggestionsList.innerHTML = "";
+
+            if(!suggestions.length) {
+                document.getElementById("autocomplete-list").style.display = "none";
+            }
+
+            suggestions.forEach((suggestion) => {
+                const suggestionItem = document.createElement("div");
+                suggestionItem.textContent = `${suggestion.gameName ? suggestion.gameName : "-"}#${suggestion.tagLine}`;
+                suggestionItem.addEventListener("click", () => {
+                    document.getElementById("search").value = suggestion.gameName;
+                    suggestionsList.innerHTML = "";
+                    suggestionsList.style.display = "none";
+                    const index = leaderboardData.indexOf(suggestion);
+
+                    if (index !== -1) {
+                        const itemPosition = Math.floor(index / itemsPerPage) + 1;
+                        if (itemPosition !== currentPage) {
+                            currentPage = itemPosition;
+                            renderPage(leaderboardData, currentPage);
+                            updatePagination();
+                        }
+                        const listItems = document.querySelectorAll("#leaderboard-list li");
+                        listItems.forEach((item) => item.classList.remove("highlight"));
+                        listItems[index % itemsPerPage].scrollIntoView({ behavior: "smooth", block: "center" });
+                        listItems[index % itemsPerPage].classList.add("highlight");
+
+                        setTimeout(() => {
+                            const removeHighlight = () => {
+                                listItems[index % itemsPerPage].classList.remove('highlight');
+                            };
+
+                            document.addEventListener('scroll', removeHighlight);
+                            document.getElementById('search').addEventListener('input', removeHighlight);
+                            document.getElementById('prev').addEventListener('click', removeHighlight);
+                            document.getElementById('next').addEventListener('click', removeHighlight);
+                            setTimeout(removeHighlight, 5000);
+                        }, 1000);
+                    }
+                });
+                suggestionsList.appendChild(suggestionItem);
+            });
+        });
+
+        let region = "global";
+        let platform = "pc";
+
+        setLoading(true);
+        fetch(`https://valtools.fin-tech.com/api/leaderboard/${platform}/${region}`)
+            .then(res => res.json())
+            .then(data => {
+                maxPages = Math.ceil(data.length / itemsPerPage);
+                leaderboardData = data;
+                renderPage(leaderboardData, currentPage);
+                updatePagination();
+            });
+
+        document.getElementById("region-select").addEventListener("change", function () {
+            region = this.value;
+            setLoading(true);
+            fetch(`https://valtools.fin-tech.com/api/leaderboard/${platform}/${region}`)
+                .then(res => res.json())
+                .then(data => {
+                    maxPages = Math.ceil(data.length / itemsPerPage);
+                    leaderboardData = data;
+                    currentPage = 1;
+                    renderPage(leaderboardData, currentPage);
+                    updatePagination();
+                });
+        });
+
+        const platformButtons = document.querySelectorAll('.platform-button');
+        platformButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const platformValue = button.getAttribute('data-value');
+                platform = platformValue;
+                if(platformValue === 'console' && !['na', 'eu', 'ap', 'global'].includes(region)) {
+                    document.getElementById('region-select').value = 'global';
+                    region = 'global';
                 }
 
-                document.getElementById("prev").addEventListener("click", () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        renderPage(currentPage);
-                    }
-                });
+                if (platformValue === 'console') {
+                    document.querySelectorAll('.pc').forEach(option => option.style.display = 'none');
+                } else {
+                    document.querySelectorAll('.pc').forEach(option => option.style.display = 'block');
+                }
 
-                document.getElementById("next").addEventListener("click", () => {
-                    if (currentPage < totalPages) {
-                        currentPage++;
-                        renderPage(currentPage);
-                    }
-                });
-
-                // Autocomplete search
-                const searchInput = document.getElementById("search");
-                const autocompleteList = document.getElementById("autocomplete-list");
-
-                searchInput.addEventListener('input', function () {
-                    const searchValue = searchInput.value.toLowerCase();
-                    autocompleteList.innerHTML = '';
-
-                    if (searchValue) {
-                        const filtered = leaderboardData.filter(item =>
-                            item.gameName && item.tagLine && (
-                                item.gameName.toLowerCase().startsWith(searchValue) ||
-                                (item.gameName + '#' + item.tagLine).toLowerCase().startsWith(searchValue)
-                            )
-                        );
-
-                        filtered.slice(0, 10).forEach(item => {
-                            const suggestion = document.createElement('div');
-                            suggestion.textContent = `${item.gameName}#${item.tagLine}`;
-                            suggestion.addEventListener('click', () => {
-                                const index = leaderboardData.findIndex(leader => leader.gameName === item.gameName && leader.tagLine === item.tagLine);
-                                const page = Math.floor(index / itemsPerPage) + 1;
-                                const rowIndexOnPage = index % itemsPerPage;
-
-                                currentPage = page;
-                                renderPage(currentPage);
-
-                                setTimeout(() => {
-                                    const listItems = document.querySelectorAll('.leaderboard li');
-                                    const targetRow = listItems[rowIndexOnPage];
-
-                                    if (targetRow) {
-                                        targetRow.classList.add('highlight');
-                                        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                                        setTimeout(() => {
-                                            targetRow.classList.remove('highlight');
-                                        }, 2000); // Mantener el resaltado durante 2 segundos
-                                    }
-                                }, 100);
-                            });
-                            autocompleteList.appendChild(suggestion);
-                        });
-                    }
-                });
-
-
-                renderPage(currentPage);
+                platformButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                setLoading(true);
+                fetch(`https://valtools.fin-tech.com/api/leaderboard/${platformValue}/${region}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        maxPages = Math.ceil(data.length / itemsPerPage);
+                        leaderboardData = data;
+                        currentPage = 1;
+                        renderPage(leaderboardData, currentPage);
+                        updatePagination();
+                    });
             });
+        });
+
+        setInterval(() => {
+            fetch(`https://valtools.fin-tech.com/api/leaderboard/${platform}/${region}`)
+                .then(res => res.json())
+                .then(data => {
+                    leaderboardData = data;
+                    renderPage(leaderboardData, currentPage);
+                });
+        }, 3e4);
+
+        function setLoading(display) {
+            document.querySelector('.loading-div').style.display = display ? 'flex' : 'none';
+            document.querySelector('.leaderboard ul').style.display = display ? 'none' : 'block';
+        }
+
+        function renderPage(data, page) {
+            const start = (page - 1) * itemsPerPage;
+            const end = page * itemsPerPage;
+            const pageItems = data.slice(start, end);
+            const list = document.getElementById("leaderboard-list");
+            list.innerHTML = "";
+
+            pageItems.forEach((item, index) => {
+                const listItem = document.createElement("li");
+                listItem.innerHTML = `
+            <span class="position">${start + index + 1}.</span>
+            <span class="name">${item.gameName ? `${item.gameName}#${item.tagLine}` : "-"}</span>
+            <div class="image-container">
+                <div class="rank-img">
+                    <img src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/${item.competitiveTier}/largeicon.png" alt="${item.name}">
+                </div>
+                <span class="info-text">${item.rankedRating} <span class="rr-text">RR</span></span>
+            </div>
+        `;
+                list.appendChild(listItem);
+            });
+
+            document.getElementById("prev").disabled = currentPage === 1;
+            document.getElementById("next").disabled = currentPage === Math.ceil(data.length / itemsPerPage);
+            setLoading(false);
+        }
+
     </script>
 </body>
 
