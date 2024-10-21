@@ -113,28 +113,23 @@ export async function processLeaderboard(
 
       if (result && result.data) {
         const pageData = result.data;
-        if (pageData.length < PAGE_SIZE) {
-          hasMorePages = false;
-          currentPage = 1;
-          break;
-        }
 
         accTable.push(...pageData);
 
         await handleRateLimit(result.rateLimitInfo);
         currentPage++;
-      }
 
-      if (
-        result.data.length < PAGE_SIZE ||
-        result.count <= result.data.pop().leaderboardRank
-      ) {
-        console.log("Leaderboard page size");
-        hasMorePages = false;
-        currentPage = 1;
-        break;
+        if (
+          result.data.length < PAGE_SIZE ||
+          result.count <= result.data.pop().leaderboardRank || pageData.length < PAGE_SIZE
+        ) {
+          console.log("Leaderboard page size");
+          hasMorePages = false;
+          currentPage = 1;
+          break;
+        }
       }
-    }
+      }
 
     await redis.set(
       `leaderboard:${platform}:${region}:thresholds`,
@@ -144,20 +139,6 @@ export async function processLeaderboard(
   }
   console.log(`Leaderboard for ${region} ${platform} has been processed.`);
   await saveFinalLeaderboardToRedis(accTable, thresholds, region, platform);
-}
-
-export async function saveLeaderboardToRedis(
-  page: number,
-  pageData: LeaderboardPlayer[],
-  region: string,
-  platform: "pc" | "console"
-) {
-  const pageKey = `leaderboard:${platform}:${region}:pages:${page}`;
-  try {
-    await redis.set(pageKey, JSON.stringify(pageData));
-  } catch (error) {
-    throw new Error(`Error caching leaderboard page ${page}: ${error}`);
-  }
 }
 
 async function saveFinalLeaderboardToRedis(
