@@ -75,9 +75,8 @@ server.on("listening", async () => {
   console.log(`Server is running on ${PORT}`);
   await connect(process.env.DATABASE_URI, { dbName: "main" });
   console.log("Connected to database");
-  processLeaderboard('ap', 'console')
-  //PCRegions.forEach((region) => processLeaderboard(region, "pc"));
-  //ConsoleRegions.forEach((region) => processLeaderboard(region, "console"));
+  PCRegions.forEach((region) => processLeaderboard(region, "pc"));
+  ConsoleRegions.forEach((region) => processLeaderboard(region, "console"));
 });
 
 server.on("request", app);
