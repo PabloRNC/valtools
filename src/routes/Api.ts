@@ -47,7 +47,7 @@ router.get('/leaderboard/:platform/:region', limiter, async(req, res) => {
   }
 
   const parsedLeaderboard = leaderboard.map((entry: any) => {
-    const { puuid, ...rest } = entry;
+    const { puuid, leaderboardRank, ...rest } = entry;
 
     return {
       ...rest
