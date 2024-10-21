@@ -121,7 +121,7 @@ export async function processLeaderboard(
 
         if (
           result.data.length < PAGE_SIZE ||
-          result.count <= result.data.pop().leaderboardRank || pageData.length < PAGE_SIZE
+          result.count <= result.data.pop().leaderboardRank
         ) {
           console.log("Leaderboard page size");
           hasMorePages = false;
@@ -148,18 +148,7 @@ async function saveFinalLeaderboardToRedis(
   platform: "pc" | "console",
 ) {
   try {
-    for (let i = 0; i < Math.floor(leaderboardArray.length / 200); i++) {
-      const pageKey = `leaderboard:${platform}:${region}:pages:${i + 1}`;
-      try {
-        await redis.set(
-          pageKey,
-          JSON.stringify(leaderboardArray.slice(i * 200, (i + 1) * 200))
-        );
-      } catch (error) {
-        throw new Error(`Error caching leaderboard page ${i + 1}: ${error}`);
-      }
-    }
-
+  
     await redis.set(
       `leaderboard:${platform}:${region}:thresholds`,
       JSON.stringify(thresholds)
