@@ -33,6 +33,8 @@ router.get("/callback", async (req, res) => {
       authData.refresh_token
     );
 
+    console.log(authData, user)
+
     const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
 
     const platforms = [];
