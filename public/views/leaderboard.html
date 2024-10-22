@@ -122,7 +122,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
+            padding: 5px 10px;
             margin: 5px 0;
             border-radius: 8px;
             background-color: #34344a;
@@ -529,9 +529,9 @@
 
     <script>
         let leaderboardData = [];
-        const itemsPerPage = 100;
+        const itemsPerPage = 50;
         let currentPage = 1;
-        let maxPages = 100;
+        let maxPages = 1000;
 
         function updatePagination() {
             let startPage = Math.max(1, currentPage - 2);
