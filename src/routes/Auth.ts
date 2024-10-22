@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verify } from "jsonwebtoken";
 import { connections } from "..";
-import { AuthJWTPayload, RiotRequestManager, RSORequestManager } from "../lib";
+import { AuthJWTPayload, RiotGetAccountShard, RiotRequestManager, RSORequestManager } from "../lib";
 import { User } from "../models";
 import "dotenv/config";
 
@@ -33,15 +33,21 @@ router.get("/callback", async (req, res) => {
       authData.refresh_token
     );
 
-    console.log(authData, user)
+    const shardInfo: RiotGetAccountShard | false = await RiotRequestManager.getAccountShard(user.puuid).catch(() => false);
 
-    const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
+    if(!shardInfo){
+      connection.socket.send(
+        JSON.stringify({ metadata: { type: "no_valorant_account" } })
+      );
+      connection.socket.close();
+      return res.redirect("/#noValorantAccount");
+    }
 
     const platforms = [];
 
     const pc = await RiotRequestManager.getMatchlist(
       user.puuid,
-      activeShard,
+      shardInfo.activeShard,
       "pc"
     ).catch(() => false);
 
@@ -49,7 +55,7 @@ router.get("/callback", async (req, res) => {
 
     const _console = await RiotRequestManager.getMatchlist(
       user.puuid,
-      activeShard,
+      shardInfo.activeShard,
       "console"
     ).catch(() => false);
 
@@ -68,7 +74,7 @@ router.get("/callback", async (req, res) => {
       {
         puuid:
           user.puuid,
-        region: activeShard,
+        region: shardInfo.activeShard,
         username: user.gameName,
         tag: user.tagLine,
         config: {
@@ -137,13 +143,21 @@ router.get("/mockcallback", async (req, res) => {
       authData.refresh_token
     );
 
-    const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
+    const shardInfo: RiotGetAccountShard | false = await RiotRequestManager.getAccountShard(user.puuid).catch(() => false);
+
+    if(!shardInfo){
+      connection.socket.send(
+        JSON.stringify({ metadata: { type: "no_valorant_account" } })
+      );
+      connection.socket.close();
+      return res.redirect("/#noValorantAccount");
+    }
 
     const platforms = [];
 
     const pc = await RiotRequestManager.getMatchlist(
       user.puuid,
-      activeShard,
+      shardInfo.activeShard,
       "pc"
     ).catch(() => false);
 
@@ -151,7 +165,7 @@ router.get("/mockcallback", async (req, res) => {
 
     const _console = await RiotRequestManager.getMatchlist(
       user.puuid,
-      activeShard,
+      shardInfo.activeShard,
       "console"
     ).catch(() => false);
 
@@ -170,7 +184,7 @@ router.get("/mockcallback", async (req, res) => {
       {
         puuid:
           user.puuid,
-        region: activeShard,
+        region: shardInfo.activeShard,
         username: user.gameName,
         tag: user.tagLine,
         config: {
