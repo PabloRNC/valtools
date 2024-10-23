@@ -26,13 +26,12 @@ export class RSORequestManager {
 
         const body = new URLSearchParams();
 
+        console.log(refreshToken)
+
         body.append('grant_type', 'refresh_token');
         body.append('refresh_token', refreshToken);
 
-        const response = await fetch(process.env.RSO_BASE_URL + 'token', { method: 'POST', body: JSON.stringify({
-            grant_type: 'refresh_token',
-            refresh_token: refreshToken
-        }), headers: {
+        const response = await fetch(process.env.RSO_BASE_URL + 'token', { method: 'POST', body, headers: {
             'Authorization': `Basic ${Buffer.from(`${process.env.RSO_CLIENT_ID}:${process.env.RSO_CLIENT_SECRET}`).toString('base64')}`,
             'Content-Type': 'application/x-www-form-urlencoded'
         }})
