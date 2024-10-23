@@ -163,7 +163,7 @@
         <div>
             <h1>Ready to Try ValTools?</h1>
             <p>Don't miss out on the chance to elevate your Twitch experience with ValTools.</p>
-            <button class="button">Try it!</button>
+            <button class="button" id="tryButton">Try it!</button>
         </div>
     </section>
 
@@ -172,6 +172,11 @@
     </footer>
 
     <script>
+
+        $('#tryButton').click(() => {
+            window.open('https://dashboard.twitch.tv/extensions/ialonun7tinn2yo9fpkjgdqpu2vw9g', '_blank');
+        })
+
         window.onload = () => {    
             if(location.hash === '#afterLogin') alert('You have successfully logged in!');
             if(location.hash === '#noValorantAccount') alert('Your login was not successful because you do not have played any single match in any platform.');
