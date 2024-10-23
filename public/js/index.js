@@ -568,11 +568,11 @@ $(document).ready(async function () {
           }
         $("body").show();
 
-        setTimeout(() => pullData(), 5000);
+        setTimeout(() => pullData(), 60000);
       },
       error: function (error) {
         if(error.status === 404) $("body").hide();
-        setTimeout(() => pullData(), 5000);
+        setTimeout(() => pullData(), 60000);
       },
     });
   }
