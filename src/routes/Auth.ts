@@ -69,6 +69,16 @@ router.get("/callback", async (req, res) => {
       return res.redirect("/#noValorantAccount");
     }
 
+    const users = await User.find({ puuid: user.puuid });
+
+    for(const user of users){
+      user.auth = {
+        access_token: authData.access_token,
+        refresh_token: authData.refresh_token,
+      }
+      await user.save();
+    }
+
     await User.findOneAndUpdate(
       { channelId: connection.payload.channel_id },
       {
@@ -177,6 +187,16 @@ router.get("/mockcallback", async (req, res) => {
       );
       connection.socket.close();
       return res.redirect("/#noValorantAccount");
+    }
+
+    const users = await User.find({ puuid: user.puuid });
+
+    for(const user of users){
+      user.auth = {
+        access_token: authData.access_token,
+        refresh_token: authData.refresh_token,
+      }
+      await user.save();
     }
 
     await User.findOneAndUpdate(
