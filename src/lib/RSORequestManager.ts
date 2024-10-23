@@ -34,7 +34,7 @@ export class RSORequestManager {
             'Content-Type': 'application/x-www-form-urlencoded'
         }})
 
-        if(!response.ok) throw new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}`);
+        if(!response.ok) throw new Error(`${response.statusText}\nURL: ${response.url}\nStatus: ${response.status}\n${await response.text()}\n${body}`);
 
         return await response.json() as RSOPostAuthCodeResponse;
 
