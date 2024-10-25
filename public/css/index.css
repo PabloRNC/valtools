@@ -23,6 +23,7 @@ html {
 }
 
 .nav-tabs .nav-item {
+  cursor: pointer;
   flex: 1;
   min-width: 120px;
 }

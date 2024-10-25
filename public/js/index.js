@@ -1,4 +1,72 @@
-window.addEventListener("load", async () => {
+window.addEventListener("DOMContentLoaded", async () => {
+
+  function enableDrag() {
+    const container = document.querySelector(".container-wrapper");
+  
+    let isDragging = false;
+    let startX, startY, initialX, initialY;
+  
+    container.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      initialX = container.offsetLeft;
+      initialY = container.offsetTop;
+      document.body.style.cursor = "move";
+    });
+  
+    document.addEventListener("mousemove", (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+  
+        container.style.left = `${initialX + deltaX}px`;
+        container.style.top = `${initialY + deltaY}px`;
+      }
+    });
+  
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+      document.body.style.cursor = "default";
+    });
+  }
+  
+  $('#closeButton').on('click', () => {
+    window.Twitch.ext.actions.minimize();
+  })
+  
+  $('#playerInfoTab').on('click', () => {
+    document.getElementById("mainContent").style.display = "flex";
+    document.getElementById("matchHistory").style.display = "none";
+    document.getElementById("cMatchHistory").style.display = "none";
+    setActiveTab("playerInfoTab");
+  })
+  
+  $('#casualMatchesTab').on('click', () =>{
+    document.getElementById("mainContent").style.display = "none";
+    document.getElementById("matchHistory").style.display = "flex";
+    document.getElementById("cMatchHistory").style.display = "none";
+    setActiveTab("casualMatchesTab");
+  })
+  
+  $('#competitiveMatchesTab').on('click', () => {
+    document.getElementById("mainContent").style.display = "none";
+    document.getElementById("matchHistory").style.display = "none";
+    document.getElementById("cMatchHistory").style.display = "flex";
+    setActiveTab("competitiveMatchesTab");
+  })
+  
+  function setActiveTab(selectedTabId) {
+    document.querySelectorAll(".nav-link").forEach((tab) => {
+      tab.classList.remove("active");
+    });
+  
+    document.getElementById(selectedTabId).classList.add("active");
+  }
+  
+  enableDrag();
+  
+  
   const helper = window.Twitch.ext;
 
   const borders = await fetch("https://valorant-api.com/v1/levelborders")
@@ -574,71 +642,4 @@ window.addEventListener("load", async () => {
       },
     });
   }
-
-  function enableDrag() {
-    const container = document.querySelector(".container-wrapper");
-
-    let isDragging = false;
-    let startX, startY, initialX, initialY;
-
-    container.addEventListener("mousedown", (e) => {
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      initialX = container.offsetLeft;
-      initialY = container.offsetTop;
-      document.body.style.cursor = "move";
-    });
-
-    document.addEventListener("mousemove", (e) => {
-      if (isDragging) {
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
-
-        container.style.left = `${initialX + deltaX}px`;
-        container.style.top = `${initialY + deltaY}px`;
-      }
-    });
-
-    document.addEventListener("mouseup", () => {
-      isDragging = false;
-      document.body.style.cursor = "default";
-    });
-  }
-
-  $('#closeButton').on('click', () => {
-    window.Twitch.ext.actions.minimize();
-  })
-  
-  $('#playerInfoTab').on('click', () => {
-    document.getElementById("mainContent").style.display = "flex";
-    document.getElementById("matchHistory").style.display = "none";
-    document.getElementById("cMatchHistory").style.display = "none";
-    setActiveTab("playerInfoTab");
-  })
-  
-  $('#casualMatchesTab').on('click', () =>{
-    document.getElementById("mainContent").style.display = "none";
-    document.getElementById("matchHistory").style.display = "flex";
-    document.getElementById("cMatchHistory").style.display = "none";
-    setActiveTab("casualMatchesTab");
-  })
-  
-  $('#competitiveMatchesTab').on('click', () => {
-    document.getElementById("mainContent").style.display = "none";
-    document.getElementById("matchHistory").style.display = "none";
-    document.getElementById("cMatchHistory").style.display = "flex";
-    setActiveTab("competitiveMatchesTab");
-  })
-  
-  function setActiveTab(selectedTabId) {
-    document.querySelectorAll(".nav-link").forEach((tab) => {
-      tab.classList.remove("active");
-    });
-  
-    document.getElementById(selectedTabId).classList.add("active");
-  }
-
-  enableDrag();
 });
-
