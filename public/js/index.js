@@ -1,4 +1,4 @@
-$(document).ready(async function () {
+window.addEventListener("load", async () => {
   const helper = window.Twitch.ext;
 
   const borders = await fetch("https://valorant-api.com/v1/levelborders")
@@ -31,8 +31,6 @@ $(document).ready(async function () {
       firstAuth = false;
     }
   });
-
-  while (!channelId || !token) return;
 
   async function pullData() {
     $.ajax({
@@ -166,7 +164,7 @@ $(document).ready(async function () {
 
             
             $(path).attr({
-              d: "M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16M8 15c-1.657 0-3.314-.5-4-1.5",
+              d: "M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16m0-1",
             });
             
 
@@ -568,11 +566,11 @@ $(document).ready(async function () {
           }
         $("body").show();
 
-        setTimeout(() => pullData(), 60000);
+        setTimeout(() => pullData(), 35000);
       },
       error: function (error) {
         if(error.status === 404) $("body").hide();
-        setTimeout(() => pullData(), 60000);
+        setTimeout(() => pullData(), 35000);
       },
     });
   }
