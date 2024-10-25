@@ -90,7 +90,6 @@ export async function processLeaderboard(
   platform: "pc" | "console"
 ) {
   const actId = await RiotRequestManager.getActId(region);
-  console.log(actId, region)
   const accTable = [];
   let currentPage = 1;
   let hasMorePages = true;
