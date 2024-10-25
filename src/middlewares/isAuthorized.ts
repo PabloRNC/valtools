@@ -23,7 +23,7 @@ export function isAuthorized(req: Request, res: Response, next: NextFunction) {
 
     next();
   } catch (error) {
-    console.error(error);
+    console.log("Error in isAuthorized middleware", req.url);
     return res.status(401).json({ status: 401, error: "Unauthorized" });
   }
 }
