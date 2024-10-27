@@ -89,7 +89,10 @@ export async function processLeaderboard(
   region: string,
   platform: "pc" | "console"
 ) {
-  const actId = await RiotRequestManager.getActId(region);
+  const actId = await RiotRequestManager.getActId(region).catch(() => null);
+
+  if(!actId) processLeaderboard(region, platform);
+
   const accTable = [];
   let currentPage = 1;
   let hasMorePages = true;
@@ -98,7 +101,7 @@ export async function processLeaderboard(
   while (hasMorePages) {
     for (let i = 0; i < 10 && hasMorePages; i++) {
       const result = await fetchLeaderboardPage(
-        actId,
+        actId!,
         currentPage,
         region,
         platform

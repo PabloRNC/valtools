@@ -221,7 +221,7 @@ $(document).ready(async function () {
                       }`
                     )
                     .text(
-                      match.won ? "VICTORY" : match.drawn ? "drawn" : "DEFEAT"
+                      match.won ? "VICTORY" : match.drawn ? "DRAWN" : "DEFEAT"
                     )
                 )
                 .append($("<div>").addClass("score").text(match.score))
@@ -405,7 +405,7 @@ $(document).ready(async function () {
                         }`
                       )
                       .text(
-                        match.won ? "VICTORY" : match.drawn ? "draw" : "DEFEAT"
+                        match.won ? "VICTORY" : match.drawn ? "DRAWN" : "DEFEAT"
                       )
                   )
                   .append($("<div>").addClass("score").text(match.score))

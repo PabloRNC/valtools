@@ -335,7 +335,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                 .append(
                   $("<div>")
                     .addClass(`status-text ${match.won ? "victory" : match.drawn? "draw" : "defeat"}`)
-                    .text(match.won ? "VICTORY" : match.drawn ? "drawn" : "DEFEAT")
+                    .text(match.won ? "VICTORY" : match.drawn ? "DRAWN" : "DEFEAT")
                 )
                 .append($("<div>").addClass("score").text(match.score))
                 .append($("<div>").addClass("mode").text(displayName));
@@ -511,7 +511,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                       .addClass(
                         `status-text ${match.won ? "victory" : match.drawn ? "draw" : "defeat"}`
                       )
-                      .text(match.won ? "VICTORY" : match.drawn ? "draw" : "DEFEAT")
+                      .text(match.won ? "VICTORY" : match.drawn ? "DRAWN" : "DEFEAT")
                   )
                   .append($("<div>").addClass("score").text(match.score))
                   .append($("<div>").addClass("mode").text("competitive"));
