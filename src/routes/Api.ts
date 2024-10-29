@@ -80,8 +80,6 @@ router.get('/players/mock', async(req, res) => {
     user.config.platform
   );
 
-  console.log(riotMatchlist, matchlist)
-
   if (!matchlist.data.length && !matchlist.competitiveMatches.length)
     return res
       .status(404)

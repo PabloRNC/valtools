@@ -100,7 +100,7 @@ export async function checkMatchlist(
     }>;
 
     if(parsedCache.updateAt > Date.now())
-      return { data: parsedCache.data, cached: true };
+      return { data: parsedCache.data, cached: true, riotMatchlist: data };
   }
 
   const accData = await parseMatches(puuid, region, platform, data.history.filter((x) => x.queueId !== parseQueue("competitive", platform)).slice(0, 3));
