@@ -5,10 +5,10 @@ import { redis } from "..";
 import {
   RedisMatchlist,
   RiotRequestManager,
-  RiotGetValorantContent,
   RiotGetMatchResponse,
   Redis,
-  BaseMatch
+  BaseMatch,
+  RiotGetValorantMatchlist
 } from "../lib";
 
 
@@ -40,7 +40,7 @@ router.get("/:channel_id", async (req, res) => {
     await user.save();
   }
 
-  const { data: matchlist, cached } = await checkMatchlist(
+  const { data: matchlist, cached, riotMatchlist } = await checkMatchlist(
     user.puuid,
     user.region,
     user.config.platform
@@ -60,9 +60,9 @@ router.get("/:channel_id", async (req, res) => {
 
   const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.config.platform);
 
-  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, user.config.daily.only_competitive) : null;
+  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, riotMatchlist!, user.config.daily.only_competitive) : null;
 
-  res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).json({
+  res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).status(200).json({
     matchlist: user.config.match_history ? matchlist.data : null,
     mmrHistory: user.config.match_history ? matchlist.competitiveMatches : null,
     daily,
@@ -76,6 +76,7 @@ export async function checkMatchlist(
   region: string,
   platform: "pc" | "console"
 ) {
+
   let data;
 
   try {
@@ -114,6 +115,7 @@ export async function checkMatchlist(
       competitiveMatches: accCompetitive
     },
     cached: false,
+    riotMatchlist: data
   };
 }
 
@@ -189,10 +191,7 @@ export function parseKey(key: string, platform: string) {
   return `${platform}_${key}`;
 }
 
-export async function checkDaily(puuid: string, region: string, platform: "pc" | "console", only_competitive: boolean) {
-
-
-  const matchlist = await RiotRequestManager.getMatchlist(puuid, region, platform);
+export async function checkDaily(puuid: string, region: string, platform: "pc" | "console", matchlist: RiotGetValorantMatchlist, only_competitive: boolean) {
 
   const daily = matchlist.history.sort((a, b) => b.gameStartTimeMillis - a.gameStartTimeMillis).filter((x) => {
    

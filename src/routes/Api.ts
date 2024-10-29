@@ -6,6 +6,7 @@ import { ConsoleRegions, PCRegions, RiotRequestManager } from '../lib';
 import { User } from '../models';
 import { isAuthorized } from '../middlewares';
 import { redis } from '..';
+import { readFileSync } from 'fs';
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
@@ -73,7 +74,7 @@ router.get('/players/mock', async(req, res) => {
     await user.save();
   }
 
-  const { data: matchlist, cached } = await checkMatchlist(
+  const { data: matchlist, cached, riotMatchlist } = await checkMatchlist(
     user.puuid,
     user.region,
     user.config.platform
@@ -93,7 +94,7 @@ router.get('/players/mock', async(req, res) => {
 
   const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.config.platform);
 
-  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, user.config.daily.only_competitive) : null;
+  const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, riotMatchlist!, user.config.daily.only_competitive) : null;
 
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).json({
     matchlist: user.config.match_history ? matchlist.data : null,
