@@ -62,6 +62,8 @@ router.get("/:channel_id", async (req, res) => {
 
   const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, riotMatchlist!, user.config.daily.only_competitive) : null;
 
+  console.log(daily);
+
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).status(200).json({
     matchlist: user.config.match_history ? matchlist.data : null,
     mmrHistory: user.config.match_history ? matchlist.competitiveMatches : null,
