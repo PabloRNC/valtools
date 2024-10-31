@@ -62,8 +62,6 @@ router.get("/:channel_id", async (req, res) => {
 
   const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, riotMatchlist!, user.config.daily.only_competitive) : null;
 
-  console.log(daily);
-
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).status(200).json({
     matchlist: user.config.match_history ? matchlist.data : null,
     mmrHistory: user.config.match_history ? matchlist.competitiveMatches : null,
@@ -239,7 +237,7 @@ export async function checkDaily(puuid: string, region: string, platform: "pc" |
         if(!acc) return acc;
         if(x.won) acc = false;
         return acc;
-      }, true)) return;
+      }, true)) continue;
 
       obj.streak = 0;
       obj.lost++;
@@ -248,8 +246,6 @@ export async function checkDaily(puuid: string, region: string, platform: "pc" |
     await redis.set(`match:${match.matchId}`, JSON.stringify(matchData));
 
   }
-
-  console.log(obj, 'from function');
 
   return obj;
 }
@@ -260,6 +256,7 @@ export async function parseMatches(
   platform: "pc" | "console",
   matches: BaseMatch[]
 ) {
+  
   const accData: RedisMatchlist[] = [];
 
   for (const match of matches) {
