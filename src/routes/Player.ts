@@ -249,7 +249,7 @@ export async function checkDaily(puuid: string, region: string, platform: "pc" |
 
   }
 
-  await redis.set(parseKey(`daily:${puuid}`, platform), JSON.stringify(obj));
+  console.log(obj, 'from function');
 
   return obj;
 }
