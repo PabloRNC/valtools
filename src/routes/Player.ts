@@ -86,10 +86,10 @@ export async function checkMatchlist(
       competitiveMatches: RedisMatchlist[];
     }>;
 
-    const parsedRawMatchlist = JSON.parse((await redis.get(parseKey(`raw_matchlist:${puuid}`, platform)))!) as RiotGetValorantMatchlist;
+    const matchlistCache = await redis.get(parseKey(`raw_matchlist:${puuid}`, platform));
 
     if(parsedCache.updateAt > Date.now())
-      return { data: parsedCache.data, cached: true, riotMatchlist: parsedRawMatchlist };
+      return { data: parsedCache.data, cached: true, riotMatchlist: matchlistCache ? JSON.parse(matchlistCache) as RiotGetValorantMatchlist : await RiotRequestManager.getMatchlist(puuid, region, platform) };
   }
 
   let data;
