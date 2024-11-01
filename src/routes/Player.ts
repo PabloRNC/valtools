@@ -277,7 +277,7 @@ export async function parseMatches(
     const player = matchData.players.find((x) => x.puuid === puuid)!;
 
     const isDeathmatch =
-      matchData.matchInfo.queueId === parseQueue("deathmatch", platform) || matchData.matchInfo.gameMode === 'Game/GameModes/Deathmatch/DeathmatchGameMode.DeathmatchGameMode_C';
+      matchData.matchInfo.queueId === parseQueue("deathmatch", platform) || matchData.matchInfo.gameMode === '/Game/GameModes/Deathmatch/DeathmatchGameMode.DeathmatchGameMode_C';
 
     const team = matchData.teams.find((x) => x.teamId === player.teamId)!;
 
