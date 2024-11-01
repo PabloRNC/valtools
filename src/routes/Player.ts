@@ -60,6 +60,7 @@ router.get("/:channel_id", async (req, res) => {
 
   const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.config.platform);
 
+
   const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, riotMatchlist!, user.config.daily.only_competitive) : null;
 
   res.setHeader('Cache', `${cached ? 'HIT' : 'MISS'}`).status(200).json({
@@ -77,6 +78,20 @@ export async function checkMatchlist(
   platform: "pc" | "console"
 ) {
 
+  const cache = await redis.get(parseKey(`matchlist:${puuid}`, platform));
+
+  if(cache){
+    const parsedCache = JSON.parse(cache) as Redis<{
+      data: RedisMatchlist[];
+      competitiveMatches: RedisMatchlist[];
+    }>;
+
+    const parsedRawMatchlist = JSON.parse((await redis.get(parseKey(`raw_matchlist:${puuid}`, platform)))!) as RiotGetValorantMatchlist;
+
+    if(parsedCache.updateAt > Date.now())
+      return { data: parsedCache.data, cached: true, riotMatchlist: parsedRawMatchlist };
+  }
+
   let data;
 
   try {
@@ -91,17 +106,6 @@ export async function checkMatchlist(
     };
   }
 
-  const cache = await redis.get(parseKey(`matchlist:${puuid}`, platform));
-
-  if(cache){
-    const parsedCache = JSON.parse(cache) as Redis<{
-      data: RedisMatchlist[];
-      competitiveMatches: RedisMatchlist[];
-    }>;
-
-    if(parsedCache.updateAt > Date.now())
-      return { data: parsedCache.data, cached: true, riotMatchlist: data };
-  }
 
   const accData = await parseMatches(puuid, region, platform, data.history.filter((x) => x.queueId !== parseQueue("competitive", platform)).slice(0, 3));
   const accCompetitive = await parseMatches(puuid, region, platform, data.history.filter((x) => x.queueId === parseQueue("competitive", platform)).slice(0, 3));
@@ -109,6 +113,8 @@ export async function checkMatchlist(
 
   await redis.set(parseKey(`matchlist:${puuid}`, platform), JSON.stringify({ data: { data: accData, competitiveMatches: accCompetitive }, updateAt: Date.now() + 1000 * 60 }));
   
+  await redis.set(parseKey(`raw_matchlist:${puuid}`, platform), JSON.stringify(data));
+
   return {
     data: {
       data: accData,
