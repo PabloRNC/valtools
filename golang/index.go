@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
 )
 
 type Player struct {
@@ -44,6 +42,7 @@ const (
 var (
 	redisClient *redis.Client
 	ctx         = context.Background()
+	allDataMap  = make(map[string]map[string]interface{})
 )
 
 func init() {
@@ -143,68 +142,62 @@ func fetchLeaderboardPage(actId string, page int, region, platform string) (*Lea
 	return &data, nil
 }
 
-func savePlayersToRedis(players []Player, region, platform string, page int) error {
-	key := fmt.Sprintf("leaderboard:%s:%s:page:%d", platform, region, page)
-	redisClient.Del(ctx, key)
-	pipeline := redisClient.Pipeline()
+func savePlayersAndTierDetailsToRedis(region, platform string) error {
+	keyPlayers := fmt.Sprintf("leaderboard:%s:%s:total", platform, region)
+	keyTierDetails := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
 
-	for _, player := range players {
-		data, _ := json.Marshal(player)
-		pipeline.RPush(ctx, key, string(data))
+	allData := allDataMap[fmt.Sprintf("%s.%s", platform, region)]
+	playersData, _ := json.Marshal(allData["players"])
+	tierDetailsData, _ := json.Marshal(allData["tierDetails"])
+
+	if err := redisClient.Set(ctx, keyPlayers, playersData, 0).Err(); err != nil {
+		return err
 	}
-
-	_, err := pipeline.Exec(ctx)
-	return err
-}
-
-func saveTierDetailsToRedis(tierDetails map[string]interface{}, region, platform string) error {
-	key := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
-	data, _ := json.Marshal(tierDetails)
-	return redisClient.Set(ctx, key, data, 0).Err()
+	return redisClient.Set(ctx, keyTierDetails, tierDetailsData, 0).Err()
 }
 
 func processLeaderboardForRegion(actId, region, platform string) {
+	allDataMapKey := fmt.Sprintf("%s.%s", platform, region)
 
-	tierDetails := make(map[string]interface{})
+	allDataMap[allDataMapKey] = map[string]interface{}{
+		"tierDetails": map[string]interface{}{},
+		"players":     []Player{},
+	}
 
 	for {
 		page := 1
 		for {
-			players, err := fetchLeaderboardPage(actId, page, region, platform)
+			playersPage, err := fetchLeaderboardPage(actId, page, region, platform)
 			if err != nil {
 				fmt.Printf("Error fetching page %d for %s (%s): %v\n", page, platform, region, err)
 				return
 			}
 
-			if len(players.Players) == 0 {
-				saveTierDetailsToRedis(tierDetails, region, platform)
+			if len(playersPage.Players) == 0 {
+				err := savePlayersAndTierDetailsToRedis(region, platform)
+				if err != nil {
+					fmt.Printf("Error saving data for %s (%s): %v\n", region, platform, err)
+				} else {
+					fmt.Println("All players and tier details saved to Redis.")
+				}
 				fmt.Println("No more players found. Exiting...")
+				allDataMap[allDataMapKey] = map[string]interface{}{
+					"tierDetails": map[string]interface{}{},
+					"players":     []Player{},
+				}
 				break
 			}
 
-			tierDetails = players.TierDetails
+			allDataMap[allDataMapKey]["players"] = append(allDataMap[allDataMapKey]["players"].([]Player), playersPage.Players...)
+			allDataMap[allDataMapKey]["tierDetails"] = playersPage.TierDetails
 
-			fmt.Printf("Page %d fetched for %s (%s) - Players: %d\n", page, platform, region, len(players.Players))
-
-			err = savePlayersToRedis(players.Players, region, platform, page)
-			if err != nil {
-				fmt.Printf("Error saving page %d for %s (%s): %v\n", page, platform, region, err)
-			}
+			fmt.Printf("Page %d fetched for %s (%s) - Players: %d\n", page, platform, region, len(playersPage.Players))
 
 			page++
 		}
 		fmt.Printf("Processing complete for %s (%s). Restarting after 2 minutes...\n", platform, region)
 		time.Sleep(2 * time.Minute)
 	}
-}
-
-func printSystemStats() {
-	vmStat, _ := mem.VirtualMemory()
-	cpuStat, _ := cpu.Percent(0, false)
-
-	fmt.Printf("\nSystem Stats:\n")
-	fmt.Printf("Memory Usage: %.2f%%\n", vmStat.UsedPercent)
-	fmt.Printf("CPU Usage: %.2f%%\n", cpuStat[0])
 }
 
 func processAllRegions() {
@@ -238,6 +231,5 @@ func processAllRegions() {
 
 func main() {
 	processAllRegions()
-	printSystemStats()
 	fmt.Println("All leaderboards processed.")
 }
