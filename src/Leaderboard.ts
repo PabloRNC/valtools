@@ -162,7 +162,7 @@ async function saveFinalLeaderboardToRedis(
       JSON.stringify(leaderboardArray)
     );
 
-    setTimeout(() => processLeaderboard(region, platform), 30000);
+    setTimeout(() => processLeaderboard(region, platform), 3 * 60 * 1000);
   } catch (error) {
     throw new Error(`Error caching final leaderboard: ${error}`);
   }
