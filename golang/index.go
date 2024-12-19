@@ -31,6 +31,11 @@ type LeaderboardResponse struct {
 	TierDetails  map[string]interface{} `json:"tierDetails"`
 }
 
+type Act struct {
+	ID       string `json:"id"`
+	IsActive bool   `json:"isActive"`
+}
+
 const (
 	pageSize       = 200
 	redisKeyFormat = "leaderboard:%s:%s"
@@ -39,7 +44,6 @@ const (
 var (
 	redisClient *redis.Client
 	ctx         = context.Background()
-	actId       = "dcde7346-4085-de4f-c463-2489ed47983b"
 )
 
 func init() {
@@ -48,10 +52,10 @@ func init() {
 	redisDB, _ := strconv.Atoi(os.Getenv("REDIS_DB"))
 
 	if redisAddr == "" {
-		redisAddr = "localhost:6379" // Default host si no se proporciona
+		redisAddr = "localhost:6379"
 	}
 	if redisPass == "" {
-		redisPass = "" // Default sin contraseña
+		redisPass = ""
 	}
 
 	redisClient = redis.NewClient(&redis.Options{
@@ -59,6 +63,41 @@ func init() {
 		Password: redisPass,
 		DB:       redisDB,
 	})
+}
+
+func fetchActiveActID(region string) (string, error) {
+	url := fmt.Sprintf("https://%s.api.riotgames.com/val/content/v1/contents", region)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("X-Riot-Token", os.Getenv("RIOT_API_KEY"))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var content struct {
+		Acts []Act `json:"acts"`
+	}
+
+	err = json.Unmarshal(body, &content)
+	if err != nil {
+		return "", err
+	}
+
+	for _, act := range content.Acts {
+		if act.IsActive {
+			return act.ID, nil
+		}
+	}
+
+	return "", fmt.Errorf("no active act found")
 }
 
 func fetchLeaderboardPage(actId string, page int, region, platform string) (*LeaderboardResponse, error) {
@@ -86,7 +125,7 @@ func fetchLeaderboardPage(actId string, page int, region, platform string) (*Lea
 			waitTime, _ := strconv.Atoi(retryAfter)
 			fmt.Printf("Rate limit reached for %s (%s). Waiting for %d seconds...\n", platform, region, waitTime)
 			time.Sleep(time.Duration(waitTime) * time.Second)
-			return fetchLeaderboardPage(actId, page, region, platform) // Recursión para volver a intentar después de la espera
+			return fetchLeaderboardPage(actId, page, region, platform)
 		}
 	}
 
@@ -118,7 +157,16 @@ func savePlayersToRedis(players []Player, region, platform string, page int) err
 	return err
 }
 
+func saveTierDetailsToRedis(tierDetails map[string]interface{}, region, platform string) error {
+	key := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
+	data, _ := json.Marshal(tierDetails)
+	return redisClient.Set(ctx, key, data, 0).Err()
+}
+
 func processLeaderboardForRegion(actId, region, platform string) {
+
+	tierDetails := make(map[string]interface{})
+
 	for {
 		page := 1
 		for {
@@ -129,9 +177,12 @@ func processLeaderboardForRegion(actId, region, platform string) {
 			}
 
 			if len(players.Players) == 0 {
+				saveTierDetailsToRedis(tierDetails, region, platform)
 				fmt.Println("No more players found. Exiting...")
 				break
 			}
+
+			tierDetails = players.TierDetails
 
 			fmt.Printf("Page %d fetched for %s (%s) - Players: %d\n", page, platform, region, len(players.Players))
 
@@ -143,7 +194,7 @@ func processLeaderboardForRegion(actId, region, platform string) {
 			page++
 		}
 		fmt.Printf("Processing complete for %s (%s). Restarting after 2 minutes...\n", platform, region)
-		time.Sleep(2 * time.Minute) // Esperar 2 minutos antes de volver a ejecutar
+		time.Sleep(2 * time.Minute)
 	}
 }
 
@@ -160,18 +211,29 @@ func processAllRegions() {
 	pcRegions := []string{"na", "eu", "ap", "kr", "br", "latam"}
 	consoleRegions := []string{"na", "eu", "ap"}
 
-	// Procesar regiones para PC
 	for _, region := range pcRegions {
-		go processLeaderboardForRegion(actId, region, "pc")
+		go func(region string) {
+			actId, err := fetchActiveActID(region)
+			if err != nil {
+				fmt.Printf("Error fetching active actId for %s: %v\n", region, err)
+				return
+			}
+			processLeaderboardForRegion(actId, region, "pc")
+		}(region)
 	}
 
-	// Procesar regiones para Console
 	for _, region := range consoleRegions {
-		go processLeaderboardForRegion(actId, region, "console")
+		go func(region string) {
+			actId, err := fetchActiveActID(region)
+			if err != nil {
+				fmt.Printf("Error fetching active actId for %s: %v\n", region, err)
+				return
+			}
+			processLeaderboardForRegion(actId, region, "console")
+		}(region)
 	}
 
-	// Esperar a que todos los procesos terminen
-	time.Sleep(10 * time.Minute) // Ajustar según el tiempo esperado para que los procesos terminen
+	time.Sleep(10 * time.Minute)
 }
 
 func main() {
