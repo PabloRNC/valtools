@@ -99,6 +99,17 @@ func fetchActiveActID(region string) (string, error) {
 	return "", fmt.Errorf("no active act found")
 }
 
+func retryFetchActiveActID(region string) string {
+	for {
+		actId, err := fetchActiveActID(region)
+		if err == nil {
+			return actId
+		}
+		fmt.Printf("Failed to fetch actId for region %s: %v. Retrying in 30 seconds...\n", region, err)
+		time.Sleep(30 * time.Second)
+	}
+}
+
 func fetchLeaderboardPage(actId string, page int, region, platform string) (*LeaderboardResponse, error) {
 	url := fmt.Sprintf("https://%s.api.riotgames.com/val/%sranked/v1/leaderboards/by-act/%s?size=%d&startIndex=%d&platformType=playstation",
 		region,
@@ -156,7 +167,8 @@ func savePlayersAndTierDetailsToRedis(region, platform string) error {
 	return redisClient.Set(ctx, keyTierDetails, tierDetailsData, 0).Err()
 }
 
-func processLeaderboardForRegion(actId, region, platform string) {
+func processLeaderboardForRegion(region, platform string) {
+	actId := retryFetchActiveActID(region)
 	allDataMapKey := fmt.Sprintf("%s.%s", platform, region)
 
 	allDataMap[allDataMapKey] = map[string]interface{}{
@@ -178,10 +190,13 @@ func processLeaderboardForRegion(actId, region, platform string) {
 				if err != nil {
 					fmt.Printf("Error saving data for %s (%s): %v\n", region, platform, err)
 				} else {
-					fmt.Printf("All players and tier details saved to Redis for %s (%s).\n", region, platform)
+					fmt.Println("All players and tier details saved to Redis.")
 				}
-				fmt.Printf("Finished processing all players for %s (%s). Restarting after 2 minutes...\n", region, platform)
-				time.Sleep(2 * time.Minute)
+				fmt.Println("No more players found. Exiting...")
+				allDataMap[allDataMapKey] = map[string]interface{}{
+					"tierDetails": map[string]interface{}{},
+					"players":     []Player{},
+				}
 				break
 			}
 
@@ -192,6 +207,8 @@ func processLeaderboardForRegion(actId, region, platform string) {
 
 			page++
 		}
+		fmt.Printf("Processing complete for %s (%s). Restarting after 2 minutes...\n", platform, region)
+		time.Sleep(2 * time.Minute)
 	}
 }
 
@@ -201,36 +218,20 @@ func processAllRegions() {
 
 	for _, region := range pcRegions {
 		go func(region string) {
-			for {
-				actId, err := fetchActiveActID(region)
-				if err != nil {
-					fmt.Printf("Error fetching active actId for %s: %v\n", region, err)
-					time.Sleep(5 * time.Minute)
-					continue
-				}
-				processLeaderboardForRegion(actId, region, "pc")
-			}
+			processLeaderboardForRegion(region, "pc")
 		}(region)
 	}
 
 	for _, region := range consoleRegions {
 		go func(region string) {
-			for {
-				actId, err := fetchActiveActID(region)
-				if err != nil {
-					fmt.Printf("Error fetching active actId for %s: %v\n", region, err)
-					time.Sleep(5 * time.Minute)
-					continue
-				}
-				processLeaderboardForRegion(actId, region, "console")
-			}
+			processLeaderboardForRegion(region, "console")
 		}(region)
 	}
 
-	select {}
+	time.Sleep(10 * time.Minute)
 }
 
 func main() {
 	processAllRegions()
-	fmt.Println("Program running indefinitely.")
+	fmt.Println("All leaderboards processed.")
 }
