@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -35,15 +36,58 @@ type Act struct {
 }
 
 const (
-	pageSize       = 200
-	redisKeyFormat = "leaderboard:%s:%s"
+	pageSize = 200
 )
 
 var (
 	redisClient *redis.Client
 	ctx         = context.Background()
 	allDataMap  = make(map[string]map[string]interface{})
+	wg          sync.WaitGroup
 )
+
+func fetchLeaderboardPage(actId string, page int, region, platform string) (*LeaderboardResponse, error) {
+	url := fmt.Sprintf("https://%s.api.riotgames.com/val/%sranked/v1/leaderboards/by-act/%s?size=%d&startIndex=%d&platformType=playstation",
+		region,
+		map[string]string{"console": "console/", "pc": ""}[platform],
+		actId,
+		pageSize,
+		(page-1)*pageSize,
+	)
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("X-Riot-Token", os.Getenv("RIOT_API_KEY"))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		retryAfter := resp.Header.Get("Retry-After")
+		if retryAfter != "" {
+			waitTime, _ := strconv.Atoi(retryAfter)
+			fmt.Printf("Rate limit reached for %s (%s). Waiting for %d seconds...\n", platform, region, waitTime)
+			time.Sleep(time.Duration(waitTime) * time.Second)
+			return fetchLeaderboardPage(actId, page, region, platform)
+		}
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var data LeaderboardResponse
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &data, nil
+}
 
 func init() {
 	redisAddr := os.Getenv("REDIS_HOST")
@@ -91,10 +135,7 @@ func fetchActiveActID(region string) string {
 			Acts []Act `json:"acts"`
 		}
 
-		var raw any
-
 		err = json.Unmarshal(body, &content)
-		err = json.Unmarshal(body, &raw)
 		if err != nil {
 			fmt.Printf("Error unmarshaling JSON for %s: %v. Retrying in 30 seconds...\n", region, err)
 			time.Sleep(30 * time.Second)
@@ -107,54 +148,9 @@ func fetchActiveActID(region string) string {
 			}
 		}
 
-		fmt.Print(raw)
-
 		fmt.Printf("No active act found for %s. Retrying in 30 seconds...\n", region)
 		time.Sleep(30 * time.Second)
 	}
-}
-
-func fetchLeaderboardPage(actId string, page int, region, platform string) (*LeaderboardResponse, error) {
-	url := fmt.Sprintf("https://%s.api.riotgames.com/val/%sranked/v1/leaderboards/by-act/%s?size=%d&startIndex=%d&platformType=playstation",
-		region,
-		map[string]string{"console": "console/", "pc": ""}[platform],
-		actId,
-		pageSize,
-		(page-1)*pageSize,
-	)
-
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Add("X-Riot-Token", os.Getenv("RIOT_API_KEY"))
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 429 {
-		retryAfter := resp.Header.Get("Retry-After")
-		if retryAfter != "" {
-			waitTime, _ := strconv.Atoi(retryAfter)
-			fmt.Printf("Rate limit reached for %s (%s). Waiting for %d seconds...\n", platform, region, waitTime)
-			time.Sleep(time.Duration(waitTime) * time.Second)
-			return fetchLeaderboardPage(actId, page, region, platform)
-		}
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var data LeaderboardResponse
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		return nil, err
-	}
-
-	return &data, nil
 }
 
 func savePlayersAndTierDetailsToRedis(region, platform string) error {
@@ -172,6 +168,8 @@ func savePlayersAndTierDetailsToRedis(region, platform string) error {
 }
 
 func processLeaderboardForRegion(actId, region, platform string) {
+	defer wg.Done()
+
 	allDataMapKey := fmt.Sprintf("%s.%s", platform, region)
 
 	allDataMap[allDataMapKey] = map[string]interface{}{
@@ -195,11 +193,8 @@ func processLeaderboardForRegion(actId, region, platform string) {
 				} else {
 					fmt.Println("All players and tier details saved to Redis.")
 				}
-				fmt.Println("No more players found. Exiting...")
-				allDataMap[allDataMapKey] = map[string]interface{}{
-					"tierDetails": map[string]interface{}{},
-					"players":     []Player{},
-				}
+				fmt.Println("No more players found. Restarting region processing...")
+				time.Sleep(2 * time.Minute)
 				break
 			}
 
@@ -207,11 +202,8 @@ func processLeaderboardForRegion(actId, region, platform string) {
 			allDataMap[allDataMapKey]["tierDetails"] = playersPage.TierDetails
 
 			fmt.Printf("Page %d fetched for %s (%s) - Players: %d\n", page, platform, region, len(playersPage.Players))
-
 			page++
 		}
-		fmt.Printf("Processing complete for %s (%s). Restarting after 2 minutes...\n", platform, region)
-		time.Sleep(2 * time.Minute)
 	}
 }
 
@@ -219,24 +211,27 @@ func processAllRegions() {
 	pcRegions := []string{"na", "eu", "ap", "kr", "br", "latam"}
 	consoleRegions := []string{"na", "eu", "ap"}
 
-	for _, region := range pcRegions {
-		go func(region string) {
-			actId := fetchActiveActID(region)
-			processLeaderboardForRegion(actId, region, "pc")
-		}(region)
-	}
+	for {
+		for _, region := range pcRegions {
+			wg.Add(1)
+			go func(region string) {
+				actId := fetchActiveActID(region)
+				processLeaderboardForRegion(actId, region, "pc")
+			}(region)
+		}
 
-	for _, region := range consoleRegions {
-		go func(region string) {
-			actId := fetchActiveActID(region)
-			processLeaderboardForRegion(actId, region, "console")
-		}(region)
-	}
+		for _, region := range consoleRegions {
+			wg.Add(1)
+			go func(region string) {
+				actId := fetchActiveActID(region)
+				processLeaderboardForRegion(actId, region, "console")
+			}(region)
+		}
 
-	time.Sleep(10 * time.Minute)
+		wg.Wait()
+	}
 }
 
 func main() {
 	processAllRegions()
-	fmt.Println("All leaderboards processed.")
 }
