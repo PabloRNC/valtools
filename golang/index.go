@@ -73,7 +73,6 @@ func fetchActiveActID(region string) string {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Printf(err.Error())
 			fmt.Printf("Error fetching active actId for %s: %v. Retrying in 30 seconds...\n", region, err)
 			time.Sleep(30 * time.Second)
 			continue
@@ -92,7 +91,10 @@ func fetchActiveActID(region string) string {
 			Acts []Act `json:"acts"`
 		}
 
+		var raw any
+
 		err = json.Unmarshal(body, &content)
+		err = json.Unmarshal(body, &raw)
 		if err != nil {
 			fmt.Printf("Error unmarshaling JSON for %s: %v. Retrying in 30 seconds...\n", region, err)
 			time.Sleep(30 * time.Second)
@@ -104,6 +106,8 @@ func fetchActiveActID(region string) string {
 				return act.ID
 			}
 		}
+
+		fmt.Print(raw)
 
 		fmt.Printf("No active act found for %s. Retrying in 30 seconds...\n", region)
 		time.Sleep(30 * time.Second)
