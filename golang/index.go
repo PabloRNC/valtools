@@ -65,47 +65,46 @@ func init() {
 }
 
 func fetchActiveActID(region string) (string, error) {
-	url := fmt.Sprintf("https://%s.api.riotgames.com/val/content/v1/contents", region)
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Add("X-Riot-Token", os.Getenv("RIOT_API_KEY"))
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	var content struct {
-		Acts []Act `json:"acts"`
-	}
-
-	err = json.Unmarshal(body, &content)
-	if err != nil {
-		return "", err
-	}
-
-	for _, act := range content.Acts {
-		if act.IsActive {
-			return act.ID, nil
-		}
-	}
-
-	return "", fmt.Errorf("no active act found")
-}
-
-func retryFetchActiveActID(region string) string {
 	for {
-		actId, err := fetchActiveActID(region)
-		if err == nil {
-			return actId
+		url := fmt.Sprintf("https://%s.api.riotgames.com/val/content/v1/contents", region)
+		client := &http.Client{}
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Add("X-Riot-Token", os.Getenv("RIOT_API_KEY"))
+
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Printf("Error fetching active actId for %s: %v. Retrying in 30 seconds...\n", region, err)
+			time.Sleep(30 * time.Second)
+			continue
 		}
-		fmt.Printf("Failed to fetch actId for region %s: %v. Retrying in 30 seconds...\n", region, err)
+
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Printf("Error reading response body for %s: %v. Retrying in 30 seconds...\n", region, err)
+			time.Sleep(30 * time.Second)
+			continue
+		}
+
+		var content struct {
+			Acts []Act `json:"acts"`
+		}
+
+		err = json.Unmarshal(body, &content)
+		if err != nil {
+			fmt.Printf("Error unmarshaling JSON for %s: %v. Retrying in 30 seconds...\n", region, err)
+			time.Sleep(30 * time.Second)
+			continue
+		}
+
+		for _, act := range content.Acts {
+			if act.IsActive {
+				return act.ID, nil
+			}
+		}
+
+		fmt.Printf("No active act found for %s. Retrying in 30 seconds...\n", region)
 		time.Sleep(30 * time.Second)
 	}
 }
@@ -167,8 +166,7 @@ func savePlayersAndTierDetailsToRedis(region, platform string) error {
 	return redisClient.Set(ctx, keyTierDetails, tierDetailsData, 0).Err()
 }
 
-func processLeaderboardForRegion(region, platform string) {
-	actId := retryFetchActiveActID(region)
+func processLeaderboardForRegion(actId, region, platform string) {
 	allDataMapKey := fmt.Sprintf("%s.%s", platform, region)
 
 	allDataMap[allDataMapKey] = map[string]interface{}{
@@ -218,13 +216,23 @@ func processAllRegions() {
 
 	for _, region := range pcRegions {
 		go func(region string) {
-			processLeaderboardForRegion(region, "pc")
+			actId, err := fetchActiveActID(region)
+			if err != nil {
+				fmt.Printf("Error fetching active actId for %s: %v\n", region, err)
+				return
+			}
+			processLeaderboardForRegion(actId, region, "pc")
 		}(region)
 	}
 
 	for _, region := range consoleRegions {
 		go func(region string) {
-			processLeaderboardForRegion(region, "console")
+			actId, err := fetchActiveActID(region)
+			if err != nil {
+				fmt.Printf("Error fetching active actId for %s: %v\n", region, err)
+				return
+			}
+			processLeaderboardForRegion(actId, region, "console")
 		}(region)
 	}
 
