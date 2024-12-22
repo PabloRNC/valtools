@@ -64,7 +64,7 @@ func init() {
 	})
 }
 
-func fetchActiveActID(region string) (string, error) {
+func fetchActiveActID(region string) string {
 	for {
 		url := fmt.Sprintf("https://%s.api.riotgames.com/val/content/v1/contents", region)
 		client := &http.Client{}
@@ -73,6 +73,7 @@ func fetchActiveActID(region string) (string, error) {
 
 		resp, err := client.Do(req)
 		if err != nil {
+			fmt.Printf(err.Error())
 			fmt.Printf("Error fetching active actId for %s: %v. Retrying in 30 seconds...\n", region, err)
 			time.Sleep(30 * time.Second)
 			continue
@@ -100,7 +101,7 @@ func fetchActiveActID(region string) (string, error) {
 
 		for _, act := range content.Acts {
 			if act.IsActive {
-				return act.ID, nil
+				return act.ID
 			}
 		}
 
@@ -216,22 +217,14 @@ func processAllRegions() {
 
 	for _, region := range pcRegions {
 		go func(region string) {
-			actId, err := fetchActiveActID(region)
-			if err != nil {
-				fmt.Printf("Error fetching active actId for %s: %v\n", region, err)
-				return
-			}
+			actId := fetchActiveActID(region)
 			processLeaderboardForRegion(actId, region, "pc")
 		}(region)
 	}
 
 	for _, region := range consoleRegions {
 		go func(region string) {
-			actId, err := fetchActiveActID(region)
-			if err != nil {
-				fmt.Printf("Error fetching active actId for %s: %v\n", region, err)
-				return
-			}
+			actId := fetchActiveActID(region)
 			processLeaderboardForRegion(actId, region, "console")
 		}(region)
 	}
