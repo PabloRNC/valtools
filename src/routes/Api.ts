@@ -35,8 +35,9 @@ router.get('/leaderboard/:platform/:region', limiter, async(req, res) => {
     for(const reg of obj[platform as 'pc' | 'console']) {
       const data = JSON.parse(await redis.get(`leaderboard:${platform}:${reg}:total`) as string);
       if(!data) continue;
-      if(!leaderboard) leaderboard = data;
-      else leaderboard = leaderboard.concat(data);
+      if(!leaderboard){
+        leaderboard = data
+      } else leaderboard = leaderboard.concat(data);
     }
     
     leaderboard.sort((a, b) => b.rankedRating - a.rankedRating);
