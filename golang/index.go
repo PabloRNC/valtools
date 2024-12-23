@@ -170,7 +170,6 @@ func savePlayersAndTierDetailsToRedis(region, platform string) error {
 	playersData, _ := json.Marshal(allData["players"])
 	tierDetailsData, _ := json.Marshal(allData["tierDetails"])
 
-	// Envía la tarea al canal para que se procese
 	queueChannel <- func() {
 		_ = redisClient.Del(ctx, keyPlayers, keyTierDetails).Err()
 		_ = redisClient.Set(ctx, keyPlayers, playersData, 0).Err()
