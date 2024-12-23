@@ -40,11 +40,39 @@ const (
 )
 
 var (
-	redisClient *redis.Client
-	ctx         = context.Background()
-	allDataMap  = make(map[string]map[string]interface{})
-	wg          sync.WaitGroup
+	redisClient  *redis.Client
+	ctx          = context.Background()
+	allDataMap   = make(map[string]map[string]interface{})
+	wg           sync.WaitGroup
+	queueChannel chan func()
 )
+
+func redisWorker() {
+	for task := range queueChannel {
+		task()
+	}
+}
+
+func init() {
+	redisAddr := os.Getenv("REDIS_HOST")
+	redisPass := os.Getenv("REDIS_PASS")
+	redisDB, _ := strconv.Atoi(os.Getenv("REDIS_DB"))
+
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	if redisPass == "" {
+		redisPass = ""
+	}
+
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: redisPass,
+		DB:       redisDB,
+	})
+	queueChannel = make(chan func(), 100)
+	go redisWorker()
+}
 
 func fetchLeaderboardPage(actId string, page int, region, platform string) (*LeaderboardResponse, error) {
 	url := fmt.Sprintf("https://%s.api.riotgames.com/val/%sranked/v1/leaderboards/by-act/%s?size=%d&startIndex=%d&platformType=playstation",
@@ -87,25 +115,6 @@ func fetchLeaderboardPage(actId string, page int, region, platform string) (*Lea
 	}
 
 	return &data, nil
-}
-
-func init() {
-	redisAddr := os.Getenv("REDIS_HOST")
-	redisPass := os.Getenv("REDIS_PASS")
-	redisDB, _ := strconv.Atoi(os.Getenv("REDIS_DB"))
-
-	if redisAddr == "" {
-		redisAddr = "localhost:6379"
-	}
-	if redisPass == "" {
-		redisPass = ""
-	}
-
-	redisClient = redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: redisPass,
-		DB:       redisDB,
-	})
 }
 
 func fetchActiveActID(region string) string {
@@ -157,18 +166,18 @@ func savePlayersAndTierDetailsToRedis(region, platform string) error {
 	keyPlayers := fmt.Sprintf("leaderboard:%s:%s:total", platform, region)
 	keyTierDetails := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
 
-	if err := redisClient.Del(ctx, keyPlayers, keyTierDetails).Err(); err != nil {
-		return err
-	}
-
 	allData := allDataMap[fmt.Sprintf("%s.%s", platform, region)]
 	playersData, _ := json.Marshal(allData["players"])
 	tierDetailsData, _ := json.Marshal(allData["tierDetails"])
 
-	if err := redisClient.Set(ctx, keyPlayers, playersData, 0).Err(); err != nil {
-		return err
+	// Envía la tarea al canal para que se procese
+	queueChannel <- func() {
+		_ = redisClient.Del(ctx, keyPlayers, keyTierDetails).Err()
+		_ = redisClient.Set(ctx, keyPlayers, playersData, 0).Err()
+		_ = redisClient.Set(ctx, keyTierDetails, tierDetailsData, 0).Err()
 	}
-	return redisClient.Set(ctx, keyTierDetails, tierDetailsData, 0).Err()
+
+	return nil
 }
 
 func processLeaderboardForRegion(actId, region, platform string) {
@@ -191,13 +200,8 @@ func processLeaderboardForRegion(actId, region, platform string) {
 			}
 
 			if len(playersPage.Players) == 0 {
-				err := savePlayersAndTierDetailsToRedis(region, platform)
-				if err != nil {
-					fmt.Printf("Error saving data for %s (%s): %v\n", region, platform, err)
-				} else {
-					fmt.Println("All players and tier details saved to Redis.")
-				}
-				fmt.Println("No more players found. Restarting region processing...")
+				_ = savePlayersAndTierDetailsToRedis(region, platform)
+				fmt.Println("All players and tier details saved to Redis.")
 				time.Sleep(2 * time.Minute)
 				break
 			}
