@@ -157,6 +157,10 @@ func savePlayersAndTierDetailsToRedis(region, platform string) error {
 	keyPlayers := fmt.Sprintf("leaderboard:%s:%s:total", platform, region)
 	keyTierDetails := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
 
+	if err := redisClient.Del(ctx, keyPlayers, keyTierDetails).Err(); err != nil {
+		return err
+	}
+
 	allData := allDataMap[fmt.Sprintf("%s.%s", platform, region)]
 	playersData, _ := json.Marshal(allData["players"])
 	tierDetailsData, _ := json.Marshal(allData["tierDetails"])
