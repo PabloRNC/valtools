@@ -161,82 +161,98 @@ func fetchActiveActID(region string) string {
 	}
 }
 
-/*func savePlayersAndTierDetailsToRedis(region, platform string) error {
-	keyPlayers := fmt.Sprintf("leaderboard:%s:%s:total", platform, region)
-	keyTierDetails := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
-
-	allData := allDataMap[fmt.Sprintf("%s.%s", platform, region)]
-	playersData, _ := json.Marshal(allData["players"])
-	tierDetailsData, _ := json.Marshal(allData["tierDetails"])
-
-	queueChannel <- func() {
-		_ = redisClient.Del(ctx, keyPlayers, keyTierDetails).Err()
-		_ = redisClient.Set(ctx, keyPlayers, playersData, 0).Err()
-		_ = redisClient.Set(ctx, keyTierDetails, tierDetailsData, 0).Err()
-	}
-
-	return nil
-}*/
-
-func processLeaderboardForRegion(actId, region, platform string) {
-	defer wg.Done()
+func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
+	page := 1
+	totalKey := fmt.Sprintf("leaderboard:%s:%s:total", platform, region)
 
 	for {
-		page := 1
-		for {
-			playersPage, err := fetchLeaderboardPage(actId, page, region, platform)
-			if err != nil {
-				fmt.Printf("Error fetching page %d for %s (%s): %v\n", page, platform, region, err)
-				return
-			}
-
-			if len(playersPage.Players) == 0 {
-				fmt.Println("All players and tier details saved to Redis.")
-				time.Sleep(2 * time.Minute)
-				break
-			}
-
-			key := fmt.Sprintf("leaderboard:%s:%s:page:%d", platform, region, page)
-			thresholdsKey := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
-
-			redisClient.Del(ctx, key)
-			redisClient.Del(ctx, thresholdsKey)
-			playersData, _ := json.Marshal(playersPage.Players)
-			thresholdsData, _ := json.Marshal(playersPage.TierDetails)
-			_ = redisClient.Set(ctx, key, playersData, 0).Err()
-			_ = redisClient.Set(ctx, thresholdsKey, thresholdsData, 0).Err()
-
-			fmt.Printf("Page %d fetched for %s (%s) - Players: %d\n", page, platform, region, len(playersPage.Players))
-			page++
+		playersPage, err := fetchLeaderboardPage(actId, page, region, platform)
+		if err != nil {
+			fmt.Printf("Error fetching page %d for %s (%s): %v\n", page, platform, region, err)
+			return
 		}
+
+		if len(playersPage.Players) == 0 {
+			break
+		}
+
+		pageKey := fmt.Sprintf("leaderboard:%s:%s:page:%d", platform, region, page)
+		playersData, _ := json.Marshal(playersPage.Players)
+		err = redisClient.Set(ctx, pageKey, playersData, 0).Err()
+		if err != nil {
+			fmt.Printf("Error saving page %d to Redis for %s (%s): %v\n", page, platform, region, err)
+			return
+		}
+
+		fmt.Printf("Saved page for %s (%s): %d\n", platform, region, page)
+
+		page++
 	}
+
+	luaScript := `
+		local totalKey = KEYS[1]
+		local pageKeys = ARGV
+		local result = ""
+		for _, key in ipairs(pageKeys) do
+			local value = redis.call("GET", key)
+			if value then
+				result = result .. value
+			end
+		end
+		redis.call("SET", totalKey, result)
+		return #pageKeys
+	`
+
+	var pageKeys []string
+	for i := 1; i < page; i++ {
+		pageKeys = append(pageKeys, fmt.Sprintf("leaderboard:%s:%s:page:%d", platform, region, i))
+	}
+
+	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey}, pageKeys).Result()
+	if err != nil {
+		fmt.Printf("Error concatenating pages to Redis for %s (%s): %v\n", platform, region, err)
+		return
+	}
+
+	fmt.Printf("All pages concatenated and saved to %s\n", totalKey)
 }
 
-func processAllRegions() {
-	pcRegions := []string{"na", "eu", "ap", "kr", "br", "latam"}
-	consoleRegions := []string{"na", "eu", "ap"}
-
+func processRegion(region, platform string, timeout time.Duration) {
 	for {
-		for _, region := range pcRegions {
-			wg.Add(1)
-			go func(region string) {
-				actId := fetchActiveActID(region)
-				processLeaderboardForRegion(actId, region, "pc")
-			}(region)
-		}
-
-		for _, region := range consoleRegions {
-			wg.Add(1)
-			go func(region string) {
-				actId := fetchActiveActID(region)
-				processLeaderboardForRegion(actId, region, "console")
-			}(region)
-		}
-
-		wg.Wait()
+		actId := fetchActiveActID(region)
+		saveAndConcatenatePagesToRedis(region, platform, actId)
+		time.Sleep(timeout)
 	}
 }
 
 func main() {
-	processAllRegions()
+	pcRegions := []string{"na", "eu", "ap", "kr", "br", "latam"}
+	consoleRegions := []string{"na", "eu", "ap"}
+
+	timeoutMap := map[string]time.Duration{
+		"na":    2 * time.Minute,
+		"eu":    2 * time.Minute,
+		"ap":    2 * time.Minute,
+		"kr":    2 * time.Minute,
+		"br":    2 * time.Minute,
+		"latam": 2 * time.Minute,
+	}
+
+	for _, region := range pcRegions {
+		wg.Add(1)
+		go func(region string) {
+			defer wg.Done()
+			processRegion(region, "pc", timeoutMap[region])
+		}(region)
+	}
+
+	for _, region := range consoleRegions {
+		wg.Add(1)
+		go func(region string) {
+			defer wg.Done()
+			processRegion(region, "console", timeoutMap[region])
+		}(region)
+	}
+
+	wg.Wait()
 }
