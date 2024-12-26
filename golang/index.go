@@ -222,10 +222,10 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 		err := redisClient.Del(ctx, pageKey).Err()
 		if err != nil {
 			fmt.Printf("Error deleting temporary page %s: %v\n", pageKey, err)
-		} else {
-			fmt.Printf("Deleted temporary page %s\n", pageKey)
 		}
 	}
+
+	fmt.Printf("All temporary pages deleted\n")
 }
 
 func processRegion(region, platform string, timeout time.Duration) {
