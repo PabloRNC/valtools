@@ -42,7 +42,6 @@ const (
 var (
 	redisClient  *redis.Client
 	ctx          = context.Background()
-	allDataMap   = make(map[string]map[string]interface{})
 	wg           sync.WaitGroup
 	queueChannel chan func()
 )
@@ -162,7 +161,7 @@ func fetchActiveActID(region string) string {
 	}
 }
 
-func savePlayersAndTierDetailsToRedis(region, platform string) error {
+/*func savePlayersAndTierDetailsToRedis(region, platform string) error {
 	keyPlayers := fmt.Sprintf("leaderboard:%s:%s:total", platform, region)
 	keyTierDetails := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
 
@@ -177,17 +176,10 @@ func savePlayersAndTierDetailsToRedis(region, platform string) error {
 	}
 
 	return nil
-}
+}*/
 
 func processLeaderboardForRegion(actId, region, platform string) {
 	defer wg.Done()
-
-	allDataMapKey := fmt.Sprintf("%s.%s", platform, region)
-
-	allDataMap[allDataMapKey] = map[string]interface{}{
-		"tierDetails": map[string]interface{}{},
-		"players":     []Player{},
-	}
 
 	for {
 		page := 1
@@ -199,14 +191,20 @@ func processLeaderboardForRegion(actId, region, platform string) {
 			}
 
 			if len(playersPage.Players) == 0 {
-				_ = savePlayersAndTierDetailsToRedis(region, platform)
 				fmt.Println("All players and tier details saved to Redis.")
 				time.Sleep(2 * time.Minute)
 				break
 			}
 
-			allDataMap[allDataMapKey]["players"] = append(allDataMap[allDataMapKey]["players"].([]Player), playersPage.Players...)
-			allDataMap[allDataMapKey]["tierDetails"] = playersPage.TierDetails
+			key := fmt.Sprintf("leaderboard:%s:%s:page:%d", platform, region, page)
+			thresholdsKey := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
+
+			redisClient.Del(ctx, key)
+			redisClient.Del(ctx, thresholdsKey)
+			playersData, _ := json.Marshal(playersPage.Players)
+			thresholdsData, _ := json.Marshal(playersPage.TierDetails)
+			_ = redisClient.Set(ctx, key, playersData, 0).Err()
+			_ = redisClient.Set(ctx, thresholdsKey, thresholdsData, 0).Err()
 
 			fmt.Printf("Page %d fetched for %s (%s) - Players: %d\n", page, platform, region, len(playersPage.Players))
 			page++
