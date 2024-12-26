@@ -164,6 +164,9 @@ func fetchActiveActID(region string) string {
 func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 	page := 1
 	totalKey := fmt.Sprintf("leaderboard:%s:%s:total", platform, region)
+	thresholdsKey := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
+
+	var allPageKeys []string
 
 	for {
 		playersPage, err := fetchLeaderboardPage(actId, page, region, platform)
@@ -173,6 +176,8 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 		}
 
 		if len(playersPage.Players) == 0 {
+			redisClient.Set(ctx, thresholdsKey, playersPage.TierDetails, 0)
+			fmt.Printf("Saved threshold for %s (%s)\n", platform, region)
 			break
 		}
 
@@ -185,6 +190,8 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 		}
 
 		fmt.Printf("Saved page for %s (%s): %d\n", platform, region, page)
+
+		allPageKeys = append(allPageKeys, pageKey)
 
 		page++
 	}
@@ -203,18 +210,22 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 		return #pageKeys
 	`
 
-	var pageKeys []string
-	for i := 1; i < page; i++ {
-		pageKeys = append(pageKeys, fmt.Sprintf("leaderboard:%s:%s:page:%d", platform, region, i))
-	}
-
-	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey}, pageKeys).Result()
+	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey}, allPageKeys).Result()
 	if err != nil {
 		fmt.Printf("Error concatenating pages to Redis for %s (%s): %v\n", platform, region, err)
 		return
 	}
 
 	fmt.Printf("All pages concatenated and saved to %s\n", totalKey)
+
+	for _, pageKey := range allPageKeys {
+		err := redisClient.Del(ctx, pageKey).Err()
+		if err != nil {
+			fmt.Printf("Error deleting temporary page %s: %v\n", pageKey, err)
+		} else {
+			fmt.Printf("Deleted temporary page %s\n", pageKey)
+		}
+	}
 }
 
 func processRegion(region, platform string, timeout time.Duration) {
