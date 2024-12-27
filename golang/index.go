@@ -205,14 +205,15 @@ for _, key in ipairs(pageKeys) do
     local value = redis.call("GET", key)
     if value then
         local pageData = cjson.decode(value)
-        for _, item in ipairs(pageData) do
-            table.insert(result, item)
+        for i = 1, #pageData do
+            table.insert(result, pageData[i])
         end
     end
 end
 
 redis.call("SET", totalKey, cjson.encode(result))
 return #result
+
 	`
 
 	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey}, allPageKeys).Result()
