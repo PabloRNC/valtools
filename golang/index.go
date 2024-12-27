@@ -198,16 +198,21 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 
 	luaScript := `
 		local totalKey = KEYS[1]
-		local pageKeys = ARGV
-		local result = ""
-		for _, key in ipairs(pageKeys) do
-			local value = redis.call("GET", key)
-			if value then
-				result = result .. value
-			end
-		end
-		redis.call("SET", totalKey, result)
-		return #pageKeys
+local pageKeys = ARGV
+local result = {}
+
+for _, key in ipairs(pageKeys) do
+    local value = redis.call("GET", key)
+    if value then
+        local pageData = cjson.decode(value)
+        for _, item in ipairs(pageData) do
+            table.insert(result, item)
+        end
+    end
+end
+
+redis.call("SET", totalKey, cjson.encode(result))
+return #result
 	`
 
 	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey}, allPageKeys).Result()
