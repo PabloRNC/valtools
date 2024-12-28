@@ -132,8 +132,6 @@ export async function checkMMR(
   matchlist: RedisMatchlist[],
 ) {
 
-  console.log(puuid)
-
   const lastMatch = matchlist[0];
 
   const actId = await RiotRequestManager.getActId(region);
