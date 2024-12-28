@@ -132,11 +132,13 @@ export async function checkMMR(
   matchlist: RedisMatchlist[],
 ) {
 
+  console.log(puuid)
+
   const lastMatch = matchlist[0];
 
   const actId = await RiotRequestManager.getActId(region);
 
-  if(lastMatch.seasonId !== actId) return { tier: 0, rr: null, leaderboard_rank: null, threshold: null };
+  if(lastMatch?.seasonId !== actId) return { tier: 0, rr: null, leaderboard_rank: null, threshold: null };
 
   if(lastMatch.competitiveTier < 24) return { tier: lastMatch.competitiveTier, rr: null, leaderboard_rank: null, threshold: null };
   
