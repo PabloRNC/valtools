@@ -5,7 +5,7 @@ import { connections } from ".";
 import { JWTPayload, SessionAuth, WebSocketMessage } from "./lib";
 
 export function WebSocketManager(socket: WebSocket){
-    const identity = randomBytes(16).toString("hex");
+  const identity = randomBytes(16).toString("hex");
 
   socket.on("close", () => {
     connections.delete(identity);

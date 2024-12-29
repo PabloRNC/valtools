@@ -26,8 +26,6 @@ export class RSORequestManager {
 
         const body = new URLSearchParams();
 
-        console.log(refreshToken)
-
         body.append('grant_type', 'refresh_token');
         body.append('refresh_token', refreshToken);
 

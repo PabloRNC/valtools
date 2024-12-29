@@ -34,16 +34,18 @@ router.put("/", async (req, res) => {
       error: "Korean shard is not supported in console.",
     });
 
-  const account = await RiotRequestManager.getValorantAccount(
-    user.auth.access_token,
-    user.auth.refresh_token
-  );
+  try {
+    const account = await RiotRequestManager.getValorantAccount(
+      user.auth.access_token,
+      user.auth.refresh_token
+    );
 
-  if (user.tag !== account.tagLine || user.username !== account.gameName) {
-    user.tag = account.tagLine;
-    user.username = account.gameName;
-    await user.save();
-  }
+    if (user.tag !== account.tagLine || user.username !== account.gameName) {
+      user.tag = account.tagLine;
+      user.username = account.gameName;
+      await user.save();
+    }
+  } catch (e) {}
 
   await user.updateOne({
     region: shard.activeShard,

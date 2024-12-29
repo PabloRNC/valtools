@@ -3,6 +3,7 @@ import { verify } from "jsonwebtoken";
 import { JWTPayload } from "../lib";
 
 export function isAuthorized(req: Request, res: Response, next: NextFunction) {
+  
   const data = req.headers["authorization"];
 
   if (!data)

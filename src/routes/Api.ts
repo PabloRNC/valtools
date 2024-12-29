@@ -6,7 +6,6 @@ import { ConsoleRegions, PCRegions, RiotRequestManager } from '../lib';
 import { User } from '../models';
 import { isAuthorized } from '../middlewares';
 import { redis } from '..';
-import { readFileSync } from 'fs';
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
@@ -63,7 +62,6 @@ router.get('/leaderboard/:platform/:region', limiter, async(req, res) => {
 router.get('/players/mock', async(req, res) => {
 
   const user = await User.findOne({ channelId: 'mock' });
-
 
   if (!user)
     return res.status(404).json({ status: 404, error: "User not found" });

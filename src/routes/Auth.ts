@@ -8,6 +8,7 @@ import "dotenv/config";
 const router = Router();
 
 router.get("/callback", async (req, res) => {
+
   const { state, code } = req.query as { state: string; code: string };
 
   if (!state || !code) {
