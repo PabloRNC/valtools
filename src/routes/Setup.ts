@@ -98,6 +98,7 @@ router.get<"/", any, any, any, { channel_id: string }>(
       await user.save();
     }
 
+    try {
     const account = await RiotRequestManager.getValorantAccount(
       user.auth.access_token,
       user.auth.refresh_token
@@ -108,6 +109,8 @@ router.get<"/", any, any, any, { channel_id: string }>(
       user.username = account.gameName;
       await user.save();
     }
+
+  } catch (e) {}
 
     const { auth, ...rest } = user.toObject({ versionKey: false });
 
