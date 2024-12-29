@@ -60,6 +60,11 @@ router.get("/:channel_id", async (req, res) => {
 
   const player = await checkPlayer(matchlist.data[0] || matchlist.competitiveMatches[0], user.config.platform);
 
+  if(user.username !== player.username || user.tag !== player.tagLine){
+    user.username = player.username;
+    user.tag = player.tagLine;
+    await user.save();
+  }
 
   const daily = user.config.daily.enabled ? await checkDaily(user.puuid, user.region, user.config.platform, riotMatchlist!, user.config.daily.only_competitive) : null;
 
