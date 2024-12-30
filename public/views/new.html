@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../css/new.css">
+        <script src="../js/jquery.js"></script>
+        <script src="../js/new.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="nav">
+                <div class="navItem active" data-trigger="playerStats">Player Info</div>
+                <div class="navItem" data-trigger="casualMatches">Casual Matches</div>
+                <div class="navItem">Competitive Matches</div>
+            </div>
+            <div class="window playerStats">
+                <div class="playerRank">
+                    <div class="level"><span>128</span></div>
+                    <div class="rank">
+                        <div class="rankIcon"></div>
+                        <span class="rankName">Radiant #1</span>
+                        <div class="progressContainer">
+                            <div class="progressText">0/100<span class="rr">RR</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dailyBalance">
+                    <div class="dailyGraph">
+                        <div class="dailyText">0W/0L</div>
+                        <svg viewBox="0 0 36 36" class="circle-svg"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" class="circle-bg"></path><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke-dasharray="100, 100" class="circle-fg"></path></svg>
+                    </div>
+                    <div class="streakContainer">
+                        <svg class="streak" xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="#FF4500" viewBox="0 0 16 16">
+                            <path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16m0-1"></path>
+                            <text x="50%" y="70%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="8" fill="white">1</text>
+                          </svg>
+                    </div>
+                </div>
+                <div class="playerInfo">
+                    <div class="playerName">PabloRNC</div>
+                    <div class="playerTag">#4675</div>
+                    <div class="playerPlatform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="svgPlatform" viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M192 64C86 64 0 150 0 256S86 448 192 448l256 0c106 0 192-86 192-192s-86-192-192-192L192 64zM496 168a40 40 0 1 1 0 80 40 40 0 1 1 0-80zM392 304a40 40 0 1 1 80 0 40 40 0 1 1 -80 0zM168 200c0-13.3 10.7-24 24-24s24 10.7 24 24l0 32 32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0 0 32c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-32-32 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l32 0 0-32z"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="window casualMatches inactive">
+                <div class="match victory">
+                    <div class="filter"></div>
+                    <img class="matchBackground" src="https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/listviewicon.png"></img>
+                    <div class="matchWrapper">
+                    <img class="agent" src="https://media.valorant-api.com/agents/dade69b4-4f5a-8528-247b-219e5a1facd6/displayicon.png"></img>
+                    <div class="matchInfo">
+                        <div class="matchStatus victory">VICTORY</div>
+                        <div class="matchScore">13 - 0</div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

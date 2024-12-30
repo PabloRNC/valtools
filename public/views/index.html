@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    <title>ValTools - Onboarding</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: #f3f3f3;
+        }
+
+        section {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            padding: 50px;
+            box-sizing: border-box;
+        }
+
+        .section-1 {
+            background: linear-gradient(135deg, #74ebd5, #acb6e5);
+        }
+
+        .section-2 {
+            background: linear-gradient(135deg, #ff6f61, #ffcc00);
+        }
+
+        .section-3 {
+            background: linear-gradient(135deg, #2193b0, #6dd5ed);
+        }
+
+        .section-4 {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+        }
+
+        .section-5 {
+            background: linear-gradient(135deg, #ff6f61, #ffcc00);
+        }
+
+        .section-6 {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+        }
+
+        .section-7 {
+            background: linear-gradient(135deg, #2193b0, #6dd5ed);
+        }
+
+        h1 {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 24px;
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .scroll-down {
+            margin-top: 30px;
+            font-size: 18px;
+            color: #fff;
+            cursor: pointer;
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-down:hover {
+            color: #ffcc00;
+        }
+
+        .button {
+            background-color: #74ebd5;
+            color: #fff;
+            font-size: 28px;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #ff6f61;
+            transform: translateY(-5px);
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 16px;
+        }
+
+        footer a,
+        #reportBugButton {
+            color: #ffcc00;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        footer a:hover,
+        #reportBugButton:hover {
+            background-color: #ffcc00;
+            color: #333;
+        }
+
+        #tryButton {
+            margin-top: 30px;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin: 15px 0 5px;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            min-height: 80px;
+            resize: none;
+            box-sizing: border-box;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #74ebd5;
+        }
+
+        input[type="file"] {
+            margin: 15px 0;
+        }
+
+        select {
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #74ebd5;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #ff6f61;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="section-1">
+        <div>
+            <h1>Welcome to ValTools</h1>
+            <p>Unlock a new level of Twitch interaction with ValTools, your ultimate companion for Valorant.</p>
+            <div class="scroll-down"
+                onclick="document.querySelector('.section-7').scrollIntoView({ behavior: 'smooth' });">Scroll down to
+                explore</div>
+        </div>
+    </section>
+
+    <section class="section-2">
+        <div>
+            <h1>Seamless Integration</h1>
+            <p>ValTools seamlessly integrates with Twitch, giving your viewers instant access to your Valorant stats,
+                past match history and your best competitive matches!</p>
+        </div>
+    </section>
+
+    <section class="section-3">
+        <div>
+            <h1>Enhance Your Stream</h1>
+            <p>Engage your audience with data which will be util for everyone who just started to watch your stream by
+                giving important context about your past activity.</p>
+        </div>
+    </section>
+
+    <section class="section-4">
+        <div>
+            <h1>Secured Data</h1>
+            <p>ValTools will secure all your data so only your viewers can access to it by viewing your stream.
+                Furthermore, you can select which data you want to show to your audience.</p>
+        </div>
+    </section>
+
+    <section class="section-5">
+        <div>
+            <h1>Multiplatform</h1>
+            <p>ValTools is aviliable for both platforms, pc and console, making your viewers don't miss anything!</p>
+        </div>
+    </section>
+
+    <section class="section-6">
+        <div>
+            <h1>Not endorsed with Riot Games</h1>
+            <p>ValTools is an independent tool and is not affiliated with or endorsed by Riot Games. Riot Games is not
+                responsible for the development, support, or functionality of this extension.</p>
+        </div>
+    </section>
+
+    <section class="section-7">
+        <div>
+            <h1>Ready to Try ValTools?</h1>
+            <p>Don't miss out on the chance to elevate your Twitch experience with ValTools.</p>
+            <button class="button" id="tryButton">Try it!</button>
+        </div>
+    </section>
+
+    <footer>
+        <a href="/leaderboard">Valorant Leaderboard</a> | <a href="/privacy">Privacy Policy</a> | <a href="/tos">Terms
+            of Service</a> |
+        <button id="reportBugButton">Report a Bug</button>
+    </footer>
+
+    <div id="bugModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+            <h2>Report a Bug</h2>
+            <form id="bugForm">
+                <label for="bugDescription">Bug Description:</label>
+                <textarea id="bugDescription" name="description" required></textarea>
+                <label for="bugReproduction">Steps to Reproduce:</label>
+                <textarea id="bugReproduction" name="reproduction" required></textarea>
+                <label for="bugFrequency">Does it happen 100% of the time?</label>
+                <select id="bugFrequency" name="frequency" required>
+                    <option value="100%">Yes</option>
+                    <option value="Not always">No</option>
+                    <option value="Unsure">Not Sure</option>
+                </select>
+                <label for="bugScreenshot">Screenshot (optional):</label>
+                <input type="file" id="bugScreenshot" name="screenshot" accept="image/*">
+                <div id="captchaContainer" class="h-captcha" data-sitekey="fa5c69c8-1308-45be-9930-fb9c90b8dc16"></div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const bugModal = document.getElementById("bugModal");
+        const reportBugButton = document.getElementById("reportBugButton");
+        const closeModal = document.getElementById("closeModal");
+        const bugForm = document.getElementById("bugForm");
+
+        reportBugButton.addEventListener("click", () => {
+            bugModal.style.display = "flex";
+        });
+
+        closeModal.addEventListener("click", () => {
+            bugModal.style.display = "none";
+        });
+
+        bugForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const description = document.getElementById("bugDescription").value;
+            const reproduction = document.getElementById("bugReproduction").value;
+            const frequency = document.getElementById("bugFrequency").value;
+            const screenshot = document.getElementById("bugScreenshot").files[0];
+
+            const captchaResponse = grecaptcha.getResponse();
+
+            if (!captchaResponse) {
+                alert("Please complete the CAPTCHA.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("description", description);
+            formData.append("reproduction", reproduction);
+            formData.append("frequency", frequency);
+            formData.append("captcha", captchaResponse);
+
+            if (screenshot) {
+                formData.append("screenshot", screenshot);
+            }
+
+            const response = await fetch("/api/report", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response.ok) {
+                alert("Failed to report the bug.");
+                return;
+            }
+
+
+            alert("Bug reported successfully!");
+            bugModal.style.display = "none";
+        });
+    </script>
+</body>
+
+</html>

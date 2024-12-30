@@ -1,0 +1,366 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ValStats Configuration</title>
+    <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <link
+      href="../bootstrap/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="../js/jquery.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <script src="../js/config.js"></script>
+    <style>
+      body {
+        background-color: #f8f9fa;
+        color: #343a40;
+      }
+      .btn-save {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s;
+      }
+      .btn-save:hover {
+        background-color: #218838;
+      }
+      .spinner-border {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-width: 0.3em;
+        color: white;
+        display: none;
+      }
+      .tick-icon {
+        display: none;
+        font-size: 1.5rem;
+        color: white;
+      }
+      .btn-save.loading .fa-floppy-disk {
+        display: none;
+      }
+      .btn-save.loading .spinner-border {
+        display: inline-block;
+      }
+      .btn-save.loaded .spinner-border {
+        display: none;
+      }
+      .btn-save.loaded .fa-floppy-disk {
+        display: none;
+      }
+      .btn-save.loaded .tick-icon {
+        display: inline-block;
+      }
+      .input-group {
+        display: flex;
+        align-items: center;
+      }
+      .input-group-text {
+        height: 70px;
+        font-size: 24px;
+        line-height: 1;
+      }
+      .form-control {
+        height: 70px;
+        font-size: 24px;
+      }
+      .toggle-container {
+        background-color: #e9f7ef;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .form-check-label {
+        font-size: 1.2rem;
+      }
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+        margin-left: auto;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+      }
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+      input:focus + .slider {
+        box-shadow: 0 0 1px #2196f3;
+      }
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+      .slider.round {
+        border-radius: 34px;
+      }
+      .slider.round:before {
+        border-radius: 50%;
+      }
+      .toast {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        min-width: 300px;
+        z-index: 9999;
+      }
+
+      .modal-header {
+        justify-content: center;
+      }
+
+      .modal-title {
+        text-align: center;
+        width: 100%;
+      }
+
+      #loginBtn,
+      #authBtn {
+        display: block;
+        margin: 0 auto;
+      }
+
+      .modal-footer {
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-spinner {
+        width: 2.5rem;
+        height: 2.5rem;
+        display: block;
+        margin: 0 auto;
+      }
+
+      .modal-body {
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        animation: fadeIn 0.5s;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+        margin-bottom: 30px;
+      }
+
+      .btn {
+        margin: 0 10px;
+      }
+
+      .icon {
+        width: 22px;
+        fill: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="container d-flex flex-column justify-content-center align-items-center vh-100"
+    >
+      <h1 class="display-5 mb-2 text-center">ValTools Configuration</h1>
+      <div class="row g-3 w-75">
+        <div class="col">
+          <input
+            type="text"
+            class="form-control form-control-xl"
+            id="username"
+            style="cursor: not-allowed"
+            disabled
+          />
+        </div>
+        <div class="col">
+          <div class="input-group">
+            <span class="input-group-text">#</span>
+            <input
+              type="text"
+              class="form-control disabled"
+              id="tag"
+              style="cursor: not-allowed"
+              disabled
+            />
+          </div>
+        </div>
+      </div>
+      <div class="toggle-container w-75">
+        <div class="d-flex justify-content-between w-100 align-items-center">
+          <h5 class="mb-0">Display Match History</h5>
+          <label class="switch">
+            <input type="checkbox" id="matchHistoryToggle" checked />
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <div
+          class="d-flex justify-content-between w-100 align-items-center mt-3"
+        >
+          <h5 class="mb-0">Platform</h5>
+          <select id="platformSelect" class="form-control w-auto">
+            <option value="pc" id="pcSelect" style="display: none;">PC</option>
+            <option value="console" id="consoleSelect" style="display: none;">Console</option>
+          </select>
+        </div>
+        <div
+          class="d-flex justify-content-between w-100 align-items-center mt-3"
+        >
+          <h5 class="mb-0">Daily W/L</h5>
+          <select id="dailySelect" class="form-control w-auto">
+            <option value="all">All game modes</option>
+            <option value="only_competitive">Only competitive</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-container">
+        <button id="saveBtn" class="btn btn-save btn-lg btn-success" disabled>
+          <svg class="fa-floppy-disk icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-242.7c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32L64 32zm0 96c0-17.7 14.3-32 32-32l192 0c17.7 0 32 14.3 32 32l0 64c0 17.7-14.3 32-32 32L96 224c-17.7 0-32-14.3-32-32l0-64zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>
+          <span class="spinner-border" role="status" aria-hidden="true"></span>
+          <span class="tick-icon"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 448 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg></span>
+        </button>
+
+        <button id="reauthorizeBtn" class="btn btn-secondary btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="icon"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160 352 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l111.5 0c0 0 0 0 0 0l.4 0c17.7 0 32-14.3 32-32l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1L16 432c0 17.7 14.3 32 32 32s32-14.3 32-32l0-35.1 17.6 17.5c0 0 0 0 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.8c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0l-.1-.1L125.6 352l34.4 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L48.4 288c-1.6 0-3.2 .1-4.8 .3s-3.1 .5-4.6 1z"/></svg>
+          Reauthorize
+        </button>
+
+        <button id="logoutBtn" class="btn btn-secondary btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="icon"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"/></svg>
+          Logout
+        </button>
+      </div>
+
+      <div
+        class="toast toast-success"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-delay="5000"
+      >
+        <div class="toast-header">
+          <strong class="mr-auto text-success">Success</strong>
+        </div>
+        <div class="toast-body" id="successToastBody"></div>
+      </div>
+      <div
+        class="toast toast-fail"
+        role="alert"
+        tabindex="-1"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-delay="5000"
+      >
+        <div class="toast-header">
+          <strong class="mr-auto text-danger">Error</strong>
+        </div>
+        <div class="toast-body" id="failToastBody"></div>
+      </div>
+
+      <div
+        class="modal fade"
+        id="authModal"
+        tabindex="0"
+        role="dialog"
+        aria-labelledby="authModalLabel"
+        aria-hidden="true"
+        data-backdrop="static"
+        data-keyboard="false"
+      >
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="authModalLabel">
+                Riot Games Login Required
+              </h5>
+              <button type="button" class="close" id="closeModalBtn" data-dismiss="modal" aria-label="Close" style="display: none; border:none; background-color: transparent;">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" id="modalContent">
+              <p>
+                You need to log in with your Riot Games account to continue.
+              </p>
+              <button id="loginBtn" class="btn btn-primary">Log In</button>
+            </div>
+            <div id="loadingContent" class="text-center d-none modal-body">
+              <div
+                class="modal-spinner spinner-border text-primary"
+                role="status"
+              >
+              </div>
+            </div>
+
+            <div id="authContent" class="text-center d-none modal-body">
+              <a
+                id="authBtn"
+                class="btn btn-primary btn-lg w-100"
+                target="_blank"
+              >
+                Click to authorize
+              </a>
+              <small
+                ><i
+                  >Do not share this link with anyone except you want someone to
+                  remotely authorize with the extension.</i
+                ></small
+              >
+            </div>
+            <div class="modal-footer">
+            <small
+                >This extension uses Offical <a href="https://support-developer.riotgames.com/hc/en-us/articles/22801670382739-RSO-Riot-Sign-On">Riot Sign On (RSO)</a> for
+                authorization.</small>
+            </div>
+          </div>
+        </div>      
+      </div>
+    </div>
+  </body>
+</html>

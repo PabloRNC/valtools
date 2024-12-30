@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="../bootstrap/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="../css/index.css" />
+    <script src="../js/jquery.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <script src="../js/index.js"></script>
+  </head>
+  <body style="display: none">
+    <div class="container-wrapper">
+      <div class="close-button" id="closeButton">✖</div>
+      <div class="tabs-wrapper">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a
+              class="nav-link active"
+              id="playerInfoTab"
+              >Player Info</a
+            >
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              id="casualMatchesTab"
+              >Casual Matches</a
+            >
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              id="competitiveMatchesTab"
+              >Ranked Matches</a
+            >
+          </li>
+        </ul>
+      </div>
+      <div class="main-content" id="mainContent">
+        <div class="container">
+          <div class="display-container">
+            <div class="number-image-wrapper">
+              <img
+                src="https://media.valorant-api.com/levelborders/6694d7f7-4ab9-8545-5921-35a9ea8cec24/levelnumberappearance.png"
+                alt="Imagen"
+                id="levelBorder"
+              />
+              <div class="number" id="accountLevel">1000</div>
+            </div>
+            <div class="rank-container" style="display: none">
+              <div class="rank-image-wrapper">
+                <img
+                  src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/27/smallicon.png"
+                  alt="Rank"
+                  class="rank"
+                  id="rankImage"
+                />
+              </div>
+              <div class="rank-name" id="rankName">Radiant #1</div>
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div
+                    class="progress"
+                    style="width: 75%"
+                    id="progressBar"
+                  ></div>
+                </div>
+                <div class="progress-text" id="progressText">
+                  75/100 <span>RR</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="center-container"></div>
+        </div>
+        <div class="name-bar-wrapper">
+          <div class="name-bar">
+            <div class="name-bar-text" id="accountName">TH MiniBoo</div>
+            <div class="tag" id="accountTag">#2440</div>
+            <div class="platform-icon">
+              <span><i class="fa-solid fa-gamepad" id="platformIcon"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="match-history-container" id="matchHistory">
+      </div>
+      <div class="match-history-container" id="cMatchHistory"></div>
+    </div>
+  </body>
+</html>

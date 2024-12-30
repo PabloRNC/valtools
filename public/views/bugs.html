@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <title>Bug Reports</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .table th {
+            background-color: #007bff;
+            color: white;
+        }
+        .table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .table tr:hover {
+            background-color: #ddd;
+        }
+        .resolved {
+            color: green;
+            font-weight: bold;
+        }
+        .unresolved {
+            color: red;
+            font-weight: bold;
+        }
+        img {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .no-screenshot {
+            font-style: italic;
+            color: #888;
+        }
+        .action-button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 14px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        .action-button:hover {
+            background-color: #0056b3;
+        }
+        .action-button.unresolved {
+            background-color: #dc3545;
+        }
+        .action-button.unresolved:hover {
+            background-color: #a71d2a;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bug Reports</h1>
+    <div class="container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Reproduction Steps</th>
+                    <th>Frequency</th>
+                    <th>Created At</th>
+                    <th>Screenshot</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="bugTableBody"></tbody>
+        </table>
+    </div>
+    <script>
+        const password = prompt("Enter the password to view the bug reports:");
+
+        async function toggleResolved(bugId, currentState) {
+            const newState = !currentState;
+            await fetch(`/api/reports/${bugId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${btoa(`root:${password}`)}`,
+                },
+                body: JSON.stringify({ resolved: newState }),
+            });
+            loadBugs();
+        }
+
+        async function deleteBug(bugId) {
+            await fetch(`/api/reports/${bugId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Basic ${btoa(`root:${password}`)}`,
+                },
+            });
+            loadBugs();
+        }
+
+        async function loadBugs() {
+            const response = await fetch('/api/reports', {
+                headers: {
+                    'Authorization': `Basic ${btoa(`root:${password}`)}`,
+                },
+            });
+
+            if (!response.ok) {
+                alert("Invalid password.");
+                location.reload();
+            }
+
+            const bugs = await response.json();
+            const sortedBugs = bugs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const tableBody = document.getElementById('bugTableBody');
+
+            tableBody.innerHTML = sortedBugs.map(bug => `
+                <tr>
+                    <td>${bug.description}</td>
+                    <td>${bug.reproduction}</td>
+                    <td>${bug.frequency}</td>
+                    <td>${new Date(bug.createdAt).toLocaleString()}</td>
+                    <td>
+                        ${bug.screenshot 
+                            ? `<img src="${window.location.origin}/${bug.screenshot}" alt="Screenshot">` 
+                            : `<span class="no-screenshot">No screenshot</span>`}
+                    </td>
+                    <td class="${bug.resolved ? 'resolved' : 'unresolved'}">
+                        ${bug.resolved ? 'Resolved' : 'Unresolved'}
+                    </td>
+                    <td>
+                        <button class="action-button ${bug.resolved ? 'unresolved' : ''}" 
+                                onclick="toggleResolved('${bug._id}', ${bug.resolved})">
+                            ${bug.resolved ? "Change to Unresolved" : "Change to Resolved"}
+                        </button>
+                        <button class="action-button unresolved" 
+                                onclick="deleteBug('${bug._id}')">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadBugs);
+    </script>
+</body>
+</html>

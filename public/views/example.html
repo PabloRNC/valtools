@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="../css/example.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <script
+      src="https://kit.fontawesome.com/941f548723.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="../js/example.js"></script>
+  </head>
+  <body>
+    <div class="container-wrapper" style="display: none;">
+      <div class="close-button" onclick="handleClose()">✖</div>
+      <div class="tabs-wrapper">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a
+              class="nav-link active"
+              id="playerInfoTab"
+              href="#"
+              onclick="showPlayerInfo()"
+              >Player Info</a
+            >
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              id="casualMatchesTab"
+              href="#"
+              onclick="showCasualMatches()"
+              >Casual Matches</a
+            >
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              id="competitiveMatchesTab"
+              href="#"
+              onclick="showCompetitiveMatches()"
+              >Ranked Matches</a
+            >
+          </li>
+        </ul>
+      </div>
+      <div class="main-content" id="mainContent">
+        <div class="container">
+          <div class="display-container">
+            <div class="number-image-wrapper">
+              <img
+                src="https://media.valorant-api.com/levelborders/6694d7f7-4ab9-8545-5921-35a9ea8cec24/levelnumberappearance.png"
+                alt="Imagen"
+                id="levelBorder"
+              />
+              <div class="number" id="accountLevel">1000</div>
+            </div>
+            <div class="rank-container" style="display: none">
+              <div class="rank-image-wrapper">
+                <img
+                  src="https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/27/smallicon.png"
+                  alt="Rank"
+                  class="rank"
+                  id="rankImage"
+                />
+              </div>
+              <div class="rank-name" id="rankName">Radiant #1</div>
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div
+                    class="progress"
+                    style="width: 75%"
+                    id="progressBar"
+                  ></div>
+                </div>
+                <div class="progress-text" id="progressText">
+                  75/100 <span>RR</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="center-container">            
+          </div>
+          <svg class="streak" xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="#FF4500" viewBox="0 0 16 16">
+            <path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16m0-1c-1.657 0-3-1-3"/>
+            <text x="50%" y="70%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="8" fill="white">1</text>
+          </svg>
+          
+        </div>
+        <div class="name-bar-wrapper">
+          <div class="name-bar">
+            <div class="name-bar-text" id="accountName">TH MiniBoo</div>
+            <div class="tag" id="accountTag">#2440</div>
+            <div class="platform-icon">
+              <span><i class="fa-solid fa-gamepad" id="platformIcon"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="match-history-container" id="matchHistory">
+      </div>
+      <div class="match-history-container" id="cMatchHistory"></div>
+    </div>
+    <div class="button-container" style="display: none;">
+      <button id="reauthorizeBtn" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-arrows-rotate"></i>
+        Reauthorize
+      </button>
+
+      <button id="logoutBtn" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-sign-out"></i>
+        Logout
+      </button>
+    </div>
+
+    <div
+        class="toast toast-success"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-delay="5000"
+      >
+        <div class="toast-header">
+          <strong class="mr-auto text-success">Success</strong>
+          <button
+            type="button"
+            class="ml-2 mb-1 close"
+            data-dismiss="toast"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="toast-body" id="successToastBody"></div>
+      </div>
+      <div
+        class="toast toast-fail"
+        role="alert"
+        tabindex="-1"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-delay="5000"
+      >
+        <div class="toast-header">
+          <strong class="mr-auto text-danger">Error</strong>
+          <button
+            type="button"
+            class="ml-2 mb-1 close"
+            data-dismiss="toast"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="toast-body" id="failToastBody"></div>
+      </div>
+
+    <div
+        class="modal fade"
+        id="authModal"
+        tabindex="0"
+        role="dialog"
+        aria-labelledby="authModalLabel"
+        aria-hidden="true"
+        data-backdrop="static"
+        data-keyboard="false"
+      >
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="authModalLabel">
+                Riot Games Login Required
+              </h5>
+              <button type="button" class="close" id="closeModalBtn" data-dismiss="modal" aria-label="Close" style="display: none;">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" id="modalContent">
+              <p>
+                You need to log in with your Riot Games account to continue.
+              </p>
+              <button id="loginBtn" class="btn btn-primary">Log In</button>
+            </div>
+            <div id="loadingContent" class="text-center d-none modal-body">
+              <div
+                class="modal-spinner spinner-border text-primary"
+                role="status"
+              >
+                <span class="sr-only">Loading...</span>
+              </div>
+            </div>
+
+            <div id="authContent" class="text-center d-none modal-body">
+              <a
+                id="authBtn"
+                class="btn btn-primary btn-lg w-100"
+                target="_blank"
+              >
+                Click to authorize
+              </a>
+              <small
+                ><i
+                  >Do not share this link with anyone except you want someone to
+                  remotely authorize with the extension.</i
+                ></small
+              >
+            </div>
+            <div class="modal-footer">
+            <small
+                >This extension uses Offical <a href="https://support-developer.riotgames.com/hc/en-us/articles/22801670382739-RSO-Riot-Sign-On">Riot Sign On (RSO)</a> for
+                authorization.</small>
+            </div>
+          </div>
+        </div>      
+      </div>
+  </body>
+</html>
