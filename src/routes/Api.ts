@@ -19,6 +19,10 @@ export const Api = new Elysia({ prefix: "/api" }).decorate(
   new AuthorizedUser()
 );
 
+Api.get('/*', () => {
+  console.log('got')
+})
+
 Api.get(
   "/leaderboard/:platform/:region",
   async ({ set, params: { platform, region } }) => {
@@ -212,6 +216,7 @@ Api.get("/players/mock", async ({ set }) => {
 Api.get(
   "/setup",
   async ({ user, set, query: { channel_id } }) => {
+
     if (channel_id !== user.channelId) {
       set.status = 401;
       return { status: 401, error: "Unauthorized" };

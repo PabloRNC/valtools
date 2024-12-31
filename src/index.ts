@@ -22,7 +22,6 @@ const app = new Elysia({
   .use(Auth)
   .use(Api);
 
-  /*
 app.ws("/ws/rso", {
   body: t.Object({
     metadata: t.Object({
@@ -132,8 +131,6 @@ app.ws("/ws/rso", {
     connections.delete(ws.id);
   }
 });
-
-*/
 
 app.get("/", () => {
   return file("public/views/index.html")
