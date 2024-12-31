@@ -5,7 +5,7 @@ import { cors } from "@elysiajs/cors";
 import { html } from "@elysiajs/html";
 import { staticPlugin } from "@elysiajs/static";
 import { Redis } from 'ioredis';
-import { connect } from "mongoose";
+import { connect, connections as MongoDBConnections } from "mongoose";
 import type { JWTPayload, AuthJWTPayload } from "./lib/types";
 import { Api, Auth } from './routes'
 
@@ -13,7 +13,9 @@ export const connections = new Map<string, { ws: ElysiaWS, payload: JWTPayload }
 
 export const redis = new Redis();
 
-const app = new Elysia()
+const app = new Elysia({
+  websocket: { idleTimeout: 60 * 2 }
+})
   .use(cors())
   .use(staticPlugin({ prefix: "/" }))
   .use(html())
@@ -155,6 +157,17 @@ app.listen(8080, async() => {
   await connect(process.env.DATABASE_URI, { dbName: process.env.DB_NAME });
   console.log("Connected to database");
 });
+
+process.on("SIGINT", async () => {
+  await redis.quit();
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  await MongoDBConnections[0].close();
+  process.exit(0);
+});
+
 
 declare global {
   namespace NodeJS {
