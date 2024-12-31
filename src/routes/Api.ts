@@ -70,7 +70,7 @@ Api.get(
 Api.get(
   "/players/:channelId",
   async ({ set, user, params: { channelId } }) => {
-    console.log('got');
+    console.log('got', channelId);
     if (user.channelId !== channelId) {
       set.status = 401;
       return { status: 401, error: "Unauthorized" };
