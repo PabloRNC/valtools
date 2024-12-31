@@ -12,12 +12,9 @@ import {
   checkMatchlist,
   checkPlayer,
 } from "../lib";
-import { isAuthorized } from "../../middlewares";
+import { isAuthorized } from "../middlewares";
 
-export const Api = new Elysia({ prefix: "/api" }).decorate(
-  "user",
-  new AuthorizedUser()
-);
+export const Api = new Elysia({ prefix: "/api" });
 
 Api.get(
   "/leaderboard/:platform/:region",
@@ -69,14 +66,23 @@ Api.get(
 
 Api.get(
   "/players/:channelId",
-  async ({ set, user, params: { channelId } }) => {
-    console.log('got', channelId);
-    if (user.channelId !== channelId) {
+  async ({ headers, set, params: { channelId } }) => {
+
+    const payload = isAuthorized(headers)
+
+    if(!payload){
       set.status = 401;
       return { status: 401, error: "Unauthorized" };
     }
 
-    const data = await user.getConfig();
+    const { channel_id } = payload;
+
+    if (channel_id !== channelId) {
+      set.status = 401;
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    const data = await User.findOne({ channelId });
 
     if (!data) {
       set.status = 404;
@@ -144,13 +150,11 @@ Api.get(
       mmr,
       player,
     };
-  },
-  {
-    beforeHandle: isAuthorized,
   }
 );
 
 Api.get("/players/mock", async ({ set }) => {
+
   const user = await User.findOne({ channelId: "mock" });
 
   if (!user) {
@@ -212,14 +216,23 @@ Api.get("/players/mock", async ({ set }) => {
 
 Api.get(
   "/setup",
-  async ({ user, set, query: { channel_id } }) => {
+  async ({ headers, set, query: { channel_id } }) => {
 
-    if (channel_id !== user.channelId) {
+    const payload = isAuthorized(headers);
+
+    if(!payload){
       set.status = 401;
       return { status: 401, error: "Unauthorized" };
     }
 
-    const data = await user.getConfig();
+    const { channel_id: channelId } = payload;
+
+    if (channel_id !== channelId) {
+      set.status = 401;
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    const data = await User.findOne({ channelId });
 
     if (!data) {
       set.status = 404;
@@ -270,7 +283,6 @@ Api.get(
     return { status: 200, data: rest };
   },
   {
-    beforeHandle: isAuthorized,
     query: t.Object({
       channel_id: t.String(),
     }),
@@ -279,13 +291,23 @@ Api.get(
 
 Api.put(
   "/setup",
-  async ({ user, set, body }) => {
-    if (body.channelId !== user.channelId) {
+  async ({ headers, set, body }) => {
+
+    const payload = isAuthorized(headers);
+
+    if(!payload){
       set.status = 401;
       return { status: 401, error: "Unauthorized" };
     }
 
-    const data = await user.getConfig();
+    const { channel_id } = payload;
+
+    if (body.channelId !== channel_id) {
+      set.status = 401;
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    const data = await User.findOne({ channelId: body.channelId });
 
     if (!data) {
       set.status = 404;
@@ -344,16 +366,25 @@ Api.put(
         enabled: t.Boolean(),
         only_competitive: t.Boolean(),
       }),
-    }),
-    beforeHandle: isAuthorized,
+    })
   }
 );
 
 Api.delete(
   "/setup",
-  async ({ user, set }) => {
+  async ({ headers, set }) => {
+
+    const payload = isAuthorized(headers);
+
+    if(!payload){
+      set.status = 401;
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    const { channel_id } = payload;
+
     const data = await User.findOneAndDelete({
-      channelId: user.channelId,
+      channelId: channel_id,
     });
 
     if (!data) {
@@ -364,15 +395,13 @@ Api.delete(
     set.status = 204;
 
     return;
-  },
-  {
-    beforeHandle: isAuthorized,
   }
 );
 
 Api.post(
   "/report",
   async ({ server, request, body, set }) => {
+    
     const { description, reproduction, frequency, captcha, screenshot } = body;
 
     const ip = server?.requestIP(request)?.address;

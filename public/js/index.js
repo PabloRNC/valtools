@@ -640,7 +640,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       },
       error: function (error) {
         if(error.status === 404) $("body").hide();
-        setTimeout(() => pullData(), 35000);
+        setTimeout(() => pullData(), 60000);
       },
     });
   }
