@@ -14,7 +14,9 @@ export const connections = new Map<string, { ws: ElysiaWS, payload: JWTPayload }
 export const redis = new Redis();
 
 const app = new Elysia({
-  websocket: { idleTimeout: 60 * 2 }
+  serve: {
+    idleTimeout: 30
+  }
 })
   .use(cors())
   .use(staticPlugin({ prefix: "/" }))
