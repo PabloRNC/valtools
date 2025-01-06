@@ -6,7 +6,6 @@ import {
   PCRegions,
   ConsoleRegions,
   RiotRequestManager,
-  AuthorizedUser,
   checkDaily,
   checkMMR,
   checkMatchlist,

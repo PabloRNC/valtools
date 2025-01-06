@@ -164,9 +164,12 @@ func fetchActiveActID(region string) string {
 func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 	page := 1
 	totalKey := fmt.Sprintf("leaderboard:%s:%s:total", platform, region)
+	playerKey := fmt.Sprintf("leaderboard:%s:%s:players", platform, region)
 	thresholdsKey := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
 
 	var allPageKeys []string
+
+	var thresholds map[string]interface{} = make(map[string]interface{})
 
 	for {
 		playersPage, err := fetchLeaderboardPage(actId, page, region, platform)
@@ -175,8 +178,13 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 			return
 		}
 
+		if page == 1 {
+			thresholds = playersPage.TierDetails
+		}
+
 		if len(playersPage.Players) == 0 {
-			redisClient.Set(ctx, thresholdsKey, playersPage.TierDetails, 0)
+			thresholdsData, _ := json.Marshal(thresholds)
+			redisClient.Set(ctx, thresholdsKey, string(thresholdsData), 0)
 			fmt.Printf("Saved threshold for %s (%s)\n", platform, region)
 			break
 		}
@@ -198,15 +206,31 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 
 	luaScript := `
 		local totalKey = KEYS[1]
+local playerKey = KEYS[2]
 local pageKeys = ARGV
 local result = {}
+
+local cursor = "0"
+local pattern = playerKey .. ":*"
+repeat
+    local scanResult = redis.call("SCAN", cursor, "MATCH", pattern, "COUNT", 100)
+    cursor = scanResult[1]
+    local keys = scanResult[2]
+    
+    if #keys > 0 then
+        redis.call("DEL", unpack(keys))
+    end
+until cursor == "0"
 
 for _, key in ipairs(pageKeys) do
     local value = redis.call("GET", key)
     if value then
         local pageData = cjson.decode(value)
         for i = 1, #pageData do
-            table.insert(result, pageData[i])
+            local playerData = pageData[i]
+            local playerDataKey = playerKey..":"..playerData.leaderboardRank.."_"..playerData.puuid
+            redis.call("SET", playerDataKey, cjson.encode(playerData))
+            table.insert(result, playerData)
         end
     end
 end
@@ -216,7 +240,7 @@ return #result
 
 	`
 
-	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey}, allPageKeys).Result()
+	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey, playerKey}, allPageKeys).Result()
 	if err != nil {
 		fmt.Printf("Error concatenating pages to Redis for %s (%s): %v\n", platform, region, err)
 		return
