@@ -63,10 +63,12 @@ Api.get(
   }
 );
 
-/*
+
 Api.get(
   "/players/:channelId",
   async ({ headers, set, params: { channelId } }) => {
+
+    console.log(channelId)
 
     const payload = isAuthorized(headers)
 
@@ -152,8 +154,6 @@ Api.get(
     };
   }
 );
-
-*/
 
 Api.get("/players/mock", async ({ set }) => {
 
