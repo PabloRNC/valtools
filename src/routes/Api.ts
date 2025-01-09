@@ -100,17 +100,17 @@ Api.get(
       await data.save();
     }
 
-    set.status = 400;
-    return { status: 200, channelId: payload.channel_id };
-
-    /*
-
     const {
       data: matchlist,
       cached,
       riotMatchlist,
     } = await checkMatchlist(data.puuid, data.region, data.config.platform);
 
+    set.status = 400;
+    return { status: 200, channelId: payload.channel_id };
+
+
+    /*
     if (!matchlist.data.length && !matchlist.competitiveMatches.length) {
       set.status = 404;
       return { status: 404, error: "No match history found." };
