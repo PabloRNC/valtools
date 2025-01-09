@@ -118,11 +118,6 @@ Api.get(
       matchlist.competitiveMatches
     );
 
-    set.status = 400;
-    return { status: 200, channelId: payload.channel_id };
-
-    /*
-
     const player = await checkPlayer(
       matchlist.data[0] || matchlist.competitiveMatches[0],
       data.config.platform
@@ -157,7 +152,6 @@ Api.get(
       mmr,
       player,
     };
-    */
   }
 );
 
