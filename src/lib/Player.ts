@@ -107,7 +107,7 @@ export async function checkMMR(
 ) {
   const lastMatch = matchlist[0];
 
-  const actId = await RiotRequestManager.getActId(region);
+  const actId = '476b0893-4c2e-abd6-c5fe-708facff0772'
 
   if (lastMatch?.seasonId !== actId)
     return { tier: 0, rr: null, leaderboard_rank: null, threshold: null };
