@@ -90,10 +90,6 @@ Api.get(
       return { status: 404, error: "User not found" };
     }
 
-    set.status = 400;
-    return { status: 200, channelId: payload.channel_id };
-
-    /*
 
     const { activeShard } = await RiotRequestManager.getAccountShard(
       data.puuid
@@ -103,6 +99,11 @@ Api.get(
       data.region = activeShard;
       await data.save();
     }
+
+    set.status = 400;
+    return { status: 200, channelId: payload.channel_id };
+
+    /*
 
     const {
       data: matchlist,
