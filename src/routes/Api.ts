@@ -75,11 +75,7 @@ Api.get(
       return { status: 401, error: "Unauthorized" };
     }
 
-    set.status = 400;
-    return { status: 200, channelId: payload.channel_id };
 
-
-    /*
     const { channel_id } = payload;
 
     if (channel_id !== channelId) {
@@ -93,6 +89,11 @@ Api.get(
       set.status = 404;
       return { status: 404, error: "User not found" };
     }
+
+    set.status = 400;
+    return { status: 200, channelId: payload.channel_id };
+
+    /*
 
     const { activeShard } = await RiotRequestManager.getAccountShard(
       data.puuid
