@@ -24,6 +24,17 @@ type Player struct {
 	Puuid           string `json:"puuid"`
 }
 
+type Season struct {
+	UUID        string  `json:"uuid"`
+	DisplayName string  `json:"displayName"`
+	Title       *string `json:"title"`
+	Type        *string `json:"type"`
+	StartTime   string  `json:"startTime"`
+	EndTime     string  `json:"endTime"`
+	ParentUuid  *string `json:"parentUuid"`
+	AssetPath   string  `json:"assetPath"`
+}
+
 type LeaderboardResponse struct {
 	Players      []Player               `json:"players"`
 	TotalPlayers int                    `json:"totalPlayers"`
@@ -116,16 +127,20 @@ func fetchLeaderboardPage(actId string, page int, region, platform string) (*Lea
 	return &data, nil
 }
 
-func fetchActiveActID(region string) string {
+func fetchActiveActID() string {
 	for {
-		url := fmt.Sprintf("https://%s.api.riotgames.com/val/content/v1/contents", region)
+		url := "https://valorant-api.com/v1/seasons"
 		client := &http.Client{}
-		req, _ := http.NewRequest("GET", url, nil)
-		req.Header.Add("X-Riot-Token", os.Getenv("RIOT_API_KEY"))
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			fmt.Printf("Error creating request: %v. Retrying in 30 seconds...\n", err)
+			time.Sleep(30 * time.Second)
+			continue
+		}
 
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Printf("Error fetching active actId for %s: %v. Retrying in 30 seconds...\n", region, err)
+			fmt.Printf("Error fetching season data: %v. Retrying in 30 seconds...\n", err)
 			time.Sleep(30 * time.Second)
 			continue
 		}
@@ -134,29 +149,47 @@ func fetchActiveActID(region string) string {
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			fmt.Printf("Error reading response body for %s: %v. Retrying in 30 seconds...\n", region, err)
+			fmt.Printf("Error reading response body: %v. Retrying in 30 seconds...\n", err)
 			time.Sleep(30 * time.Second)
 			continue
 		}
 
-		var content struct {
-			Acts []Act `json:"acts"`
+		var data struct {
+			Data []Season `json:"data"`
 		}
 
-		err = json.Unmarshal(body, &content)
+		err = json.Unmarshal(body, &data)
 		if err != nil {
-			fmt.Printf("Error unmarshaling JSON for %s: %v. Retrying in 30 seconds...\n", region, err)
+			fmt.Printf("Error unmarshalling JSON: %v. Retrying in 30 seconds...\n", err)
 			time.Sleep(30 * time.Second)
 			continue
 		}
 
-		for _, act := range content.Acts {
-			if act.IsActive {
-				return act.ID
+		now := time.Now()
+
+		var activeSeason *Season
+		for _, season := range data.Data {
+			startTime, err1 := time.Parse(time.RFC3339, season.StartTime)
+			endTime, err2 := time.Parse(time.RFC3339, season.EndTime)
+
+			if err1 != nil || err2 != nil {
+				fmt.Printf("Error parsing season dates: %v, %v. Retrying in 30 seconds...\n", err1, err2)
+				time.Sleep(30 * time.Second)
+				continue
+			}
+
+			if now.After(startTime) && now.Before(endTime) {
+				activeSeason = &season
+				break
 			}
 		}
 
-		fmt.Printf("No active act found for %s. Retrying in 30 seconds...\n", region)
+		if activeSeason != nil {
+			fmt.Printf("Active season found: %s\n", activeSeason.UUID)
+			return activeSeason.UUID
+		}
+
+		fmt.Printf("No active season found. Retrying in 30 seconds...\n")
 		time.Sleep(30 * time.Second)
 	}
 }
@@ -260,7 +293,7 @@ return #result
 
 func processRegion(region, platform string, timeout time.Duration) {
 	for {
-		actId := fetchActiveActID(region)
+		actId := fetchActiveActID()
 		saveAndConcatenatePagesToRedis(region, platform, actId)
 		time.Sleep(timeout)
 	}
