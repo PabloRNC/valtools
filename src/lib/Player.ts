@@ -353,29 +353,25 @@ export async function parseMatches(
       drawn,
       acs: Math.round(player.stats.score / player.stats.roundsPlayed),
       mvp: isDeathmatch ? false : allScores[0].puuid === puuid,
+      competitiveTier: player.competitiveTier,
+      seasonId: matchData.matchInfo.seasonId,
+      timestamp: new Date(matchData.matchInfo.gameStartMillis),
       teamMvp: isDeathmatch
         ? false
         : allScores.filter((x) => x.teamId === team.teamId)[0].puuid === puuid,
-      competitiveTier: player.competitiveTier,
       puuid: player.puuid,
       playerCard: player.playerCard,
       tagLine: player.tagLine,
       username: player.gameName,
       accountLevel: player.accountLevel,
-      timestamp: new Date(
-        matchData.matchInfo.gameStartMillis +
-          matchData.matchInfo.gameLengthMillis
-      ),
-      seasonId: matchData.matchInfo.seasonId,
-      queueId:
-        matchData.matchInfo.queueId === ""
-          ? "custom"
-          : normalizeQueue(matchData.matchInfo.queueId, platform),
+      queueId: matchData.matchInfo.queueId === ""
+      ? "custom"
+      : normalizeQueue(matchData.matchInfo.queueId, platform),
     };
 
-    await redis.set(`match:${match.matchId}`, JSON.stringify(matchData));
-
     accData.push(pushData);
+
+    await redis.set(`match:${match.matchId}`, JSON.stringify(matchData));
   }
 
   return accData;
