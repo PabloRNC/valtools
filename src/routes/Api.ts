@@ -63,14 +63,10 @@ Api.get(
   }
 );
 
+/*
 Api.get(
   "/players/:channelId",
   async ({ headers, set, params: { channelId } }) => {
-
-    if(channelId === "83949294"){
-      set.status = 404;
-      return { status: 404, error: "Not found" };
-    }
 
     const payload = isAuthorized(headers)
 
@@ -156,6 +152,8 @@ Api.get(
     };
   }
 );
+
+*/
 
 Api.get("/players/mock", async ({ set }) => {
 
