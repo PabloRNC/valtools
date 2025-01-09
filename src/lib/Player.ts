@@ -9,6 +9,17 @@ import type {
 } from "./types";
 import { redis } from "..";
 
+interface Season {
+  uuid: string;
+  displayName: string;
+  title: string | null;
+  type: string | null;
+  startTime: string;
+  endTime: string;
+  parentUuid: string | null;
+  assetPath: string;
+}
+
 const regionTimeZones = {
   ap: "Asia/Tokyo",
   br: "America/Sao_Paulo",
@@ -107,7 +118,11 @@ export async function checkMMR(
 ) {
   const lastMatch = matchlist[0];
 
-  const actId = '476b0893-4c2e-abd6-c5fe-708facff0772'
+  const acts = await fetch('https://valorant-api.com/v1/seasons').then(res => res.json()).then(res => res.data) as Season[];
+
+  const now = new Date();
+
+  const actId = acts.find((act) => new Date(act.startTime) <= now && new Date(act.endTime) > now)!.uuid;
 
   if (lastMatch?.seasonId !== actId)
     return { tier: 0, rr: null, leaderboard_rank: null, threshold: null };
