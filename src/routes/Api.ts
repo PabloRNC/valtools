@@ -68,8 +68,6 @@ Api.get(
   "/players/:channelId",
   async ({ headers, set, params: { channelId } }) => {
 
-    console.log(channelId)
-
     const payload = isAuthorized(headers)
 
     if(!payload){
@@ -77,6 +75,11 @@ Api.get(
       return { status: 401, error: "Unauthorized" };
     }
 
+    set.status = 400;
+    return { status: 200, channelId: payload.channel_id };
+
+
+    /*
     const { channel_id } = payload;
 
     if (channel_id !== channelId) {
@@ -152,6 +155,7 @@ Api.get(
       mmr,
       player,
     };
+    */
   }
 );
 
