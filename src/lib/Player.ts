@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import { redis } from "..";
 import { RiotRequestManager } from "./RiotRequestManager";
-import type { BaseMatch, RedisDaily, RedisMatchlist } from "./types";
+import type { BaseMatch, RedisDaily, RedisMatchlist, RiotGetMatchResponse } from "./types";
 
 const regionTimeZones = {
   ap: "Asia/Tokyo",
@@ -82,83 +82,9 @@ export async function parseMatches(
       platform
     );
 
-    const player = matchData.players.find((x) => x.puuid === puuid)!;
+    const parsedMatch = parseMatch(puuid, platform, matchData);
 
-    const isDeathmatch =
-      matchData.matchInfo.queueId === parseQueue("deathmatch", platform) ||
-      matchData.matchInfo.gameMode ===
-        "/Game/GameModes/Deathmatch/DeathmatchGameMode.DeathmatchGameMode_C";
-
-    const team = matchData.teams.find((x) => x.teamId === player.teamId)!;
-
-    const otherTeam = matchData.teams.find((x) => x.teamId !== player.teamId)!;
-
-    const score = isDeathmatch
-      ? player.stats.kills.toString()
-      : match.queueId === parseQueue("hurm", platform) ||
-        (match.queueId === "" && matchData.matchInfo.gameMode.includes("HURM"))
-      ? `${team.numPoints} - ${otherTeam.numPoints}`
-      : `${team.roundsWon} - ${team.roundsPlayed - team.roundsWon}`;
-
-    const damage = matchData.roundResults.reduce(
-      (acc: { headshots: number; bodyshots: number; legshots: number }, x) => {
-        const pStats = x.playerStats.find((_) => _.puuid === puuid)!;
-        for (const d of pStats.damage) {
-          acc.headshots += d.headshots;
-          acc.bodyshots += d.bodyshots;
-          acc.legshots += d.legshots;
-        }
-        return acc;
-      },
-      { headshots: 0, bodyshots: 0, legshots: 0 }
-    );
-
-    const shots = damage.headshots + damage.bodyshots + damage.legshots;
-
-    const allScores = matchData.players.sort(
-      (a, b) => (b.stats?.score || 0) - (a.stats?.score || 0)
-    );
-
-    const drawn = matchData.teams.reduce((acc: boolean, x) => {
-      if (!acc) return acc;
-      if (x.won) acc = false;
-      return acc;
-    }, true);
-
-    accData.push({
-      startedAt: new Date(matchData.matchInfo.gameStartMillis),
-      id: match.matchId,
-      agentId: player.characterId,
-      mapId: matchData.matchInfo.mapId,
-      mode: matchData.matchInfo.gameMode,
-      isDeathmatch,
-      score,
-      kills: player.stats.kills,
-      deaths: player.stats.deaths,
-      assists: player.stats.assists,
-      headshots: !isDeathmatch ? (damage.headshots / shots).toFixed(2) : "0",
-      bodyshots: !isDeathmatch ? (damage.bodyshots / shots).toFixed(2) : "0",
-      legshots: !isDeathmatch ? (damage.legshots / shots).toFixed(2) : "0",
-      won: team.won,
-      drawn,
-      acs: Math.round(player.stats.score / player.stats.roundsPlayed),
-      mvp: isDeathmatch ? false : allScores[0].puuid === puuid,
-      competitiveTier: player.competitiveTier,
-      seasonId: matchData.matchInfo.seasonId,
-      timestamp: new Date(matchData.matchInfo.gameStartMillis),
-      teamMvp: isDeathmatch
-        ? false
-        : allScores.filter((x) => x.teamId === team.teamId)[0].puuid === puuid,
-      puuid: player.puuid,
-      playerCard: player.playerCard,
-      tagLine: player.tagLine,
-      username: player.gameName,
-      accountLevel: player.accountLevel,
-      queueId:
-        matchData.matchInfo.queueId === ""
-          ? "custom"
-          : normalizeQueue(matchData.matchInfo.queueId, platform),
-    });
+    accData.push(parsedMatch);
   }
 
   return accData.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime()) as RedisMatchlist[];
@@ -288,6 +214,87 @@ export async function getPlayer(data: RedisMatchlist, platform: "pc" | "console"
   await redis.set(getKey("player", data.puuid, platform), JSON.stringify(player), "EX", 3600 * 24 * 7 * 4);
 
   return player;
+}
+
+export function parseMatch(puuid: string, platform: 'pc' | 'console', matchData: RiotGetMatchResponse){
+
+  const player = matchData.players.find((x) => x.puuid === puuid)!;
+
+    const isDeathmatch =
+      matchData.matchInfo.queueId === parseQueue("deathmatch", platform) ||
+      matchData.matchInfo.gameMode ===
+        "/Game/GameModes/Deathmatch/DeathmatchGameMode.DeathmatchGameMode_C";
+
+    const team = matchData.teams.find((x) => x.teamId === player.teamId)!;
+
+    const otherTeam = matchData.teams.find((x) => x.teamId !== player.teamId)!;
+
+    const score = isDeathmatch
+      ? player.stats.kills.toString()
+      : matchData.matchInfo.queueId === parseQueue("hurm", platform) ||
+        (matchData.matchInfo.queueId === "" && matchData.matchInfo.gameMode.includes("HURM"))
+      ? `${team.numPoints} - ${otherTeam.numPoints}`
+      : `${team.roundsWon} - ${team.roundsPlayed - team.roundsWon}`;
+
+    const damage = matchData.roundResults.reduce(
+      (acc: { headshots: number; bodyshots: number; legshots: number }, x) => {
+        const pStats = x.playerStats.find((_) => _.puuid === puuid)!;
+        for (const d of pStats.damage) {
+          acc.headshots += d.headshots;
+          acc.bodyshots += d.bodyshots;
+          acc.legshots += d.legshots;
+        }
+        return acc;
+      },
+      { headshots: 0, bodyshots: 0, legshots: 0 }
+    );
+
+    const shots = damage.headshots + damage.bodyshots + damage.legshots;
+
+    const allScores = matchData.players.sort(
+      (a, b) => (b.stats?.score || 0) - (a.stats?.score || 0)
+    );
+
+    const drawn = matchData.teams.reduce((acc: boolean, x) => {
+      if (!acc) return acc;
+      if (x.won) acc = false;
+      return acc;
+    }, true);
+
+    return {
+      startedAt: new Date(matchData.matchInfo.gameStartMillis),
+      id: matchData.matchInfo.matchId,
+      agentId: player.characterId,
+      mapId: matchData.matchInfo.mapId,
+      mode: matchData.matchInfo.gameMode,
+      isDeathmatch,
+      score,
+      kills: player.stats.kills,
+      deaths: player.stats.deaths,
+      assists: player.stats.assists,
+      headshots: !isDeathmatch ? (damage.headshots / shots).toFixed(2) : "0",
+      bodyshots: !isDeathmatch ? (damage.bodyshots / shots).toFixed(2) : "0",
+      legshots: !isDeathmatch ? (damage.legshots / shots).toFixed(2) : "0",
+      won: team.won,
+      drawn,
+      acs: Math.round(player.stats.score / player.stats.roundsPlayed),
+      mvp: isDeathmatch ? false : allScores[0].puuid === puuid,
+      competitiveTier: player.competitiveTier,
+      seasonId: matchData.matchInfo.seasonId,
+      timestamp: new Date(matchData.matchInfo.gameStartMillis),
+      teamMvp: isDeathmatch
+        ? false
+        : allScores.filter((x) => x.teamId === team.teamId)[0].puuid === puuid,
+      puuid: player.puuid,
+      playerCard: player.playerCard,
+      tagLine: player.tagLine,
+      username: player.gameName,
+      accountLevel: player.accountLevel,
+      queueId:
+        matchData.matchInfo.queueId === ""
+          ? "custom"
+          : normalizeQueue(matchData.matchInfo.queueId, platform),
+    };
 }
 
 export async function getMMR(
