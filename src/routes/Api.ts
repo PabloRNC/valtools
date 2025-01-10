@@ -202,8 +202,6 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
   }
 
 
-  console.log('Cache miss!', channelId, new Date().toISOString());
-
   const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
 
   if(!matchlist){
@@ -215,8 +213,6 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
   const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
 
   if(lastCachedMatch !== matchlist.history[0].matchId || !lastCachedMatch){
-
-    console.log("New matches found!");
 
     let notCachedMatches: BaseMatch[] = [];
 
