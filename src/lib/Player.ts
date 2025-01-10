@@ -274,8 +274,9 @@ export async function getDaily(
   return obj;
 }
 
-export function getPlayer(data: RedisMatchlist, platform: "pc" | "console") {
-  return {
+export async function getPlayer(data: RedisMatchlist, platform: "pc" | "console") {
+
+  const player = {
     puuid: data.puuid,
     username: data.username,
     tagLine: data.tagLine,
@@ -283,6 +284,10 @@ export function getPlayer(data: RedisMatchlist, platform: "pc" | "console") {
     playerCard: data.playerCard,
     platform
   };
+
+  await redis.set(getKey("player", data.puuid, platform), JSON.stringify(player), "EX", 3600 * 24 * 7 * 4);
+
+  return player;
 }
 
 export async function getMMR(
@@ -315,9 +320,6 @@ export async function getMMR(
 
       return mmr;
     } else {
-
-      console.log(lastCompetitive.competitiveTier)
-
       const thresholds = JSON.parse(
         (await redis.get(
           `leaderboard:${platform}:${region}:thresholds`
