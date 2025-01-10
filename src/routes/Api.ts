@@ -209,10 +209,12 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     return { status: 404, error: "No match history found." };
   }
 
-  /*
+  
   const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
 
   if(lastCachedMatch !== matchlist.history[0].matchId || !lastCachedMatch){
+
+    console.log("New matches found!");
 
     let notCachedMatches: BaseMatch[] = [];
 
@@ -252,7 +254,7 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
       player
   
   }
-} else {*/
+} else {
     
     setCache(data.puuid, data.config.platform, 2 * 60);
 
@@ -267,7 +269,7 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
       mmr: await redis.exists(getKey("mmr", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("mmr", data.puuid, data.config.platform)) as string) : null,
       player: await redis.exists(getKey("player", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("player", data.puuid, data.config.platform)) as string) : null
     } 
-//} 
+} 
 });
 
 /*Api.get("/players/mock", async ({ set }) => {
