@@ -178,3 +178,5 @@ dist
 public/reports/**
 
 dump.rdb
+
+**/**.txt

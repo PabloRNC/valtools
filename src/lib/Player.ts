@@ -1,24 +1,7 @@
 import { DateTime } from "luxon";
-import { RiotRequestManager } from "./RiotRequestManager";
-import type {
-  Redis,
-  RedisMatchlist,
-  RiotGetValorantMatchlist,
-  RiotGetMatchResponse,
-  BaseMatch,
-} from "./types";
 import { redis } from "..";
-
-interface Season {
-  uuid: string;
-  displayName: string;
-  title: string | null;
-  type: string | null;
-  startTime: string;
-  endTime: string;
-  parentUuid: string | null;
-  assetPath: string;
-}
+import { RiotRequestManager } from "./RiotRequestManager";
+import type { BaseMatch, RedisDaily, RedisMatchlist } from "./types";
 
 const regionTimeZones = {
   ap: "Asia/Tokyo",
@@ -29,250 +12,59 @@ const regionTimeZones = {
   na: "America/New_York",
 };
 
-export async function checkMatchlist(
+export async function getLastMatchId(
   puuid: string,
-  region: string,
   platform: "pc" | "console"
 ) {
-  const cache = await redis.get(parseKey(`matchlist:${puuid}`, platform));
+  const redisMatchlist = await redis.get(
+    getKey("matchlist:last", puuid, platform)
+  );
 
-  if (cache) {
-    const parsedCache = JSON.parse(cache) as Redis<{
-      data: RedisMatchlist[];
-      competitiveMatches: RedisMatchlist[];
-    }>;
+  return redisMatchlist ?? false;
 
-    const matchlistCache = await redis.get(
-      parseKey(`raw_matchlist:${puuid}`, platform)
+}
+
+export async function setLastMatchId(puuid: string, platform: "pc" | "console", matchId: string) {
+    await redis.set(
+        getKey("matchlist:last", puuid, platform),
+        matchId,
+        "EX",
+        3600 * 24 * 7 * 4
     );
-
-    if (parsedCache.updateAt > Date.now())
-      return {
-        data: parsedCache.data,
-        cached: true,
-        riotMatchlist: matchlistCache
-          ? (JSON.parse(matchlistCache) as RiotGetValorantMatchlist)
-          : await RiotRequestManager.getMatchlist(puuid, region, platform),
-      };
-  }
-
-  let data;
-
-  try {
-    data = await RiotRequestManager.getMatchlist(puuid, region, platform);
-  } catch (e) {
-    return {
-      data: {
-        data: [],
-        competitiveMatches: [],
-      },
-      cached: false,
-    };
-  }
-
-  const accData = await parseMatches(
-    puuid,
-    region,
-    platform,
-    data.history
-      .filter((x) => x.queueId !== parseQueue("competitive", platform))
-      .slice(0, 3)
-  );
-  const accCompetitive = await parseMatches(
-    puuid,
-    region,
-    platform,
-    data.history
-      .filter((x) => x.queueId === parseQueue("competitive", platform))
-      .slice(0, 3)
-  );
-
-  await redis.set(
-    parseKey(`matchlist:${puuid}`, platform),
-    JSON.stringify({
-      data: { data: accData, competitiveMatches: accCompetitive },
-      updateAt: Date.now() + 1000 * 60,
-    })
-  );
-
-  await redis.set(
-    parseKey(`raw_matchlist:${puuid}`, platform),
-    JSON.stringify(data)
-  );
-
-  return {
-    data: {
-      data: accData,
-      competitiveMatches: accCompetitive,
-    },
-    cached: false,
-    riotMatchlist: data,
-  };
-}
-
-export async function checkMMR(
-  puuid: string,
-  region: string,
-  platform: "pc" | "console",
-  matchlist: RedisMatchlist[]
-) {
-  const lastMatch = matchlist[0];
-
-  const acts = await fetch('https://valorant-api.com/v1/seasons').then(res => res.json()).then(res => res.data) as Season[];
-
-  const now = new Date();
-
-  const actId = acts.find((act) => new Date(act.startTime) <= now && new Date(act.endTime) > now)!.uuid;
-
-  if (lastMatch?.seasonId !== actId)
-    return { tier: 0, rr: null, leaderboard_rank: null, threshold: null };
-
-  if (lastMatch.competitiveTier < 24)
-    return {
-      tier: lastMatch.competitiveTier,
-      rr: null,
-      leaderboard_rank: null,
-      threshold: null,
-    };
-
-  const thresholds = JSON.parse(
-    (await redis.get(`leaderboard:${platform}:${region}:thresholds`)) as string
-  );
-
-  const redisKeys = await findKeysById(
-    `leaderboard:${platform}:${region}:players:*_${puuid}`
-  );
-
-  if (!redisKeys.length)
-    return {
-      tier: lastMatch.competitiveTier,
-      rr: null,
-      leaderboard_rank: null,
-      threshold: null,
-    };
-
-  const leaderboardData = JSON.parse((await redis.get(redisKeys[0])) as string);
-
-  let threshold = thresholds[leaderboardData.competitiveTier + 1]?.rankedRatingThreshold;
-
-  if (leaderboardData.competitiveTier === 26) {
-    const thresholdKeys = await findKeysById(
-      `leaderboard:${platform}:${region}:players:${
-        thresholds["26"].startingIndex - 1
-      }_*`
-    );
-    if (thresholdKeys.length) {
-      threshold =
-        JSON.parse((await redis.get(thresholdKeys[0])) as string).rankedRating +
-        1;
-    }
-  } else {
-    if (!threshold) threshold = null;
-  }
-
-  return {
-    tier: leaderboardData.competitiveTier,
-    rr: leaderboardData.rankedRating,
-    leaderboard_rank: leaderboardData.leaderboardRank,
-    threshold,
-  };
-}
-
-export async function checkPlayer(
-  data: RedisMatchlist,
-  platform: "pc" | "console"
-) {
-  return {
-    puuid: data.puuid,
-    tagLine: data.tagLine,
-    username: data.username,
-    accountLevel: data.accountLevel,
-    playerCard: data.playerCard,
-    platform,
-  };
-}
-
-export function parseQueue(queue: string, platform: string) {
-  return `${platform === "console" ? "console_" : ""}${queue}`;
-}
-
-export function parseKey(key: string, platform: string) {
-  return `${platform}_${key}`;
-}
-
-export async function checkDaily(
-  puuid: string,
-  region: string,
-  platform: "pc" | "console",
-  matchlist: RiotGetValorantMatchlist,
-  only_competitive: boolean
-) {
-  const daily = matchlist.history
-    .sort((a, b) => b.gameStartTimeMillis - a.gameStartTimeMillis)
-    .filter((x) => {
-      if (x.queueId === "") return false;
-
-      if (only_competitive && x.queueId !== parseQueue("competitive", platform))
-        return false;
-
-      const nowInRegion = DateTime.now()
-        .setZone(
-          regionTimeZones[region as "eu" | "br" | "na" | "kr" | "latam" | "ap"]
-        )
-        .startOf("day");
-
-      const matchTime = DateTime.fromMillis(x.gameStartTimeMillis)
-        .setZone(
-          regionTimeZones[region as "eu" | "br" | "na" | "kr" | "latam" | "ap"]
-        )
-        .startOf("day");
-
-      return nowInRegion.equals(matchTime);
-    })
-    .reverse();
-
-  const obj = {
-    won: 0,
-    lost: 0,
-    streak: 0,
-  };
-
-  for (const match of daily) {
-    let matchData =
-      ((await redis.get(
-        `match:${match.matchId}`
-      )) as RiotGetMatchResponse | null) ||
-      (await RiotRequestManager.getMatch(match.matchId, region, platform));
-
-    if (typeof matchData === "string") matchData = JSON.parse(matchData);
-
-    const player = matchData.players.find((x) => x.puuid === puuid)!;
-
-    const team = matchData.teams.find((x) => x.teamId === player.teamId)!;
-
-    const won = team.won;
-
-    if (won) {
-      obj.won++;
-      obj.streak++;
-    } else {
-      if (
-        matchData.teams.reduce((acc: boolean, x) => {
-          if (!acc) return acc;
-          if (x.won) acc = false;
-          return acc;
-        }, true)
-      )
-        continue;
-
-      obj.streak = 0;
-      obj.lost++;
     }
 
-    await redis.set(`match:${match.matchId}`, JSON.stringify(matchData));
+export async function addMatches(
+  puuid: string,
+  platform: "pc" | "console",
+  competitive: boolean,
+  matches: RedisMatchlist[]
+) {
+  const key = await redis.get(
+    getKey(matchlistKey(competitive), puuid, platform)
+  );
+
+  if (!key) {
+    await redis.set(
+      getKey(matchlistKey(competitive), puuid, platform),
+      JSON.stringify(matches),
+      "EX",
+      3600 * 24 * 7 * 4
+    );
+    return matches;
   }
 
-  return obj;
+  const matchlist = JSON.parse(key) as RedisMatchlist[];
+
+  const newMatchlist = matches.concat(matchlist.slice(0, 3 - matches.length));
+
+  await redis.set(
+    getKey(matchlistKey(competitive), puuid, platform),
+    JSON.stringify(newMatchlist),
+    "EX",
+    3600 * 24 * 7 * 4
+  );
+
+  return newMatchlist;
 }
 
 export async function parseMatches(
@@ -281,16 +73,14 @@ export async function parseMatches(
   platform: "pc" | "console",
   matches: BaseMatch[]
 ) {
-  const accData: RedisMatchlist[] = [];
+  const accData = [];
 
   for (const match of matches) {
-    let matchData =
-      ((await redis.get(
-        `match:${match.matchId}`
-      )) as RiotGetMatchResponse | null) ||
-      (await RiotRequestManager.getMatch(match.matchId, region, platform));
-
-    if (typeof matchData === "string") matchData = JSON.parse(matchData);
+    const matchData = await RiotRequestManager.getMatch(
+      match.matchId,
+      region,
+      platform
+    );
 
     const player = matchData.players.find((x) => x.puuid === puuid)!;
 
@@ -335,7 +125,7 @@ export async function parseMatches(
       return acc;
     }, true);
 
-    const pushData = {
+    accData.push({
       startedAt: new Date(matchData.matchInfo.gameStartMillis),
       id: match.matchId,
       agentId: player.characterId,
@@ -364,21 +154,347 @@ export async function parseMatches(
       tagLine: player.tagLine,
       username: player.gameName,
       accountLevel: player.accountLevel,
-      queueId: matchData.matchInfo.queueId === ""
-      ? "custom"
-      : normalizeQueue(matchData.matchInfo.queueId, platform),
-    };
-
-    accData.push(pushData);
-
-    await redis.set(`match:${match.matchId}`, JSON.stringify(matchData));
+      queueId:
+        matchData.matchInfo.queueId === ""
+          ? "custom"
+          : normalizeQueue(matchData.matchInfo.queueId, platform),
+    });
   }
 
-  return accData;
+  return accData.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime()) as RedisMatchlist[];
+}
+
+export async function getDaily(
+  puuid: string,
+  region: string,
+  platform: "pc" | "console",
+  matches: BaseMatch[],
+  onlyCompetitive: boolean
+) {
+
+  const cachedDaily = await redis.get(getKey("daily", puuid, platform));
+
+  const nowInRegion = DateTime.now()
+    .setZone(regionTimeZones[region as keyof typeof regionTimeZones])
+    .startOf("day");
+
+  const toUseMatches = matches.filter((x) => {
+    if(x.queueId === "") return false
+    if(onlyCompetitive && x.queueId !== parseQueue("competitive", platform)) return false
+    return nowInRegion.equals(
+      DateTime.fromMillis(x.gameStartTimeMillis)
+        .setZone(regionTimeZones[region as keyof typeof regionTimeZones])
+        .startOf("day")
+    )
+    }).sort((a, b) => b.gameStartTimeMillis - a.gameStartTimeMillis);
+
+  const obj = {
+        won: 0,
+        lost: 0,
+        streak: 0,
+        status: {}
+    };
+
+  for (const match of toUseMatches.reverse()) {
+
+    if(cachedDaily){
+
+        const parsedData = JSON.parse(cachedDaily) as RedisDaily;
+
+        const status = parsedData.status[match.matchId];
+
+        if(typeof status === 'boolean'){
+            obj.won += status ? 1 : 0;
+            obj.lost += status ? 0 : 1;
+            obj.streak = status ? obj.streak + 1 : 0;
+            //@ts-ignore
+            obj.status[match.matchId] = status;
+            continue;
+        } else if(status === 'tied'){
+            //@ts-ignore
+            obj.status[match.matchId] = 'tied';
+            continue;
+        }
+
+    }
+
+    const matchData = await RiotRequestManager.getMatch(
+      match.matchId,
+      region,
+      platform
+    );
+
+    const player = matchData.players.find((x) => x.puuid === puuid)!;
+
+    const team = matchData.teams.find((x) => x.teamId === player.teamId)!;
+
+    if (team.won) {
+      obj.won++;
+      obj.streak++;
+      //@ts-ignore
+      obj.status[match.matchId] = true;
+    } else {
+      if (
+        matchData.teams.reduce((acc: boolean, x) => {
+          if (!acc) return acc;
+          if (x.won) acc = false;
+          return acc;
+        }, true)
+      ) {
+        //@ts-ignore
+        obj.status[match.matchId] = 'tied';
+        continue;
+      }
+
+      //@ts-ignore
+      obj.status[match.matchId] = false;
+      obj.streak = 0;
+      obj.lost++;
+    }
+  }
+
+  const nowUTC = new Date().getTime();
+  const expiryTimeUTC = new Date(
+    DateTime.now()
+      .toUTC()
+      .plus({ days: 1 })
+      .set({ minute: 0, hour: 0, second: 0, millisecond: 0 })
+      .toISO()
+  ).getTime();
+
+  const ttlMs = Math.max(0, expiryTimeUTC - nowUTC);
+
+  await redis.set(
+    getKey("daily", puuid, platform),
+    JSON.stringify(obj),
+    "PX",
+    ttlMs
+  );
+
+  return obj;
+}
+
+export async function recalculateDaily(
+  puuid: string,
+  region: string,
+  platform: "pc" | "console",
+  only_competitive: boolean
+) {
+  const nowInRegion = DateTime.now()
+    .setZone(
+      regionTimeZones[region as "eu" | "br" | "na" | "kr" | "latam" | "ap"]
+    )
+    .startOf("day");
+
+  const matchlist = await RiotRequestManager.getMatchlist(
+    puuid,
+    region,
+    platform
+  );
+
+  const filterMatchlist = matchlist.history
+    .sort((a, b) => b.gameStartTimeMillis - a.gameStartTimeMillis)
+    .filter((x) => {
+      if (x.queueId === "") return false;
+
+      if (only_competitive && x.queueId !== parseQueue("competitive", platform))
+        return false;
+
+      const matchTime = DateTime.fromMillis(x.gameStartTimeMillis)
+        .setZone(
+          regionTimeZones[region as "eu" | "br" | "na" | "kr" | "latam" | "ap"]
+        )
+        .startOf("day");
+
+      return nowInRegion.equals(matchTime);
+    })
+    .reverse();
+
+  const obj = {
+    won: 0,
+    lost: 0,
+    streak: 0,
+  };
+
+  for (const match of filterMatchlist.reverse()) {
+    const matchData = await RiotRequestManager.getMatch(
+      match.matchId,
+      region,
+      platform
+    );
+
+    const player = matchData.players.find((x) => x.puuid === puuid)!;
+
+    const team = matchData.teams.find((x) => x.teamId === player.teamId)!;
+
+    if (team.won) {
+      obj.won++;
+      obj.streak++;
+    } else {
+      if (
+        matchData.teams.reduce((acc: boolean, x) => {
+          if (!acc) return acc;
+          if (x.won) acc = false;
+          return acc;
+        }, true)
+      )
+        continue;
+
+      obj.streak = 0;
+      obj.lost++;
+    }
+  }
+
+  const nowUTC = new Date().getTime();
+  const expiryTimeUTC = new Date(
+    DateTime.now()
+      .toUTC()
+      .plus({ days: 1 })
+      .set({ minute: 0, hour: 0, second: 0, millisecond: 0 })
+      .toISO()
+  ).getTime();
+
+  const ttlMs = Math.max(0, expiryTimeUTC - nowUTC);
+
+  await redis.set(
+    getKey("daily", puuid, platform),
+    JSON.stringify({
+      until: nowInRegion.plus({ days: 1 }).toISO(),
+      data: obj,
+    }),
+    "PX",
+    ttlMs
+  );
+
+  return;
+}
+
+export function getPlayer(data: RedisMatchlist, platform: "pc" | "console") {
+  return {
+    puuid: data.puuid,
+    username: data.username,
+    tagLine: data.tagLine,
+    accountLevel: data.accountLevel,
+    playerCard: data.playerCard,
+    platform
+  };
+}
+
+export async function getMMR(
+  puuid: string,
+  region: string,
+  platform: "pc" | "console",
+  lastCompetitive?: RedisMatchlist
+) {
+  const key = await redis.get(getKey("mmr", puuid, platform));
+
+  if (!key) {
+    const actId = await redis.get("actId");
+
+    if (
+      lastCompetitive?.seasonId !== actId ||
+      lastCompetitive.competitiveTier < 24
+    ) {
+      const mmr = {
+        tier:
+          lastCompetitive?.seasonId !== actId
+            ? 0
+            : lastCompetitive.competitiveTier,
+        rr: null,
+        leaderboard_rank: null,
+        threshold: null,
+      };
+
+      await redis.set(getKey("mmr", puuid, platform), JSON.stringify(mmr));
+
+      return mmr;
+    } else {
+      const thresholds = JSON.parse(
+        (await redis.get(
+          `leaderboard:${platform}:${region}:thresholds`
+        )) as string
+      );
+
+      const redisKeys = await findKeysById(
+        `leaderboard:${platform}:${region}:players:*_${puuid}`
+      );
+
+      if (!redisKeys.length)
+        return {
+          tier: lastCompetitive.competitiveTier,
+          rr: null,
+          leaderboard_rank: null,
+          threshold: null,
+        };
+
+      const leaderboardData = JSON.parse(
+        (await redis.get(redisKeys[0])) as string
+      );
+
+      let threshold =
+        thresholds[leaderboardData.competitiveTier + 1]?.rankedRatingThreshold;
+
+      if (leaderboardData.competitiveTier === 26) {
+        const thresholdKeys = await findKeysById(
+          `leaderboard:${platform}:${region}:players:${
+            thresholds["26"].startingIndex - 1
+          }_*`
+        );
+        if (thresholdKeys.length) {
+          threshold =
+            JSON.parse((await redis.get(thresholdKeys[0])) as string)
+              .rankedRating + 1;
+        }
+      } else {
+        if (!threshold) threshold = null;
+      }
+
+      const mmr = {
+        tier: leaderboardData.competitiveTier,
+        rr: leaderboardData.rankedRating,
+        leaderboard_rank: leaderboardData.leaderboardRank,
+        threshold,
+      };
+
+      await redis.set(getKey("mmr", puuid, platform), JSON.stringify(mmr));
+
+      return mmr;
+    }
+  }
+
+  return JSON.parse(key);
+}
+
+export async function useCache(puuid: string, platform: "pc" | "console") {
+  return !!(await redis.get(getKey("cache", puuid, platform)));
+}
+
+export async function setCache(
+  puuid: string,
+  platform: "pc" | "console",
+  seconds: number
+) {
+  await redis.set(getKey("cache", puuid, platform), "true", "EX", seconds);
+}
+
+export function matchlistKey(competitive: boolean) {
+  return `matchlist:${competitive ? "ranked" : "unrated"}`;
 }
 
 export function normalizeQueue(queue: string, platform: string) {
   return queue.replace(`${platform}_`, "");
+}
+
+export function parseQueue(queue: string, platform: string) {
+  return `${platform === "console" ? "console_" : ""}${queue}`;
+}
+
+export function parseKey(key: string, platform: string) {
+  return `${platform}_${key}`;
+}
+
+export function getKey(key: string, puuid: string, platform: string) {
+  return `${parseKey(key, platform)}:${puuid}`;
 }
 
 async function findKeysById(pattern: string) {

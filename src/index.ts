@@ -8,6 +8,8 @@ import { Redis } from 'ioredis';
 import { connect, connections as MongoDBConnections } from "mongoose";
 import type { JWTPayload, AuthJWTPayload } from "./lib/types";
 import { Api, Auth } from './routes'
+import cron from "@elysiajs/cron";
+import { parseToCron } from "./lib";
 
 export const connections = new Map<string, { ws: ElysiaWS, payload: JWTPayload }>();
 
@@ -158,6 +160,7 @@ app.listen(8080, async() => {
   console.log("Listening on port 8080");
   await connect(process.env.DATABASE_URI, { dbName: process.env.DB_NAME });
   console.log("Connected to database");
+  await startActCron();
 });
 
 process.on("SIGINT", async () => {
@@ -170,6 +173,37 @@ process.on("SIGINT", async () => {
   process.exit(0);
 });
 
+
+async function startActCron(){
+
+  const acts = await fetch('https://valorant-api.com/v1/seasons').then(res => res.json()).then(res => res.data) as Season[];
+
+  const now = new Date()
+
+  const act = acts.find((act) => new Date(act.startTime) <= now && new Date(act.endTime) > now)!;
+
+  console.log(`New act started. Welcome to ${act.displayName}. Ending on ${new Date(act.endTime).toDateString()}`);
+
+  await redis.set('actId', act.uuid);
+
+  app.use(cron({
+    name: 'actChange',
+    pattern: parseToCron(act.endTime),
+    utcOffset: 0,
+    run: startActCron
+  }))
+}
+
+interface Season {
+  uuid: string;
+  displayName: string;
+  title: string | null;
+  type: string | null;
+  startTime: string;
+  endTime: string;
+  parentUuid: string | null;
+  assetPath: string;
+}
 
 declare global {
   namespace NodeJS {

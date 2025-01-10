@@ -6,12 +6,11 @@ import {
   PCRegions,
   ConsoleRegions,
   RiotRequestManager,
-  checkDaily,
-  checkMMR,
-  checkMatchlist,
-  checkPlayer,
+  type BaseMatch,
+  addMatches, getLastMatchId, parseQueue, useCache, parseMatches, getKey, getMMR, getDaily, matchlistKey, getPlayer, setCache, setLastMatchId
 } from "../lib";
 import { isAuthorized } from "../middlewares";
+
 
 export const Api = new Elysia({ prefix: "/api" });
 
@@ -63,7 +62,7 @@ Api.get(
   }
 );
 
-
+/*
 Api.get(
   "/players/:channelId",
   async ({ headers, set, params: { channelId } }) => {
@@ -155,7 +154,135 @@ Api.get(
   }
 );
 
-Api.get("/players/mock", async ({ set }) => {
+*/
+
+Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) => {
+
+  const payload = isAuthorized(headers);
+
+  if(!payload){
+    set.status = 401;
+    return { status: 401, error: "Unauthorized" };
+  }
+
+  const { channel_id } = payload;
+
+  if (channel_id !== channelId) {
+    set.status = 401;
+    return { status: 401, error: "Unauthorized" };
+  }
+  
+  const data = await User.findOne({ channelId });
+
+  if (!data) {
+    set.status = 404;
+    return { status: 404, error: "User not found" };
+  }
+
+  const { activeShard } = await RiotRequestManager.getAccountShard(data.puuid);
+
+  if (data.region !== activeShard) {
+    data.region = activeShard;
+    await data.save();
+  }
+
+  if(await useCache(data.puuid, data.config.platform)){
+
+    const matchlist = await redis.exists(getKey(matchlistKey(false), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(false), data.puuid, data.config.platform)) as string) : [];
+
+    const mmrHistory = await redis.exists(getKey(matchlistKey(true), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(true), data.puuid, data.config.platform)) as string) : [];
+
+    const daily = await redis.exists(getKey("daily", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("daily", data.puuid, data.config.platform)) as string) : null;
+
+    const mmr = await redis.exists(getKey("mmr", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("mmr", data.puuid, data.config.platform)) as string) : null;
+    
+    set.headers["Cache"] = "HIT";
+
+    set.status = 200;
+    return {
+      matchlist: data.config.match_history ? matchlist : null,
+      mmrHistory: data.config.match_history ? mmrHistory : null,
+      daily: data.config.daily.enabled ? daily : null,
+      mmr: mmr,
+      player: getPlayer(matchlist[0] || mmrHistory[0], data.config.platform)
+    }
+  }
+
+  const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
+
+  if(!matchlist){
+    set.status = 404;
+    return { status: 404, error: "No match history found." };
+  }
+
+  const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
+
+  const daily = data.config.daily.enabled ? await getDaily(data.puuid, data.region, data.config.platform, matchlist.history, data.config.daily.only_competitive) : null;
+
+  if(lastCachedMatch !== matchlist.history[0].matchId || !lastCachedMatch){
+
+    let notCachedMatches: BaseMatch[] = [];
+
+    if(lastCachedMatch){
+      const lastCachedMatchIndex = matchlist.history.findIndex(match => match.matchId === lastCachedMatch);
+      if(lastCachedMatchIndex === -1) notCachedMatches = matchlist.history;
+      notCachedMatches = matchlist.history.slice(0, lastCachedMatchIndex);
+    } else notCachedMatches = matchlist.history;
+
+    const competitiveMatches = notCachedMatches.filter(match => match.queueId === parseQueue('competitive', data.config.platform));
+    const unratedMatches = notCachedMatches.filter(match => match.queueId !== parseQueue('competitive', data.config.platform));
+
+    const competitive = await addMatches(data.puuid, data.config.platform, true, await parseMatches(data.puuid, data.region, data.config.platform, competitiveMatches.slice(0, 3)));
+    const unrated = await addMatches(data.puuid, data.config.platform, false, await parseMatches(data.puuid, data.region, data.config.platform, unratedMatches.slice(0, 3)));
+
+    const mmr = !competitiveMatches.length ? await redis.get(getKey("mmr", data.puuid, data.config.platform)) : await getMMR(data.puuid, data.region, data.config.platform, competitive[0]);
+  
+    const player = getPlayer(competitive[0] || unrated[0], data.config.platform);
+
+    setCache(data.puuid, data.config.platform, 2 * 60);
+
+    setLastMatchId(data.puuid, data.config.platform, matchlist.history[0].matchId);
+
+    set.status = 200;
+
+    set.headers["Cache"] = "MISS";
+
+    return {
+      matchlist: data.config.match_history ? unrated : null,
+      mmrHistory: data.config.match_history
+        ? competitive
+        : null,
+      daily,
+      mmr,
+      player
+  
+  }
+} else {
+
+    const matchlist = await redis.exists(getKey(matchlistKey(false), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(false), data.puuid, data.config.platform)) as string) : [];
+
+    const mmrHistory = await redis.exists(getKey(matchlistKey(true), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(true), data.puuid, data.config.platform)) as string) : [];
+
+    const mmr = await redis.exists(getKey("mmr", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("mmr", data.puuid, data.config.platform)) as string) : null;
+    
+    setCache(data.puuid, data.config.platform, 2 * 60);
+
+    set.headers["Cache"] = "MISS";
+
+    set.status = 200;
+
+    return {
+      matchlist: data.config.match_history ? matchlist : null,
+      mmrHistory: data.config.match_history ? mmrHistory : null,
+      daily: data.config.daily.enabled ? daily : null,
+      mmr: mmr,
+      player: getPlayer(matchlist[0] || mmrHistory[0], data.config.platform)
+    }
+}
+
+});
+
+/*Api.get("/players/mock", async ({ set }) => {
 
   const user = await User.findOne({ channelId: "mock" });
 
@@ -215,6 +342,8 @@ Api.get("/players/mock", async ({ set }) => {
     daily,
   };
 });
+
+*/
 
 Api.get(
   "/setup",
@@ -344,6 +473,10 @@ Api.put(
         data.tag = account.tagLine;
         data.username = account.gameName;
         await data.save();
+      }
+
+      if(data.config.daily.only_competitive !== body.daily.only_competitive){
+        await getDaily(data.puuid, data.region, body.platform, (await (RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform))).history, body.daily.only_competitive);
       }
     } catch (e) {}
 
