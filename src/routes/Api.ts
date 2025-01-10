@@ -252,7 +252,7 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
       player
   
   }
-} else {
+} else {*/
     
     setCache(data.puuid, data.config.platform, 2 * 60);
 
@@ -267,7 +267,6 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
       mmr: await redis.exists(getKey("mmr", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("mmr", data.puuid, data.config.platform)) as string) : null,
       player: await redis.exists(getKey("player", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("player", data.puuid, data.config.platform)) as string) : null
     } 
-      */
 //} 
 });
 
