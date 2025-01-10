@@ -274,101 +274,6 @@ export async function getDaily(
   return obj;
 }
 
-export async function recalculateDaily(
-  puuid: string,
-  region: string,
-  platform: "pc" | "console",
-  only_competitive: boolean
-) {
-  const nowInRegion = DateTime.now()
-    .setZone(
-      regionTimeZones[region as "eu" | "br" | "na" | "kr" | "latam" | "ap"]
-    )
-    .startOf("day");
-
-  const matchlist = await RiotRequestManager.getMatchlist(
-    puuid,
-    region,
-    platform
-  );
-
-  const filterMatchlist = matchlist.history
-    .sort((a, b) => b.gameStartTimeMillis - a.gameStartTimeMillis)
-    .filter((x) => {
-      if (x.queueId === "") return false;
-
-      if (only_competitive && x.queueId !== parseQueue("competitive", platform))
-        return false;
-
-      const matchTime = DateTime.fromMillis(x.gameStartTimeMillis)
-        .setZone(
-          regionTimeZones[region as "eu" | "br" | "na" | "kr" | "latam" | "ap"]
-        )
-        .startOf("day");
-
-      return nowInRegion.equals(matchTime);
-    })
-    .reverse();
-
-  const obj = {
-    won: 0,
-    lost: 0,
-    streak: 0,
-  };
-
-  for (const match of filterMatchlist.reverse()) {
-    const matchData = await RiotRequestManager.getMatch(
-      match.matchId,
-      region,
-      platform
-    );
-
-    const player = matchData.players.find((x) => x.puuid === puuid)!;
-
-    const team = matchData.teams.find((x) => x.teamId === player.teamId)!;
-
-    if (team.won) {
-      obj.won++;
-      obj.streak++;
-    } else {
-      if (
-        matchData.teams.reduce((acc: boolean, x) => {
-          if (!acc) return acc;
-          if (x.won) acc = false;
-          return acc;
-        }, true)
-      )
-        continue;
-
-      obj.streak = 0;
-      obj.lost++;
-    }
-  }
-
-  const nowUTC = new Date().getTime();
-  const expiryTimeUTC = new Date(
-    DateTime.now()
-      .toUTC()
-      .plus({ days: 1 })
-      .set({ minute: 0, hour: 0, second: 0, millisecond: 0 })
-      .toISO()
-  ).getTime();
-
-  const ttlMs = Math.max(0, expiryTimeUTC - nowUTC);
-
-  await redis.set(
-    getKey("daily", puuid, platform),
-    JSON.stringify({
-      until: nowInRegion.plus({ days: 1 }).toISO(),
-      data: obj,
-    }),
-    "PX",
-    ttlMs
-  );
-
-  return;
-}
-
 export function getPlayer(data: RedisMatchlist, platform: "pc" | "console") {
   return {
     puuid: data.puuid,
@@ -389,7 +294,10 @@ export async function getMMR(
   const key = await redis.get(getKey("mmr", puuid, platform));
 
   if (!key) {
+
     const actId = await redis.get("actId");
+
+    console.log(actId === lastCompetitive?.seasonId)
 
     if (
       lastCompetitive?.seasonId !== actId ||
