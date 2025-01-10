@@ -158,6 +158,8 @@ Api.get(
 
 Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) => {
 
+  console.log(channelId);
+
   const payload = isAuthorized(headers);
 
   if(!payload){
