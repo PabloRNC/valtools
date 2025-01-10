@@ -210,8 +210,6 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
 
   const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
 
-  const daily = data.config.daily.enabled ? await getDaily(data.puuid, data.region, data.config.platform, matchlist.history, data.config.daily.only_competitive) : null;
-
   if(lastCachedMatch !== matchlist.history[0].matchId || !lastCachedMatch){
 
     let notCachedMatches: BaseMatch[] = [];
@@ -230,6 +228,8 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
 
     const mmr = !competitiveMatches.length ? await redis.get(getKey("mmr", data.puuid, data.config.platform)) : await getMMR(data.puuid, data.region, data.config.platform, competitive[0]);
   
+    const daily = data.config.daily.enabled ? await getDaily(data.puuid, data.region, data.config.platform, matchlist.history, data.config.daily.only_competitive) : null;
+
     const player = await getPlayer(competitive[0] || unrated[0], data.config.platform);
 
     setCache(data.puuid, data.config.platform, 2 * 60);
@@ -261,7 +261,7 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     return {
       matchlist: data.config.match_history ? await redis.exists(getKey(matchlistKey(false), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(false), data.puuid, data.config.platform)) as string) : [] : null,
       mmrHistory: data.config.match_history ? await redis.exists(getKey(matchlistKey(true), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(true), data.puuid, data.config.platform)) as string) : [] : null,
-      daily: data.config.daily.enabled ? daily : null,
+      daily: data.config.daily.enabled ? await redis.exists(getKey('daily', data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey('daily', data.puuid, data.config.platform)) as string) : null : null,
       mmr: await redis.exists(getKey("mmr", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("mmr", data.puuid, data.config.platform)) as string) : null,
       player: await redis.exists(getKey("player", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("player", data.puuid, data.config.platform)) as string) : null
     }
