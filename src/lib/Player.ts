@@ -297,8 +297,6 @@ export async function getMMR(
 
     const actId = await redis.get("actId");
 
-    console.log(actId === lastCompetitive?.seasonId)
-
     if (
       lastCompetitive?.seasonId !== actId ||
       lastCompetitive.competitiveTier < 24
@@ -317,6 +315,9 @@ export async function getMMR(
 
       return mmr;
     } else {
+
+      console.log(lastCompetitive.competitiveTier)
+
       const thresholds = JSON.parse(
         (await redis.get(
           `leaderboard:${platform}:${region}:thresholds`
