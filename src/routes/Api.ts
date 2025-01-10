@@ -201,9 +201,7 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     }
   }
 
-  return { puuid: data.puuid, region: data.region, config: data.config };
 
-  /*
   const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
 
   if(!matchlist){
@@ -269,8 +267,6 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
       player: await redis.exists(getKey("player", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("player", data.puuid, data.config.platform)) as string) : null
     }
 }
-
-*/
 });
 
 /*Api.get("/players/mock", async ({ set }) => {
