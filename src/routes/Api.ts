@@ -202,7 +202,7 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
   }
 
 
-  console.log('Cache miss!', channelId);
+  console.log('Cache miss!', channelId, new Date().toISOString());
 
   const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
 
