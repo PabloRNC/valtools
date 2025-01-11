@@ -157,10 +157,9 @@ Api.get(
 */
 
 Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) => {
-
   const payload = isAuthorized(headers);
 
-  if(!payload){
+  if (!payload) {
     set.status = 401;
     return { status: 401, error: "Unauthorized" };
   }
@@ -171,9 +170,8 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     set.status = 401;
     return { status: 401, error: "Unauthorized" };
   }
-  
-  const data = await User.findOne({ channelId });
 
+  const data = await User.findOne({ channelId });
   if (!data) {
     set.status = 404;
     return { status: 404, error: "User not found" };
@@ -186,88 +184,84 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     await data.save();
   }
 
-  if(await useCache(data.puuid, data.config.platform)){
-    
-    set.headers["Cache"] = "HIT";
+  const cacheKey = getKey;
+  const cachedMatchlist = await redis.get(cacheKey(matchlistKey(false), data.puuid, data.config.platform));
+  const cachedCompetitiveMatches = await redis.get(cacheKey(matchlistKey(true), data.puuid, data.config.platform));
+  const cachedDaily = data.config.daily.enabled ? await redis.get(cacheKey("daily", data.puuid, data.config.platform)) : null;
+  const cachedMMR = await redis.get(cacheKey("mmr", data.puuid, data.config.platform));
+  const cachedPlayer = await redis.get(cacheKey("player", data.puuid, data.config.platform));
 
+  if (await useCache(data.puuid, data.config.platform)) {
+    set.headers["Cache"] = "HIT";
     set.status = 200;
-    
+
     return {
-      matchlist: data.config.match_history ? await redis.exists(getKey(matchlistKey(false), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(false), data.puuid, data.config.platform)) as string) : [] : null,
-      mmrHistory: data.config.match_history ? await redis.exists(getKey(matchlistKey(true), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(true), data.puuid, data.config.platform)) as string) : [] : null,
-      daily: data.config.daily.enabled ? await redis.exists(getKey("daily", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("daily", data.puuid, data.config.platform)) as string) : null : null,
-      mmr: await redis.exists(getKey("mmr", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("mmr", data.puuid, data.config.platform)) as string) : null,
-      player: await redis.exists(getKey("player", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("player", data.puuid, data.config.platform)) as string) : null
-    }
+      matchlist: cachedMatchlist ? JSON.parse(cachedMatchlist) : null,
+      mmrHistory: cachedCompetitiveMatches ? JSON.parse(cachedCompetitiveMatches) : null,
+      daily: cachedDaily ? JSON.parse(cachedDaily) : null,
+      mmr: cachedMMR ? JSON.parse(cachedMMR) : null,
+      player: cachedPlayer ? JSON.parse(cachedPlayer) : null,
+    };
   }
 
-
   const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
-
-  if(!matchlist){
+  if (!matchlist) {
     set.status = 404;
     return { status: 404, error: "No match history found." };
   }
 
-  
   const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
 
-  if(lastCachedMatch !== matchlist.history[0].matchId || !lastCachedMatch){
-
-    let notCachedMatches: BaseMatch[] = [];
-
-    if(lastCachedMatch){
-      const lastCachedMatchIndex = matchlist.history.findIndex(match => match.matchId === lastCachedMatch);
-      if(lastCachedMatchIndex === -1) notCachedMatches = matchlist.history;
-      notCachedMatches = matchlist.history.slice(0, lastCachedMatchIndex);
-    } else notCachedMatches = matchlist.history;
-
-    const competitiveMatches = notCachedMatches.filter(match => match.queueId === parseQueue('competitive', data.config.platform));
-    const unratedMatches = notCachedMatches.filter(match => match.queueId !== parseQueue('competitive', data.config.platform));
-
-    const competitive = await addMatches(data.puuid, data.config.platform, true, await parseMatches(data.puuid, data.region, data.config.platform, competitiveMatches.slice(0, 3)));
-    const unrated = await addMatches(data.puuid, data.config.platform, false, await parseMatches(data.puuid, data.region, data.config.platform, unratedMatches.slice(0, 3)));
-
-    const mmr = !competitiveMatches.length ? await redis.get(getKey("mmr", data.puuid, data.config.platform)) : await getMMR(data.puuid, data.region, data.config.platform, competitive[0]);
-  
-    const daily = data.config.daily.enabled ? await getDaily(data.puuid, data.region, data.config.platform, matchlist.history, data.config.daily.only_competitive) : null;
-
-    const player = await getPlayer(competitive[0] || unrated[0], data.config.platform);
-
-    setCache(data.puuid, data.config.platform, 2 * 60);
-
-    setLastMatchId(data.puuid, data.config.platform, matchlist.history[0].matchId);
-
+  if (lastCachedMatch && matchlist.history[0].matchId === lastCachedMatch) {
+    set.headers["Cache"] = "HIT";
     set.status = 200;
 
-    set.headers["Cache"] = "MISS";
-
     return {
-      matchlist: data.config.match_history ? unrated : null,
-      mmrHistory: data.config.match_history
-        ? competitive
-        : null,
-      daily,
-      mmr,
-      player
-  
+      matchlist: cachedMatchlist ? JSON.parse(cachedMatchlist) : null,
+      mmrHistory: cachedCompetitiveMatches ? JSON.parse(cachedCompetitiveMatches) : null,
+      daily: cachedDaily ? JSON.parse(cachedDaily) : null,
+      mmr: cachedMMR ? JSON.parse(cachedMMR) : null,
+      player: cachedPlayer ? JSON.parse(cachedPlayer) : null,
+    };
   }
-} else {
-    
-    setCache(data.puuid, data.config.platform, 2 * 60);
 
-    set.headers["Cache"] = "MISS";
+  const newMatches = matchlist.history.filter(match => match.matchId !== lastCachedMatch);
+  const competitiveMatches = newMatches.filter(match => match.queueId === parseQueue("competitive", data.config.platform));
+  const unratedMatches = newMatches.filter(match => match.queueId !== parseQueue("competitive", data.config.platform));
 
-    set.status = 200;
+  const competitive = competitiveMatches.length
+    ? await addMatches(data.puuid, data.config.platform, true, await parseMatches(data.puuid, data.region, data.config.platform, competitiveMatches.slice(0, 3)))
+    : cachedCompetitiveMatches ? JSON.parse(cachedCompetitiveMatches) : null;
 
-    return {
-      matchlist: data.config.match_history ? await redis.exists(getKey(matchlistKey(false), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(false), data.puuid, data.config.platform)) as string) : [] : null,
-      mmrHistory: data.config.match_history ? await redis.exists(getKey(matchlistKey(true), data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey(matchlistKey(true), data.puuid, data.config.platform)) as string) : [] : null,
-      daily: data.config.daily.enabled ? await redis.exists(getKey('daily', data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey('daily', data.puuid, data.config.platform)) as string) : null : null,
-      mmr: await redis.exists(getKey("mmr", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("mmr", data.puuid, data.config.platform)) as string) : null,
-      player: await redis.exists(getKey("player", data.puuid, data.config.platform)) ? JSON.parse(await redis.get(getKey("player", data.puuid, data.config.platform)) as string) : null
-    } 
-} 
+  const unrated = unratedMatches.length
+    ? await addMatches(data.puuid, data.config.platform, false, await parseMatches(data.puuid, data.region, data.config.platform, unratedMatches.slice(0, 3)))
+    : cachedMatchlist ? JSON.parse(cachedMatchlist) : null;
+
+  const mmr = competitiveMatches.length
+    ? await getMMR(data.puuid, data.region, data.config.platform, competitive[0])
+    : cachedMMR ? JSON.parse(cachedMMR) : null;
+
+  const daily = data.config.daily.enabled
+    ? await getDaily(data.puuid, data.region, data.config.platform, matchlist.history, data.config.daily.only_competitive)
+    : cachedDaily ? JSON.parse(cachedDaily) : null;
+
+  const player = competitive[0] || unrated[0]
+    ? await getPlayer(competitive[0] || unrated[0], data.config.platform)
+    : cachedPlayer ? JSON.parse(cachedPlayer) : null;
+
+  setCache(data.puuid, data.config.platform, 2 * 60);
+  setLastMatchId(data.puuid, data.config.platform, matchlist.history[0].matchId);
+
+  set.headers["Cache"] = "MISS";
+  set.status = 200;
+
+  return {
+    matchlist: unrated,
+    mmrHistory: competitive,
+    daily,
+    mmr,
+    player,
+  };
 });
 
 /*Api.get("/players/mock", async ({ set }) => {

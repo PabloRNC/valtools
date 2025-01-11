@@ -181,11 +181,7 @@ export async function getDaily(
 
   const nowUTC = new Date().getTime();
   const expiryTimeUTC = new Date(
-    DateTime.now()
-      .toUTC()
-      .plus({ days: 1 })
-      .set({ minute: 0, hour: 0, second: 0, millisecond: 0 })
-      .toISO()
+    nowInRegion.plus({ days: 1 }).toISO()!
   ).getTime();
 
   const ttlMs = Math.max(0, expiryTimeUTC - nowUTC);
