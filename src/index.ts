@@ -194,6 +194,8 @@ async function startActCron(){
   }))
 }
 
+console.log(`${process.memoryUsage().heapTotal / 1024 / 1024} MB`);
+
 interface Season {
   uuid: string;
   displayName: string;
