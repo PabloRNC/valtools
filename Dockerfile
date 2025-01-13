@@ -3,6 +3,8 @@
 FROM oven/bun:1 AS base
 WORKDIR /ubuntu/valtools
 
+RUN useradd -ms /bin/bash ubuntu
+
 # install dependencies into temp directory
 # this will cache them and speed up future builds
 FROM base AS install
