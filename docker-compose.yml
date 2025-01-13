@@ -3,23 +3,27 @@ version: "3.8"
 services:
   redis:
     image: redis:latest
-    container_name: redis
+    container_name: redis-container
     ports:
       - "6379:6379"
     networks:
-      - valtools
+      - app-network
 
   app:
     build:
       context: .
-    container_name: valtools
+    container_name: bun-app-container
     ports:
       - "8080:8080"
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["bun", "run", "src/index.ts"]
     networks:
-      - valtools
+      - app-network
 
 networks:
-  valtools: 
+  app-network:
