@@ -3,22 +3,25 @@ import { Elysia, file, t } from "elysia";
 import type { ElysiaWS } from "elysia/ws";
 import { cors } from "@elysiajs/cors";
 import { html } from "@elysiajs/html";
-import { staticPlugin } from "@elysiajs/static";
-import { Redis } from 'ioredis';
-import { connect, connections as MongoDBConnections } from "mongoose";
-import type { JWTPayload, AuthJWTPayload } from "./lib/types";
-import { Api, Auth } from './routes'
 import cron from "@elysiajs/cron";
-import { parseToCron } from "./lib";
+import { staticPlugin } from "@elysiajs/static";
+import { Redis } from "ioredis";
+import { connect, connections as MongoDBConnections } from "mongoose";
+import { type JWTPayload, type AuthJWTPayload, parseToCron } from "./lib";
+import { Api, Auth } from "./routes";
+import v8 from "node:v8";
 
-export const connections = new Map<string, { ws: ElysiaWS, payload: JWTPayload }>();
+export const connections = new Map<
+  string,
+  { ws: ElysiaWS; payload: JWTPayload }
+>();
 
 export const redis = new Redis();
 
 const app = new Elysia({
   serve: {
-    idleTimeout: 30
-  }
+    idleTimeout: 30,
+  },
 })
   .use(cors())
   .use(staticPlugin({ prefix: "/" }))
@@ -31,75 +34,77 @@ app.ws("/ws/rso", {
     metadata: t.Object({
       type: t.String(),
     }),
-    payload: t.Optional(t.Object({
-      authorization: t.String(),
-      channelId: t.String(),
-    })),
+    payload: t.Optional(
+      t.Object({
+        authorization: t.String(),
+        channelId: t.String(),
+      })
+    ),
   }),
   message: (ws, data) => {
-
     const payload = data.payload;
 
     switch (data.metadata.type) {
-      case "session_auth": {
+      case "session_auth":
+        {
+          if (connections.has(ws.id)) {
+            ws.send({ error: "Already authenticating", status: 401 });
+            ws.close(4000, "Already authenticating");
+            return;
+          }
 
-        if (connections.has(ws.id)) {
-          ws.send({ error: "Already authenticating", status: 401 });
-          ws.close(4000, "Already authenticating");
-          return;
+          if (
+            payload?.authorization === "mock_auth" &&
+            payload?.channelId === "mock"
+          ) {
+            // @ts-ignore
+            connections.set(ws.id, { ws, payload: { channel_id: "mock" } });
+            ws.send({
+              metadata: { type: "session_welcome" },
+              payload: { channel_id: "mock" },
+            });
+            return;
+          }
+
+          let authData: JWTPayload;
+
+          try {
+            authData = verify(
+              payload?.authorization!,
+              Buffer.from(process.env.JWT_SECRET, "base64")
+            ) as JWTPayload;
+          } catch (e) {
+            ws.send({ error: "Unauthorized", status: 401 });
+            ws.close(4000, "Unauthorized");
+            return;
+          }
+
+          if (authData.channel_id !== payload?.channelId) {
+            ws.send({ error: "Unauthorized", status: 401 });
+            ws.close(4000, "Unauthorized");
+            return;
+          }
+
+          connections.set(ws.id, { ws, payload: authData });
+
+          ws.send({
+            metadata: { type: "session_welcome" },
+            payload: { channel_id: authData.channel_id },
+          });
         }
 
-        if(payload?.authorization === 'mock_auth' && payload?.channelId === 'mock'){
-          // @ts-ignore
-          connections.set(ws.id, { ws, payload: { channel_id: 'mock' } });
-          ws.send({ metadata: { type: "session_welcome" }, payload: { channel_id: 'mock' } });
-          return;
-        }
-        
-
-        let authData: JWTPayload;
-
-        try {
-          authData = verify(
-            payload?.authorization!,
-            Buffer.from(process.env.JWT_SECRET, "base64")
-          ) as JWTPayload;
-        } catch (e) {
-          ws.send({ error: "Unauthorized", status: 401 });
-          ws.close(4000, "Unauthorized");
-          return;
-        }
-
-        if(authData.channel_id !== payload?.channelId){
-          ws.send({ error: "Unauthorized", status: 401 });
-          ws.close(4000, "Unauthorized");
-          return;
-        }
-
-        connections.set(ws.id, { ws, payload: authData });
-
-        ws.send({
-          metadata: { type: "session_welcome" },
-          payload: { channel_id: authData.channel_id },
-        });
-
-      }
-
-      break;
+        break;
 
       case "ready_for_auth": {
-
         const connection = connections.get(ws.id);
 
-        if(!connection){
-            ws.send({error: "Not authenticated", status: 401});
-            ws.close(4000, "Not authenticated");
-            return;
+        if (!connection) {
+          ws.send({ error: "Not authenticated", status: 401 });
+          ws.close(4000, "Not authenticated");
+          return;
         }
 
-        if (
-          connection?.payload.channel_id === 'mock'
-        ) {
+        if (connection?.payload.channel_id === "mock") {
           const state = sign(
             { channel_id: "mock", identity: ws.id },
             Buffer.from(process.env.AUTH_JWT_SECRET, "base64"),
@@ -133,11 +138,11 @@ app.ws("/ws/rso", {
   },
   close: (ws) => {
     connections.delete(ws.id);
-  }
+  },
 });
 
 app.get("/", () => {
-  return file("public/views/index.html")
+  return file("public/views/index.html");
 });
 
 app.get("/leaderboard", () => {
@@ -154,9 +159,9 @@ app.get("/privacy", () => {
 
 app.get("/bugs", () => {
   return file("public/views/bugs.html");
-})
+});
 
-app.listen(8080, async() => {
+app.listen(8080, async () => {
   console.log("Listening on port 8080");
   await connect(process.env.DATABASE_URI, { dbName: process.env.DB_NAME });
   console.log("Connected to database");
@@ -173,30 +178,39 @@ process.on("SIGINT", async () => {
   process.exit(0);
 });
 
+async function startActCron() {
+  const acts = (await fetch("https://valorant-api.com/v1/seasons")
+    .then((res) => res.json())
+    .then((res) => res.data)) as Season[];
 
-async function startActCron(){
+  const now = new Date();
 
-  const acts = await fetch('https://valorant-api.com/v1/seasons').then(res => res.json()).then(res => res.data) as Season[];
+  const act = acts.find(
+    (act) => new Date(act.startTime) <= now && new Date(act.endTime) > now
+  )!;
 
-  const now = new Date()
+  console.log(
+    `New act started. Welcome to ${act.displayName}. Ending on ${new Date(
+      act.endTime
+    ).toDateString()}`
+  );
 
-  const act = acts.find((act) => new Date(act.startTime) <= now && new Date(act.endTime) > now)!;
+  await redis.set("actId", act.uuid);
 
-  console.log(`New act started. Welcome to ${act.displayName}. Ending on ${new Date(act.endTime).toDateString()}`);
-
-  await redis.set('actId', act.uuid);
-
-  app.use(cron({
-    name: 'actChange',
-    pattern: parseToCron(act.endTime),
-    utcOffset: 0,
-    run: startActCron
-  }))
+  app.use(
+    cron({
+      name: "actChange",
+      pattern: parseToCron(act.endTime),
+      utcOffset: 0,
+      run: startActCron,
+    })
+  );
 }
 
-setInterval(() => {
-console.log(`${process.memoryUsage().heapTotal / 1024 / 1024} MB`);
-}, 10000)
+const correction = 48 * 1024 * 1024;
+const hypothesis =
+  (v8.getHeapStatistics().heap_size_limit - correction) / 1024 / 1024;
+console.log(`\n==> Computed heap size = ${hypothesis}\n`);
 
 interface Season {
   uuid: string;
