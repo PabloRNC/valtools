@@ -194,7 +194,9 @@ async function startActCron(){
   }))
 }
 
+setInterval(() => {
 console.log(`${process.memoryUsage().heapTotal / 1024 / 1024} MB`);
+}, 10000)
 
 interface Season {
   uuid: string;
