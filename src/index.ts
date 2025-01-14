@@ -16,10 +16,7 @@ export const connections = new Map<
   { ws: ElysiaWS; payload: JWTPayload }
 >();
 
-export const redis = new Redis({
-  host: process.env.REDIS_HOST,
-  port: parseInt(process.env.REDIS_PORT),
-});
+export const redis = new Redis();
 
 const app = new Elysia({
   serve: {
@@ -229,8 +226,6 @@ interface Season {
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      REDIS_HOST: string 
-      REDIS_PORT: string;
       DATABASE_URI: string;
       RIOT_API_KEY: string;
       PORT: string;
