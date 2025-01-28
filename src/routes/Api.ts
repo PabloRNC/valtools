@@ -197,18 +197,19 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
       player: cachedPlayer ? JSON.parse(cachedPlayer) : null,
     };
   }
-
-  const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
-  if (!matchlist) {
-    set.status = 404;
-    return { status: 404, error: "No match history found." };
-  }
-
+  
   const { activeShard } = await RiotRequestManager.getAccountShard(data.puuid);
 
   if (data.region !== activeShard) {
     data.region = activeShard;
     await data.save();
+  }
+
+  const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
+
+  if (!matchlist) {
+    set.status = 404;
+    return { status: 404, error: "No match history found." };
   }
 
   const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
