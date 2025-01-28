@@ -163,7 +163,7 @@ app.get("/bugs", () => {
 
 app.listen(8080, async () => {
   console.log("Listening on port 8080");
-  await connect(process.env.DATABASE_URI, { dbName: process.env.DB_NAME });
+  await connect(process.env.DATABASE_URI, { dbName: process.env.DB_NAME, ssl: true, tls: true });
   console.log("Connected to database");
   await startActCron();
 });
@@ -206,11 +206,6 @@ async function startActCron() {
     })
   );
 }
-
-const correction = 48 * 1024 * 1024;
-const hypothesis =
-  (v8.getHeapStatistics().heap_size_limit - correction) / 1024 / 1024;
-console.log(`\n==> Computed heap size = ${hypothesis}\n`);
 
 interface Season {
   uuid: string;
