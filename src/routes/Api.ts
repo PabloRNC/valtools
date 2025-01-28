@@ -216,6 +216,8 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     set.headers["Cache"] = "HIT";
     set.status = 200;
 
+    setCache(data.puuid, data.config.platform, 2 * 60);
+
     return {
       matchlist: cachedMatchlist ? JSON.parse(cachedMatchlist) : null,
       mmrHistory: cachedCompetitiveMatches ? JSON.parse(cachedCompetitiveMatches) : null,

@@ -388,7 +388,6 @@ export async function setCache(
   platform: "pc" | "console",
   seconds: number
 ) {
-  console.log('saved cache')
   await redis.set(getKey("cache", puuid, platform), "true", "EX", seconds);
 }
 
