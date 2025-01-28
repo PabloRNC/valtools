@@ -26,8 +26,6 @@ export class RiotRequestManager {
       { method: "GET", headers: this.makeHeaders(auth?.accessToken) }
     );
 
-    console.log(`Request made to ${response.url}`);
-
     if (!response.ok) {
       if (auth && !refreshed && response.status === 401) {
         const newToken = await RSORequestManager.refreshToken(

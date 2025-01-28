@@ -191,8 +191,6 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
   const cachedMMR = await redis.get(cacheKey("mmr", data.puuid, data.config.platform));
   const cachedPlayer = await redis.get(cacheKey("player", data.puuid, data.config.platform));
 
-  console.log(await useCache(data.puuid, data.config.platform), data.puuid);
-
   if (await useCache(data.puuid, data.config.platform)) {
     set.headers["Cache"] = "HIT";
     set.status = 200;
