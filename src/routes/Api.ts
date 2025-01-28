@@ -177,12 +177,6 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     return { status: 404, error: "User not found" };
   }
 
-  const { activeShard } = await RiotRequestManager.getAccountShard(data.puuid);
-
-  if (data.region !== activeShard) {
-    data.region = activeShard;
-    await data.save();
-  }
 
   const cacheKey = getKey;
   const cachedMatchlist = await redis.get(cacheKey(matchlistKey(false), data.puuid, data.config.platform));
@@ -208,6 +202,13 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
   if (!matchlist) {
     set.status = 404;
     return { status: 404, error: "No match history found." };
+  }
+
+  const { activeShard } = await RiotRequestManager.getAccountShard(data.puuid);
+
+  if (data.region !== activeShard) {
+    data.region = activeShard;
+    await data.save();
   }
 
   const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
