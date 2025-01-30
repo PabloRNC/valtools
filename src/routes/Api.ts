@@ -212,7 +212,7 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
 
   if (!lockSet) {
       console.log('waiting for lock to be released', channelId);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       //@ts-expect-error
       return await handler({ headers, set, params: { channelId } });
   }
