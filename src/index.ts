@@ -229,6 +229,7 @@ declare global {
       AUTH_JWT_SECRET: string;
       RSO_CLIENT_ID: string;
       RSO_CLIENT_SECRET: string;
+      DEBUG: string | undefined;
       RSO_BASE_URL: string;
       RSO_REDIRECT_URI: string;
       RSO_REDIRECT_MOCK_URI: string;

@@ -6,8 +6,8 @@ import {
   PCRegions,
   ConsoleRegions,
   RiotRequestManager,
-  type BaseMatch,
-  addMatches, getLastMatchId, parseQueue, useCache, parseMatches, getKey, getMMR, getDaily, matchlistKey, getPlayer, setCache, setLastMatchId
+  addMatches, getLastMatchId, parseQueue, useCache, parseMatches, getKey, getMMR, getDaily, matchlistKey, getPlayer, setCache, setLastMatchId,
+  reloadExpiry
 } from "../lib";
 import { isAuthorized } from "../middlewares";
 
@@ -214,11 +214,15 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
 
   const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
 
-  if (lastCachedMatch && matchlist.history[0].matchId === lastCachedMatch) {
+  if (lastCachedMatch && matchlist.history[0].matchId === lastCachedMatch && cachedMatchlist && cachedCompetitiveMatches && cachedDaily && cachedMMR && cachedPlayer) {
+    
+
+    
     set.headers["Cache"] = "HIT";
     set.status = 200;
 
-    setCache(data.puuid, data.config.platform, 2 * 60);
+    await reloadExpiry(data.puuid, data.config.platform);
+    await setCache(data.puuid, data.config.platform, 2 * 60);
 
     return {
       matchlist: cachedMatchlist ? JSON.parse(cachedMatchlist) : null,
@@ -253,8 +257,9 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     ? await getPlayer(competitive[0] || unrated[0], data.config.platform)
     : cachedPlayer ? JSON.parse(cachedPlayer) : null;
 
-  setCache(data.puuid, data.config.platform, 2 * 60);
-  setLastMatchId(data.puuid, data.config.platform, matchlist.history[0].matchId);
+  await reloadExpiry(data.puuid, data.config.platform);
+  await setCache(data.puuid, data.config.platform, 2 * 60);
+  await setLastMatchId(data.puuid, data.config.platform, matchlist.history[0].matchId);
 
   set.headers["Cache"] = "MISS";
   set.status = 200;

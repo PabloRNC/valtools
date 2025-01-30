@@ -29,7 +29,7 @@ export async function setLastMatchId(puuid: string, platform: "pc" | "console", 
         getKey("matchlist:last", puuid, platform),
         matchId,
         "EX",
-        3600 * 24 * 7 * 4
+        3600
     );
     }
 
@@ -48,7 +48,7 @@ export async function addMatches(
       getKey(matchlistKey(competitive), puuid, platform),
       JSON.stringify(matches),
       "EX",
-      3600 * 24 * 7 * 4
+      3600
     );
     return matches;
   }
@@ -61,7 +61,7 @@ export async function addMatches(
     getKey(matchlistKey(competitive), puuid, platform),
     JSON.stringify(newMatchlist),
     "EX",
-    3600 * 24 * 7 * 4
+    3600
   );
 
   return newMatchlist;
@@ -207,7 +207,7 @@ export async function getPlayer(data: RedisMatchlist, platform: "pc" | "console"
     platform
   };
 
-  await redis.set(getKey("player", data.puuid, platform), JSON.stringify(player), "EX", 3600 * 24 * 7 * 4);
+  await redis.set(getKey("player", data.puuid, platform), JSON.stringify(player), "EX", 3600);
 
   return player;
 }
@@ -293,6 +293,15 @@ export function parseMatch(puuid: string, platform: 'pc' | 'console', matchData:
     };
 }
 
+export async function reloadExpiry(puuid: string, platform: "pc" | "console") {
+  await redis.expire(getKey(matchlistKey(false), puuid, platform), 3600);
+  await redis.expire(getKey(matchlistKey(true), puuid, platform), 3600);
+  await redis.expire(getKey("mmr", puuid, platform), 3600);
+  await redis.expire(getKey("player", puuid, platform), 3600);
+  await redis.expire(getKey("matchlist:last", puuid, platform), 3600);
+
+}
+
 export async function getMMR(
   puuid: string,
   region: string,
@@ -319,7 +328,7 @@ export async function getMMR(
         threshold: null,
       };
 
-      await redis.set(getKey("mmr", puuid, platform), JSON.stringify(mmr));
+      await redis.set(getKey("mmr", puuid, platform), JSON.stringify(mmr), 'EX', 3600);
 
       return mmr;
     } else {
@@ -370,7 +379,7 @@ export async function getMMR(
         threshold,
       };
 
-      await redis.set(getKey("mmr", puuid, platform), JSON.stringify(mmr));
+      await redis.set(getKey("mmr", puuid, platform), JSON.stringify(mmr), 'EX', 3600);
 
       return mmr;
     }
