@@ -224,6 +224,8 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
     return { status: 404, error: "No match history found." };
   }
 
+  setCache(data.puuid, data.config.platform, 2 * 60);
+
   const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
 
   if (lastCachedMatch && matchlist.history[0].matchId === lastCachedMatch && cachedMatchlist && cachedCompetitiveMatches && cachedDaily && cachedMMR && cachedPlayer) {
@@ -233,7 +235,7 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
 
     await reloadExpiry(data.puuid, data.config.platform);
     await redis.del(lockKey);
-    await setCache(data.puuid, data.config.platform, 2 * 60);
+    //await setCache(data.puuid, data.config.platform, 2 * 60);
     return {
       matchlist: cachedMatchlist ? JSON.parse(cachedMatchlist) : null,
       mmrHistory: cachedCompetitiveMatches ? JSON.parse(cachedCompetitiveMatches) : null,
@@ -270,7 +272,7 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
     : cachedPlayer ? JSON.parse(cachedPlayer) : null;
 
   await redis.del(lockKey);
-  await setCache(data.puuid, data.config.platform, 2 * 60);
+  //await setCache(data.puuid, data.config.platform, 2 * 60);
   await reloadExpiry(data.puuid, data.config.platform);
 
   set.headers["Cache"] = "MISS";
