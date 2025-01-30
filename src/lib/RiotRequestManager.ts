@@ -26,7 +26,7 @@ export class RiotRequestManager {
       { method: "GET", headers: this.makeHeaders(auth?.accessToken) }
     );
 
-    if(process.env.DEBUG) console.log(`Request made to ${response.url} with status ${response.status}`);
+    if(process.env.DEBUG) console.log(`Request made to ${response.url}`);
 
     if (!response.ok) {
       if (auth && !refreshed && response.status === 401) {
