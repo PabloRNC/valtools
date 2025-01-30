@@ -235,6 +235,7 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
 
     await reloadExpiry(data.puuid, data.config.platform);
     await redis.del(lockKey);
+    console.log('lock released', channelId);
     await setCache(data.puuid, data.config.platform, 2 * 60);
     return {
       matchlist: cachedMatchlist ? JSON.parse(cachedMatchlist) : null,
@@ -272,6 +273,7 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
     : cachedPlayer ? JSON.parse(cachedPlayer) : null;
 
   await redis.del(lockKey);
+  console.log('lock released', channelId);
   await setCache(data.puuid, data.config.platform, 2 * 60);
   await reloadExpiry(data.puuid, data.config.platform);
 
