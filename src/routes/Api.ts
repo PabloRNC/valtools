@@ -202,18 +202,6 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
     data.region = activeShard;
     await data.save();
   }
-
-  const lockKey = getKey("lock", data.puuid, data.config.platform);
-  
-  // @ts-expect-error
-  const lockSet = await redis.set(lockKey, '1', 'NX', 'EX', 60);
-  if (!lockSet) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // @ts-expect-error
-    return await handler({ headers, set, params: { channelId } });
-  }
-
-  try {
     const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
     if (!matchlist) {
       set.status = 404;
@@ -275,9 +263,6 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
       mmr,
       player,
     };
-  } finally {
-    await redis.del(lockKey);
-  }
 });
 
 
