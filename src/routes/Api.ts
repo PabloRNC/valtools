@@ -211,10 +211,13 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
   await redis.expire(lockKey, 60);
 
   if (!lockSet) {
+      console.log('waiting for lock to be released', channelId);
       await new Promise(resolve => setTimeout(resolve, 500));
       //@ts-expect-error
       return await handler({ headers, set, params: { channelId } });
   }
+
+  console.log('lock acquired', channelId);
 
   const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
 
