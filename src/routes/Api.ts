@@ -156,7 +156,8 @@ Api.get(
 
 */
 
-Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) => {
+Api.get("/players/:channelId", async function handler({ headers, set, params: { channelId }}) {
+
   const payload = isAuthorized(headers);
 
   if (!payload) {
@@ -205,6 +206,16 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     await data.save();
   }
 
+  const lockKey = getKey("lock", data.puuid, data.config.platform);
+  const lockSet = await redis.set(lockKey, '1', 'NX');
+  await redis.expire(lockKey, 60);
+
+  if (!lockSet) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      //@ts-expect-error
+      return await handler({ headers, set, params: { channelId } });
+  }
+
   const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
 
   if (!matchlist) {
@@ -216,14 +227,12 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
 
   if (lastCachedMatch && matchlist.history[0].matchId === lastCachedMatch && cachedMatchlist && cachedCompetitiveMatches && cachedDaily && cachedMMR && cachedPlayer) {
     
-
-    
     set.headers["Cache"] = "HIT";
     set.status = 200;
 
     await reloadExpiry(data.puuid, data.config.platform);
+    await redis.del(lockKey);
     await setCache(data.puuid, data.config.platform, 2 * 60);
-
     return {
       matchlist: cachedMatchlist ? JSON.parse(cachedMatchlist) : null,
       mmrHistory: cachedCompetitiveMatches ? JSON.parse(cachedCompetitiveMatches) : null,
@@ -232,6 +241,8 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
       player: cachedPlayer ? JSON.parse(cachedPlayer) : null,
     };
   }
+
+  await setLastMatchId(data.puuid, data.config.platform, matchlist.history[0].matchId);
 
   const newMatches = matchlist.history.filter(match => match.matchId !== lastCachedMatch);
   const competitiveMatches = newMatches.filter(match => match.queueId === parseQueue("competitive", data.config.platform));
@@ -257,9 +268,9 @@ Api.get("/players/:channelId", async ({ headers, set, params: { channelId } }) =
     ? await getPlayer(competitive[0] || unrated[0], data.config.platform)
     : cachedPlayer ? JSON.parse(cachedPlayer) : null;
 
-  await reloadExpiry(data.puuid, data.config.platform);
+  await redis.del(lockKey);
   await setCache(data.puuid, data.config.platform, 2 * 60);
-  await setLastMatchId(data.puuid, data.config.platform, matchlist.history[0].matchId);
+  await reloadExpiry(data.puuid, data.config.platform);
 
   set.headers["Cache"] = "MISS";
   set.status = 200;
