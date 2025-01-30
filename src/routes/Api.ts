@@ -208,7 +208,7 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
 
   const lockKey = getKey("lock", data.puuid, data.config.platform);
   const lockSet = await redis.set(lockKey, '1', 'NX');
-  await redis.expire(lockKey, 60);
+  await redis.expire(lockKey, 5);
 
   if (!lockSet) {
       console.log('waiting for lock to be released', channelId);
@@ -216,8 +216,6 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
       //@ts-expect-error
       return await handler({ headers, set, params: { channelId } });
   }
-
-  console.log('lock acquired', channelId);
 
   const matchlist = await RiotRequestManager.getMatchlist(data.puuid, data.region, data.config.platform);
 
@@ -235,7 +233,6 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
 
     await reloadExpiry(data.puuid, data.config.platform);
     await redis.del(lockKey);
-    console.log('lock released', channelId);
     await setCache(data.puuid, data.config.platform, 2 * 60);
     return {
       matchlist: cachedMatchlist ? JSON.parse(cachedMatchlist) : null,
@@ -273,7 +270,6 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
     : cachedPlayer ? JSON.parse(cachedPlayer) : null;
 
   await redis.del(lockKey);
-  console.log('lock released', channelId);
   await setCache(data.puuid, data.config.platform, 2 * 60);
   await reloadExpiry(data.puuid, data.config.platform);
 
