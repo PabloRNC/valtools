@@ -166,7 +166,6 @@ app.listen(8080, async () => {
     dbName: process.env.DB_NAME,
     //@ts-ignore
     useNewUrlParser: true,
-    useUnifiedTopology: true,
     tls: true, 
     ssl: true,
     serverSelectionTimeoutMS: 5000
