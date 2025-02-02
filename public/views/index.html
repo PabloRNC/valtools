@@ -317,10 +317,16 @@
     </div>
 
     <script>
+        const tryButton = document.getElementById("tryButton");
         const bugModal = document.getElementById("bugModal");
         const reportBugButton = document.getElementById("reportBugButton");
         const closeModal = document.getElementById("closeModal");
         const bugForm = document.getElementById("bugForm");
+
+
+        tryButton.addEventListener("click", () => {
+            window.open("https://dashboard.twitch.tv/extensions/ialonun7tinn2yo9fpkjgdqpu2vw9g-0.0.3");
+        });
 
         reportBugButton.addEventListener("click", () => {
             bugModal.style.display = "flex";
