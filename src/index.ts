@@ -9,7 +9,6 @@ import { Redis } from "ioredis";
 import { connect, connections as MongoDBConnections } from "mongoose";
 import { type JWTPayload, type AuthJWTPayload, parseToCron } from "./lib";
 import { Api, Auth } from "./routes";
-import v8 from "node:v8";
 
 export const connections = new Map<
   string,
@@ -163,7 +162,15 @@ app.get("/bugs", () => {
 
 app.listen(8080, async () => {
   console.log("Listening on port 8080");
-  await connect(process.env.DATABASE_URI, { dbName: process.env.DB_NAME, ssl: true, tls: true });
+  await connect(process.env.DATABASE_URI, {
+    dbName: process.env.DB_NAME,
+    //@ts-ignore
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    tls: true, 
+    ssl: true,
+    serverSelectionTimeoutMS: 5000
+  });
   console.log("Connected to database");
   await startActCron();
 });
