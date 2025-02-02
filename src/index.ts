@@ -165,7 +165,6 @@ app.listen(8080, async () => {
   await connect(process.env.DATABASE_URI, {
     dbName: process.env.DB_NAME,
     //@ts-ignore
-    useNewUrlParser: true,
     tls: true, 
     ssl: true,
     serverSelectionTimeoutMS: 5000
