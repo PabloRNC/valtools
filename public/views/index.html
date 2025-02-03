@@ -318,6 +318,8 @@
 
     <script>
 
+        document.getElementsByName('body')[0].addEventListener('load', () => {
+
             if(location.hash === "#afterLogin"){
                 alert("You have successfully logged in!");
             }
@@ -325,6 +327,8 @@
             if(location.hash === "#noValorantAccount"){
                 alert("You don't have any valorant data linked to this Riot Account. Try to play a match.");
             }
+
+        })
 
         const tryButton = document.getElementById("tryButton");
         const bugModal = document.getElementById("bugModal");
