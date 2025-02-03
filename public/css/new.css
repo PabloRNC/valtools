@@ -72,7 +72,6 @@
   background-color: rgba(244, 67, 54, 0.9);
 }
 
-
 .matchBackground {
   position: absolute;
   width: 100%;
@@ -83,7 +82,6 @@
   overflow: hidden;
   z-index: -1;
 }
-
 
 .playerRank {
   width: 30%;
@@ -310,7 +308,7 @@
 
 .playerName {
   color: white;
-  font-size: 0.7vw;
+  font-size: 1vw;
   font-weight: bold;
   text-align: center;
 }
@@ -322,7 +320,7 @@
   text-align: center;
   border: 1px solid grey;
   border-radius: 10px;
-  padding: 0.7%;
+  padding: 0.5%;
   margin-left: 2%;
   background-color: black;
   box-sizing: border-box;
@@ -350,32 +348,28 @@ body {
 
 .nav {
   width: 100%;
+  height: 20%;
+  background-color: rgb(68, 68, 68);
   display: flex;
   flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  background-color: #333;
   border-radius: 10px 10px 0 0;
-  overflow: hidden;
 }
 
 .navItem {
   flex: 1;
-  text-align: center;
-  padding: 0.2rem;
   color: white;
-  background-color: #444;
-  cursor: pointer;
-  font-family: "Bebas Neue", cursive;
-  font-size: clamp(0.4rem, 1.2vw, 0.6rem);
-  transition: background-color 0.3s ease, color 0.3s ease;
-  box-sizing: border-box;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.navItem span {
+  font-size: 1vw;
+  font-weight: bold;
 }
 
 .navItem:hover {
-  background-color: #555;
-  border: 1px solid white;
-  color: #68bcdb;
+  cursor: pointer;
 }
 
 .navItem.active {
@@ -428,11 +422,12 @@ body {
   width: 100%;
   height: 100%;
   background-color: black;
-  opacity: .2;
+  opacity: .25;
 }
 
 .matchStatus {
-  font-size: 1.1vw;
+  margin-bottom: -5%;
+  font-size: 1.4vw;
   font-weight: 900;
   text-shadow: 
   0.3em 0.3em 0.6em rgba(0, 0, 0, 0.9),
@@ -452,7 +447,7 @@ body {
 }
 
 .matchScore {
-  font-size: 1.1vw;
+  font-size: 1.3vw;
   font-weight: 900;
   text-shadow: 
   0.3em 0.3em 0.6em rgba(0, 0, 0, 0.9),
@@ -460,12 +455,70 @@ body {
   color: white;
 }
 
+.gamemode {
+  color: white;
+  font-size: 0.8vw;
+  font-weight: bold;
+  text-shadow:
+  0.3em 0.3em 0.6em rgba(0, 0, 0, 0.9),
+  0 0 0.5em rgba(255, 255, 255, 0.5);
+
+}
+
 .matchWrapper {
   width: 100%;
   height: 100%;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   z-index: 2;
+  margin-bottom: 2%;
+}
+
+.matchStats {
+  font-weight: bold;
+  text-shadow: 
+  0.3em 0.3em 0.6em rgba(0, 0, 0, 0.9),
+  0 0 0.5em rgba(255, 255, 255, 0.5);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 22%;
+  top: 0;
+  bottom: 0;
+}
+
+.kda {
+  font-size: 1vw;
+}
+
+.acs {
+  font-size: 0.7vw;
+}
+
+.pagination {
+  width: auto;
+  height: 8%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+}
+
+.dot {
+  height: 100%;
+  margin: 5%;
+  max-height: inherit;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  background-color: white;
+  opacity: 0.5;
+}
+
+.dot.active {
+  opacity: 1;
 }

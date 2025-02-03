@@ -10,9 +10,11 @@
     <body>
         <div class="container">
             <div class="nav">
-                <div class="navItem active" data-trigger="playerStats">Player Info</div>
-                <div class="navItem" data-trigger="casualMatches">Casual Matches</div>
-                <div class="navItem">Competitive Matches</div>
+                <div class="nav">
+                    <div class="navItem active" data-trigger="playerStats"><span>Player Info</span></div>
+                    <div class="navItem" data-trigger="casualMatches"><span>Casual Matches</span></div>
+                    <div class="navItem" data-trigger="rankedMatches"><span>Ranked Matches</span></div>
+                </div>
             </div>
             <div class="window playerStats">
                 <div class="playerRank">
@@ -51,9 +53,19 @@
                     <img class="matchBackground" src="https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/listviewicon.png"></img>
                     <div class="matchWrapper">
                     <img class="agent" src="https://media.valorant-api.com/agents/dade69b4-4f5a-8528-247b-219e5a1facd6/displayicon.png"></img>
+                    <div class="matchStats">
+                        <div class="kda">13/5/2</div>
+                        <div class="acs">ACS: 280</div>
+                    </div>
                     <div class="matchInfo">
                         <div class="matchStatus victory">VICTORY</div>
                         <div class="matchScore">13 - 0</div>
+                        <div class="gamemode">SWIFTPLAY</div>
+                    </div>
+                    <div class="pagination">
+                        <div class="dot"></div>
+                        <div class="dot active"></div>
+                        <div class="dot"></div>
                     </div>
                     </div>
                 </div>
