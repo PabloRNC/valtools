@@ -25,6 +25,12 @@ const app = new Elysia({
   .use(cors())
   .use(staticPlugin({ prefix: "/" }))
   .use(html())
+  .onBeforeHandle(({request}) => {
+    const url = new URL(request.url);
+    if(url.hostname.startsWith("www")) {
+      return redirect(`${url.protocol}//${url.host.replace("www.", "")}${url.pathname}`, 301);
+    }
+  })
   .use(Auth)
   .use(Api);
 
@@ -138,13 +144,6 @@ app.ws("/ws/rso", {
   close: (ws) => {
     connections.delete(ws.id);
   },
-});
-
-app.onBeforeHandle(({request}) => {
-  const url = new URL(request.url);
-  if(url.hostname.startsWith("www")) {
-    return redirect(`${url.protocol}//${url.host.replace("www.", "")}${url.pathname}`, 301);
-  }
 });
 
 app.get("/", () => {
