@@ -29,6 +29,12 @@
             text-align: center;
             padding: 50px;
             box-sizing: border-box;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
         }
 
         .section-1 {
@@ -58,6 +64,7 @@
         .section-7 {
             background: linear-gradient(135deg, #2193b0, #6dd5ed);
         }
+
 
         h1 {
             font-size: 50px;
