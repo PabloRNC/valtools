@@ -1,5 +1,5 @@
 import { sign, verify } from "jsonwebtoken";
-import { Elysia, file, t } from "elysia";
+import { Elysia, file, redirect, t } from "elysia";
 import type { ElysiaWS } from "elysia/ws";
 import { cors } from "@elysiajs/cors";
 import { html } from "@elysiajs/html";
@@ -138,6 +138,13 @@ app.ws("/ws/rso", {
   close: (ws) => {
     connections.delete(ws.id);
   },
+});
+
+app.onBeforeHandle(({request}) => {
+  const url = new URL(request.url);
+  if(url.hostname.startsWith("www")) {
+    return redirect(`${url.protocol}//${url.host.replace("www.", "")}${url.pathname}`, 301);
+  }
 });
 
 app.get("/", () => {
