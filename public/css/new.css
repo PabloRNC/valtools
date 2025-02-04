@@ -492,6 +492,33 @@ body {
   bottom: 0;
 }
 
+.accuracySvg {
+  position: absolute;
+  height: auto;
+  width: 7%;
+  right: 25%;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+}
+
+.accuracyText {
+  height: 65%;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8vw;
+  text-shadow: 
+  0.3em 0.3em 0.6em rgba(0, 0, 0, 0.9),
+  0 0 0.5em rgba(255, 255, 255, 0.5);
+  color: white;
+  font-weight: bold;
+  align-items: center;
+  justify-content: center;
+  right: 18%;
+  justify-content: space-between;
+}
+
 .kda {
   font-size: 1vw;
 }
