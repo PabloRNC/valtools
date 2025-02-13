@@ -173,16 +173,6 @@ app.listen(8080, async () => {
   await startActCron();
 });
 
-process.on("SIGINT", async () => {
-  await redis.quit();
-  process.exit(0);
-});
-
-process.on("SIGINT", async () => {
-  await MongoDBConnections[0].close();
-  process.exit(0);
-});
-
 async function startActCron() {
   const acts = (await fetch("https://valorant-api.com/v1/seasons")
     .then((res) => res.json())
