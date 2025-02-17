@@ -66,7 +66,7 @@
 
         <h2>2. User Accounts and Authentication</h2>
         <p>
-            With ValTools, streamers must securely link their Valorant account to the extension via the <span class="important">RSO (Riot Sign-On)</span> system. This ensures that only the authorized streamer can connect their Valorant profile. No manual input of username or tag is required.
+            Streamers must securely link their Valorant account to the extension via the <span class="important">RSO (Riot Sign-On)</span> system. This ensures that only the authorized streamer can connect their Valorant profile. No manual input of username or tag is required.
         </p>
 
         <h2>3. Content Displayed</h2>
@@ -81,7 +81,7 @@
 
         <h2>5. API Usage</h2>
         <p>
-            ValTools connects to Riot's official API and other Third Part API's to collect and display relevant data from your Valorant account. By using the extension, you agree to the use of this API to fetch and display the necessary information.
+            ValTools connects to Riot's official API and other third-party APIs to collect and display relevant data from your Valorant account. By using the extension, you agree to the use of these APIs to fetch and display the necessary information.
         </p>
 
         <h2>6. User Responsibilities</h2>
@@ -98,19 +98,47 @@
             ValTools is provided on an "as is" and "as available" basis. We do not warrant that the service will be uninterrupted, secure, or error-free. To the fullest extent permitted by law, ValTools and its developers are not liable for any direct, indirect, incidental, or consequential damages arising from your use of the extension.
         </p>
 
-        <h2>8. Modifications to Terms</h2>
+        <h2>8. Intellectual Property</h2>
+        <p>
+            ValTools and its content are the intellectual property of its developers. Valorant and its related data are the property of Riot Games. This extension is developed independently and is not endorsed by Riot Games.
+        </p>
+
+        <h2>9. Indemnification</h2>
+        <p>
+            You agree to indemnify and hold harmless ValTools and its developers from any claims, damages, or liabilities arising from your use of the extension or violation of these Terms.
+        </p>
+
+        <h2>10. Termination of Service</h2>
+        <p>
+            We reserve the right to suspend or terminate your access to ValTools if you violate these Terms or engage in activities that could harm the service or its users.
+        </p>
+
+        <h2>11. Modifications to Terms</h2>
         <p>
             We reserve the right to update these Terms at any time. Any changes will be posted on this page, and by continuing to use ValTools, you accept those changes.
         </p>
 
-        <h2>9. Governing Law</h2>
+        <h2>12. Severability</h2>
+        <p>
+            If any provision of these Terms is found to be invalid or unenforceable, the remaining provisions will continue in effect.
+        </p>
+
+        <h2>13. Entire Agreement</h2>
+        <p>
+            These Terms constitute the entire agreement between you and ValTools regarding the use of the service, superseding any prior agreements.
+        </p>
+
+        <h2>14. Governing Law</h2>
         <p>
             These Terms are governed by and construed in accordance with the laws of the jurisdiction in which the service is provided. Any disputes arising from these Terms or the use of ValTools will be subject to the exclusive jurisdiction of the courts in that jurisdiction.
         </p>
 
         <div class="footer">
-            <p>ValTools &copy; 2024. All Rights Reserved.</p>
+            <p>ValTools &copy; <span id="year"></span>. All Rights Reserved.</p>
         </div>
     </div>
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>

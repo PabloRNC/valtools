@@ -17,7 +17,6 @@
         .container {
             width: 80%;
             margin: auto;
-            overflow: hidden;
             padding: 20px;
             background-color: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -52,6 +51,12 @@
             color: #777;
         }
     </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const year = new Date().getFullYear();
+            document.getElementById("year").textContent = year;
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -65,8 +70,9 @@
             ValTools does not store any sensitive personal information. The data we handle includes:
         </p>
         <ul>
-            <li>Riot name, tag and puuid (Player Universally Unique IDentifiers).</li>
+            <li>Riot name, tag, and puuid (Player Universally Unique IDentifiers).</li>
             <li>Basic profile information such as player card, rank, and match history (agent, score, and personal stats like KDA and ACS).</li>
+            <li>Technical data such as IP address, browser type, and device information for security and optimization purposes.</li>
             <li>We do not collect any sensitive data.</li>
         </ul>
 
@@ -77,31 +83,56 @@
         <ul>
             <li>Displaying Valorant profile information in an interactive overlay.</li>
             <li>Providing real-time updates on match history and player performance.</li>
-            <li>We store data in a end to end encrypted MongoDB database and redis cache server.</li>
+            <li>Ensuring the security and integrity of the service by monitoring technical data.</li>
+            <li>We store data in an end-to-end encrypted MongoDB database and Redis cache server.</li>
         </ul>
 
-        <h2>3. Security and Data Protection</h2>
+        <h2>3. Data Sharing and Third-Party Services</h2>
+        <p>
+            ValTools connects to Riot's official API and other Third Party APIs to collect and display relevant data. We do not sell or share your data with third parties for marketing purposes. However, we may share information with:
+        </p>
+        <ul>
+            <li>Service providers necessary for hosting and maintaining ValTools.</li>
+            <li>Authorities, if required by law or to protect our rights and users' safety.</li>
+        </ul>
+
+        <h2>4. Security and Data Protection</h2>
         <p>
             ValTools uses <span class="important">JWT (JSON Web Tokens)</span> to secure your data. This ensures that only individuals using the extension have access to the information, protecting it from unauthorized third-party access. Additionally, streamers can choose to hide their match history if they prefer.
         </p>
 
-        <h2>4. Your Control Over Data</h2>
+        <h2>5. User Rights and Choices</h2>
         <p>
-            Streamers have full control over their data displayed through ValTools. You can choose to hide your match history if desired, ensuring your gameplay details remain private. The extension does not store any sensitive information beyond what is necessary for its functionality.
+            You have the right to access, correct, or delete your personal data. You can also object to or restrict certain types of processing. To exercise these rights, please contact us.
         </p>
 
-        <h2>5. Changes to This Policy</h2>
+        <h2>6. International Data Transfers</h2>
         <p>
-            ValTools may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page. We advise you to review this policy periodically for any updates.
+            Your data may be transferred to servers located outside your country of residence. We take appropriate safeguards to ensure your data is protected in compliance with relevant laws.
         </p>
 
-        <h2>6. Not endorsed with Riot Games</h2>
+        <h2>7. Automated Decision-Making</h2>
+        <p>
+            ValTools does not use automated decision-making processes or profiling that could significantly impact users.
+        </p>
+
+        <h2>8. Not endorsed by Riot Games</h2>
         <p>
             ValTools is an independent tool and is not affiliated with or endorsed by Riot Games. Riot Games is not responsible for the development, support, or functionality of this extension.
         </p>
 
+        <h2>9. Legal Basis for Data Processing</h2>
+        <p>
+            We process your data based on your consent, contractual necessity, or our legitimate interests, such as maintaining security and enhancing user experience.
+        </p>
+
+        <h2>10. Changes to This Policy</h2>
+        <p>
+            ValTools may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page. We advise you to review this policy periodically for any updates.
+        </p>
+
         <div class="footer">
-            <p>ValTools &copy; 2024. All Rights Reserved.</p>
+            <p>ValTools &copy; <span id="year"></span>. All Rights Reserved.</p>
         </div>
     </div>
 </body>
