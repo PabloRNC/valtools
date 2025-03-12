@@ -197,6 +197,7 @@ async function startActCron() {
       name: "actChange",
       pattern: parseToCron(act.endTime),
       utcOffset: 0,
+      maxRuns: 1,
       run: startActCron,
     })
   );
