@@ -16,7 +16,7 @@
     "@elysiajs/html": "^1.2.0",
     "@elysiajs/static": "^1.2.0",
     "elysia": "^1.2.25",
-    "ioredis": "^5.6.0",
+    "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
     "luxon": "^3.6.1",
     "mongoose": "^8.13.2"
