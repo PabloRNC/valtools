@@ -184,18 +184,6 @@ async function startActCron() {
     (act) => new Date(act.startTime) <= now && new Date(act.endTime) > now
   )!;
 
-  const prevAct = acts.filter(
-    (act) => new Date(act.startTime) <= now && new Date(act.endTime) < now
-  ).sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())[0];
-
-  if (prevAct) {
-    console.log(
-      `Previous act ended. ${prevAct.displayName} ended on ${new Date(
-        prevAct.endTime
-      ).toDateString()}`
-    );
-  }
-
   console.log(
     `New act started. Welcome to ${act.displayName}. Ending on ${new Date(
       act.endTime
@@ -203,7 +191,6 @@ async function startActCron() {
   );
 
   await redis.set("actId", act.uuid);
-  await redis.set("previousActId", prevAct!.uuid);
 
   app.use(
     cron({
