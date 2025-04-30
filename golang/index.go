@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -41,9 +42,8 @@ type LeaderboardResponse struct {
 	TierDetails  map[string]interface{} `json:"tierDetails"`
 }
 
-type Act struct {
-	ID       string `json:"id"`
-	IsActive bool   `json:"isActive"`
+type SeasonResponse struct {
+	Data []Season `json:"data"`
 }
 
 const (
@@ -84,7 +84,7 @@ func init() {
 	go redisWorker()
 }
 
-func fetchLeaderboardPage(actId string, page int, region, platform string) (*LeaderboardResponse, error) {
+func fetchLeaderboardPage(actId string, page int, region, platform string) (*LeaderboardResponse, int, error) {
 	url := fmt.Sprintf("https://%s.api.riotgames.com/val/%sranked/v1/leaderboards/by-act/%s?size=%d&startIndex=%d&platformType=playstation",
 		region,
 		map[string]string{"console": "console/", "pc": ""}[platform],
@@ -99,15 +99,18 @@ func fetchLeaderboardPage(actId string, page int, region, platform string) (*Lea
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == 404 {
+		return nil, 404, nil
+	}
 
 	if resp.StatusCode == 429 {
 		retryAfter := resp.Header.Get("Retry-After")
 		if retryAfter != "" {
 			waitTime, _ := strconv.Atoi(retryAfter)
-			fmt.Printf("Rate limit reached for %s (%s). Waiting for %d seconds...\n", platform, region, waitTime)
 			time.Sleep(time.Duration(waitTime) * time.Second)
 			return fetchLeaderboardPage(actId, page, region, platform)
 		}
@@ -115,83 +118,83 @@ func fetchLeaderboardPage(actId string, page int, region, platform string) (*Lea
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, resp.StatusCode, err
 	}
 
 	var data LeaderboardResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
+		return nil, resp.StatusCode, err
+	}
+
+	return &data, resp.StatusCode, nil
+}
+
+func fetchSeasonData() ([]Season, error) {
+	url := "https://valorant-api.com/v1/seasons"
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	return &data, nil
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var data SeasonResponse
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data.Data, nil
 }
 
-func fetchActiveActID() string {
+func getActIDs() (string, string) {
 	for {
-		url := "https://valorant-api.com/v1/seasons"
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", url, nil)
+		seasons, err := fetchSeasonData()
 		if err != nil {
-			fmt.Printf("Error creating request: %v. Retrying in 30 seconds...\n", err)
-			time.Sleep(30 * time.Second)
-			continue
-		}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Printf("Error fetching season data: %v. Retrying in 30 seconds...\n", err)
-			time.Sleep(30 * time.Second)
-			continue
-		}
-
-		defer resp.Body.Close()
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Printf("Error reading response body: %v. Retrying in 30 seconds...\n", err)
-			time.Sleep(30 * time.Second)
-			continue
-		}
-
-		var data struct {
-			Data []Season `json:"data"`
-		}
-
-		err = json.Unmarshal(body, &data)
-		if err != nil {
-			fmt.Printf("Error unmarshalling JSON: %v. Retrying in 30 seconds...\n", err)
 			time.Sleep(30 * time.Second)
 			continue
 		}
 
 		now := time.Now()
-
 		var activeSeason *Season
-		for _, season := range data.Data {
+		var latestEnded *Season
+
+		for _, season := range seasons {
 			startTime, err1 := time.Parse(time.RFC3339, season.StartTime)
 			endTime, err2 := time.Parse(time.RFC3339, season.EndTime)
-
 			if err1 != nil || err2 != nil {
-				fmt.Printf("Error parsing season dates: %v, %v. Retrying in 30 seconds...\n", err1, err2)
-				time.Sleep(30 * time.Second)
 				continue
 			}
-
 			if now.After(startTime) && now.Before(endTime) {
 				activeSeason = &season
-				break
+			} else if endTime.Before(now) {
+				if latestEnded == nil || endTime.After(parseTime(latestEnded.EndTime)) {
+					latestEnded = &season
+				}
 			}
 		}
 
-		if activeSeason != nil {
-			fmt.Printf("Active season found: %s\n", activeSeason.UUID)
-			return activeSeason.UUID
+		if activeSeason != nil && latestEnded != nil {
+			return activeSeason.UUID, latestEnded.UUID
 		}
-
-		fmt.Printf("No active season found. Retrying in 30 seconds...\n")
 		time.Sleep(30 * time.Second)
 	}
+}
+
+func parseTime(ts string) time.Time {
+	t, _ := time.Parse(time.RFC3339, ts)
+	return t
 }
 
 func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
@@ -201,13 +204,15 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 	thresholdsKey := fmt.Sprintf("leaderboard:%s:%s:thresholds", platform, region)
 
 	var allPageKeys []string
-
 	var thresholds map[string]interface{} = make(map[string]interface{})
 
 	for {
-		playersPage, err := fetchLeaderboardPage(actId, page, region, platform)
+		playersPage, status, err := fetchLeaderboardPage(actId, page, region, platform)
+		if status == 404 {
+			break
+		}
+
 		if err != nil {
-			fmt.Printf("Error fetching page %d for %s (%s): %v\n", page, platform, region, err)
 			return
 		}
 
@@ -218,83 +223,74 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 		if len(playersPage.Players) == 0 {
 			thresholdsData, _ := json.Marshal(thresholds)
 			redisClient.Set(ctx, thresholdsKey, string(thresholdsData), 0)
-			fmt.Printf("Saved threshold for %s (%s)\n", platform, region)
 			break
 		}
-
 		pageKey := fmt.Sprintf("leaderboard:%s:%s:page:%d", platform, region, page)
 		playersData, _ := json.Marshal(playersPage.Players)
 		err = redisClient.Set(ctx, pageKey, playersData, 0).Err()
 		if err != nil {
-			fmt.Printf("Error saving page %d to Redis for %s (%s): %v\n", page, platform, region, err)
 			return
 		}
 
-		fmt.Printf("Saved page for %s (%s): %d\n", platform, region, page)
-
 		allPageKeys = append(allPageKeys, pageKey)
-
 		page++
 	}
 
 	luaScript := `
 		local totalKey = KEYS[1]
-local playerKey = KEYS[2]
-local pageKeys = ARGV
-local result = {}
+		local playerKey = KEYS[2]
+		local pageKeys = ARGV
+		local result = {}
 
-local cursor = "0"
-local pattern = playerKey .. ":*"
-repeat
-    local scanResult = redis.call("SCAN", cursor, "MATCH", pattern, "COUNT", 100)
-    cursor = scanResult[1]
-    local keys = scanResult[2]
-    
-    if #keys > 0 then
-        redis.call("DEL", unpack(keys))
-    end
-until cursor == "0"
+		local cursor = "0"
+		local pattern = playerKey .. ":*"
+		repeat
+			local scanResult = redis.call("SCAN", cursor, "MATCH", pattern, "COUNT", 100)
+			cursor = scanResult[1]
+			local keys = scanResult[2]
+			if #keys > 0 then
+				redis.call("DEL", unpack(keys))
+			end
+		until cursor == "0"
 
-for _, key in ipairs(pageKeys) do
-    local value = redis.call("GET", key)
-    if value then
-        local pageData = cjson.decode(value)
-        for i = 1, #pageData do
-            local playerData = pageData[i]
-            local playerDataKey = playerKey..":"..playerData.leaderboardRank.."_"..playerData.puuid
-            redis.call("SET", playerDataKey, cjson.encode(playerData))
-            table.insert(result, playerData)
-        end
-    end
-end
+		for _, key in ipairs(pageKeys) do
+			local value = redis.call("GET", key)
+			if value then
+				local pageData = cjson.decode(value)
+				for i = 1, #pageData do
+					local playerData = pageData[i]
+					local playerDataKey = playerKey..":"..playerData.leaderboardRank.."_"..playerData.puuid
+					redis.call("SET", playerDataKey, cjson.encode(playerData))
+					table.insert(result, playerData)
+				end
+			end
+		end
 
-redis.call("SET", totalKey, cjson.encode(result))
-return #result
-
+		redis.call("SET", totalKey, cjson.encode(result))
+		return #result
 	`
 
 	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey, playerKey}, allPageKeys).Result()
 	if err != nil {
-		fmt.Printf("Error concatenating pages to Redis for %s (%s): %v\n", platform, region, err)
+		log.Printf("Error executing Lua script: %v", err)
 		return
 	}
 
-	fmt.Printf("All pages concatenated and saved to %s\n", totalKey)
-
 	for _, pageKey := range allPageKeys {
-		err := redisClient.Del(ctx, pageKey).Err()
-		if err != nil {
-			fmt.Printf("Error deleting temporary page %s: %v\n", pageKey, err)
-		}
+		redisClient.Del(ctx, pageKey)
 	}
 
-	fmt.Printf("All temporary pages deleted\n")
 }
 
 func processRegion(region, platform string, timeout time.Duration) {
 	for {
-		actId := fetchActiveActID()
-		saveAndConcatenatePagesToRedis(region, platform, actId)
+		activeActId, fallbackActId := getActIDs()
+		_, status, _ := fetchLeaderboardPage(activeActId, 1, region, platform)
+		if status == 404 {
+			saveAndConcatenatePagesToRedis(region, platform, fallbackActId)
+		} else {
+			saveAndConcatenatePagesToRedis(region, platform, activeActId)
+		}
 		time.Sleep(timeout)
 	}
 }
