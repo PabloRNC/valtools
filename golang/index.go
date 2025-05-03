@@ -171,6 +171,9 @@ func getActIDs() (string, string) {
 		var latestEnded *Season
 
 		for _, season := range seasons {
+			if season.ParentUuid == nil {
+				continue
+			}
 			startTime, err1 := time.Parse(time.RFC3339, season.StartTime)
 			endTime, err2 := time.Parse(time.RFC3339, season.EndTime)
 			if err1 != nil || err2 != nil {
@@ -285,10 +288,14 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 func processRegion(region, platform string, timeout time.Duration) {
 	for {
 		activeActId, fallbackActId := getActIDs()
+		println("Active Act ID:", activeActId)
+		println("Fallback Act ID:", fallbackActId)
 		_, status, _ := fetchLeaderboardPage(activeActId, 1, region, platform)
 		if status == 404 {
+			println("No active leaderboard found, using fallback")
 			saveAndConcatenatePagesToRedis(region, platform, fallbackActId)
 		} else {
+			println("Active leaderboard found")
 			saveAndConcatenatePagesToRedis(region, platform, activeActId)
 		}
 		time.Sleep(timeout)
