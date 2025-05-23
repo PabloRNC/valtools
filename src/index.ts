@@ -6,7 +6,7 @@ import { html } from "@elysiajs/html";
 import cron from "@elysiajs/cron";
 import { staticPlugin } from "@elysiajs/static";
 import { Redis } from "ioredis";
-import { connect, connections as MongoDBConnections } from "mongoose";
+import { connect } from "mongoose";
 import { type JWTPayload, type AuthJWTPayload, parseToCron } from "./lib";
 import { Api, Auth } from "./routes";
 
