@@ -14,6 +14,24 @@ import { isAuthorized } from "../middlewares";
 
 export const Api = new Elysia({ prefix: "/api" });
 
+Api.get("/rank/:region/:username/:tag", async ({ set, params: { region, username, tag } }) => {
+
+  const res = await fetch(`https://api.henrikdev.xyz/valorant/v3/mmr/${region}/pc/${username}/${tag}`, {
+    headers:{
+      "Authorization": process.env.HENRIKDEV_API_KEY || ""
+    }
+  })
+
+  const json = await res.json();
+
+  const { data: { current } } = json;
+
+  set.status = 200;
+
+  return `${current.tier.name} ${current.rr}RR`
+
+})
+
 Api.get(
   "/leaderboard/:platform/:region",
   async ({ set, params: { platform, region } }) => {

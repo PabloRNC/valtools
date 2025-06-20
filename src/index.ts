@@ -233,6 +233,7 @@ declare global {
       HCAPTCHA_SECRET: string;
       BUG_PANEL_PASSWORD: string;
       BUG_PANEL_USERNAME: string;
+      HENRIKDEV_API_KEY: string;
     }
   }
 
