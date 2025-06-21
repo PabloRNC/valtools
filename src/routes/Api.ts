@@ -28,7 +28,7 @@ Api.get("/rank/:region/:username/:tag", async ({ set, params: { region, username
 
   set.status = 200;
 
-  return `${current.tier.name} ${current.rr}RR | Peak: ${peak.tier.name} ${peak.rr}RR`
+  return `Current: ${current.tier.name} ${current.rr}RR | Peak: ${peak.tier.name} ${peak.rr}RR`
 
 })
 
