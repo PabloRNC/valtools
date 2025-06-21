@@ -24,11 +24,11 @@ Api.get("/rank/:region/:username/:tag", async ({ set, params: { region, username
 
   const json = await res.json();
 
-  const { data: { current } } = json;
+  const { data: { current, peak } } = json;
 
   set.status = 200;
 
-  return `${current.tier.name} ${current.rr}RR`
+  return `${current.tier.name} ${current.rr}RR | Peak: ${peak.tier.name} ${peak.rr}RR`
 
 })
 
