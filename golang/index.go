@@ -99,16 +99,26 @@ func fetchLeaderboardPage(actId string, page int, region, platform string) (*Lea
 
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("[ERROR] Fetching leaderboard page (region=%s, platform=%s, page=%d): %v", region, platform, page, err)
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 && resp.StatusCode != 404 && resp.StatusCode != 429 {
+		log.Printf("[WARN] Unexpected status code %d from leaderboard API (region=%s, platform=%s, page=%d)", resp.StatusCode, region, platform, page)
+	}
 
 	if resp.StatusCode == 404 {
 		return nil, 404, nil
 	}
 
+	if resp.StatusCode == 400 {
+		return nil, 400, nil
+	}
+
 	if resp.StatusCode == 429 {
 		retryAfter := resp.Header.Get("Retry-After")
+		log.Printf("[INFO] Rate limited by Riot API (region=%s, platform=%s, page=%d), retry-after: %s", region, platform, page, retryAfter)
 		if retryAfter != "" {
 			waitTime, _ := strconv.Atoi(retryAfter)
 			time.Sleep(time.Duration(waitTime) * time.Second)
@@ -118,12 +128,14 @@ func fetchLeaderboardPage(actId string, page int, region, platform string) (*Lea
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("[ERROR] Reading response body for leaderboard page (region=%s, platform=%s, page=%d): %v", region, platform, page, err)
 		return nil, resp.StatusCode, err
 	}
 
 	var data LeaderboardResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
+		log.Printf("[ERROR] Unmarshaling leaderboard response (region=%s, platform=%s, page=%d): %v", region, platform, page, err)
 		return nil, resp.StatusCode, err
 	}
 
@@ -135,23 +147,31 @@ func fetchSeasonData() ([]Season, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		log.Printf("[ERROR] Creating request for season data: %v", err)
 		return nil, err
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("[ERROR] Fetching season data: %v", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		log.Printf("[WARN] Unexpected status code %d from season API", resp.StatusCode)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("[ERROR] Reading season response body: %v", err)
 		return nil, err
 	}
 
 	var data SeasonResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
+		log.Printf("[ERROR] Unmarshaling season data: %v", err)
 		return nil, err
 	}
 
@@ -211,12 +231,20 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 
 	for {
 		playersPage, status, err := fetchLeaderboardPage(actId, page, region, platform)
+
+		if err != nil {
+			log.Printf("[ERROR] Fetching page %d for %s-%s: %v", page, platform, region, err)
+			return
+		}
+
 		if status == 404 {
+			log.Printf("[INFO] No leaderboard found for %s-%s (actId=%s), stopping.", platform, region, actId)
 			break
 		}
 
-		if err != nil {
-			return
+		if status == 400 {
+			log.Printf("[WARN] Received 400 from API on page %d for %s-%s. Stopping pagination early and saving what we have.", page, platform, region)
+			break
 		}
 
 		if page == 1 {
@@ -224,18 +252,32 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 		}
 
 		if len(playersPage.Players) == 0 {
+			log.Printf("[INFO] Page %d empty for %s-%s, stopping.", page, platform, region)
 			thresholdsData, _ := json.Marshal(thresholds)
-			redisClient.Set(ctx, thresholdsKey, string(thresholdsData), 0)
+			err := redisClient.Set(ctx, thresholdsKey, string(thresholdsData), 0).Err()
+			if err != nil {
+				log.Printf("[ERROR] Saving thresholds to Redis for %s-%s: %v", platform, region, err)
+			}
 			break
 		}
+
 		pageKey := fmt.Sprintf("leaderboard:%s:%s:page:%d", platform, region, page)
 		playersData, _ := json.Marshal(playersPage.Players)
 		err = redisClient.Set(ctx, pageKey, playersData, 0).Err()
 		if err != nil {
+			log.Printf("[ERROR] Saving page %d to Redis for %s-%s: %v", page, platform, region, err)
 			return
 		}
 
+		log.Printf("[INFO] Saved page %d for %s-%s with %d players.", page, platform, region, len(playersPage.Players))
 		allPageKeys = append(allPageKeys, pageKey)
+
+		lastPlayer := playersPage.Players[len(playersPage.Players)-1]
+		if lastPlayer.LeaderboardRank == playersPage.TotalPlayers {
+			log.Printf("[INFO] Last player rank %d equals totalPlayers (%d) for %s-%s. Pagination complete.", lastPlayer.LeaderboardRank, playersPage.TotalPlayers, platform, region)
+			break
+		}
+
 		page++
 	}
 
@@ -275,20 +317,23 @@ func saveAndConcatenatePagesToRedis(region, platform string, actId string) {
 
 	_, err := redisClient.Eval(ctx, luaScript, []string{totalKey, playerKey}, allPageKeys).Result()
 	if err != nil {
-		log.Printf("Error executing Lua script: %v", err)
+		log.Printf("[ERROR] Executing Lua script for %s-%s: %v", platform, region, err)
 		return
 	}
 
 	for _, pageKey := range allPageKeys {
 		redisClient.Del(ctx, pageKey)
 	}
-
+	log.Printf("[INFO] Successfully saved %d pages for %s-%s.", len(allPageKeys), platform, region)
 }
 
 func processRegion(region, platform string, timeout time.Duration) {
 	for {
 		activeActId, fallbackActId := getActIDs()
-		_, status, _ := fetchLeaderboardPage(activeActId, 1, region, platform)
+		_, status, err := fetchLeaderboardPage(activeActId, 1, region, platform)
+		if err != nil {
+			log.Printf("[ERROR] Fetching first page for %s-%s: %v", platform, region, err)
+		}
 		if status == 404 {
 			saveAndConcatenatePagesToRedis(region, platform, fallbackActId)
 		} else {
