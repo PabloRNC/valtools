@@ -165,7 +165,7 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
 
     const mmr = competitiveMatches.length
       ? await getMMR(data.puuid, data.region, data.config.platform, competitive[0])
-      : cachedMMR ? JSON.parse(cachedMMR) : { tier: 0, rr: 0, leaderboardRank: null, threshold: null };
+      : cachedMMR ? JSON.parse(cachedMMR) : { tier: 0, rr: null, leaderboardRank: null, threshold: null };
 
     const daily = data.config.daily.enabled
       ? await getDaily(data.puuid, data.region, data.config.platform, matchlist.history, data.config.daily.only_competitive)
