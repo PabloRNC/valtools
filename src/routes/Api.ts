@@ -159,8 +159,6 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
       ? await addMatches(data.puuid, data.config.platform, true, await parseMatches(data.puuid, data.region, data.config.platform, competitiveMatches.slice(0, 3)))
       : cachedCompetitiveMatches ? JSON.parse(cachedCompetitiveMatches) : null;
 
-      console.log(competitive)
-
     const unrated = unratedMatches.length
       ? await addMatches(data.puuid, data.config.platform, false, await parseMatches(data.puuid, data.region, data.config.platform, unratedMatches.slice(0, 3)))
       : cachedMatchlist ? JSON.parse(cachedMatchlist) : null;
@@ -169,13 +167,19 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
       ? await getMMR(data.puuid, data.region, data.config.platform, competitive[0])
       : cachedMMR ? JSON.parse(cachedMMR) : null;
 
+      console.log('MMR')
+
     const daily = data.config.daily.enabled
       ? await getDaily(data.puuid, data.region, data.config.platform, matchlist.history, data.config.daily.only_competitive)
       : cachedDaily ? JSON.parse(cachedDaily) : null;
 
+    
+
     const player = competitive[0] || unrated[0]
       ? await getPlayer(competitive[0] || unrated[0], data.config.platform)
       : cachedPlayer ? JSON.parse(cachedPlayer) : null;
+
+      console.log('Player')
 
     await setCache(data.puuid, data.config.platform, 2 * 60);
     await reloadExpiry(data.puuid, data.config.platform);
