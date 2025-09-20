@@ -80,99 +80,6 @@ Api.get(
   }
 );
 
-/*
-Api.get(
-  "/players/:channelId",
-  async ({ headers, set, params: { channelId } }) => {
-
-    const payload = isAuthorized(headers)
-
-    if(!payload){
-      set.status = 401;
-      return { status: 401, error: "Unauthorized" };
-    }
-
-
-    const { channel_id } = payload;
-
-    if (channel_id !== channelId) {
-      set.status = 401;
-      return { status: 401, error: "Unauthorized" };
-    }
-
-    const data = await User.findOne({ channelId });
-
-    if (!data) {
-      set.status = 404;
-      return { status: 404, error: "User not found" };
-    }
-
-
-    const { activeShard } = await RiotRequestManager.getAccountShard(
-      data.puuid
-    );
-
-    if (data.region !== activeShard) {
-      data.region = activeShard;
-      await data.save();
-    }
-
-    const {
-      data: matchlist,
-      cached,
-      riotMatchlist,
-    } = await checkMatchlist(data.puuid, data.region, data.config.platform);
-
-    if (!matchlist.data.length && !matchlist.competitiveMatches.length) {
-      set.status = 404;
-      return { status: 404, error: "No match history found." };
-    }
-
-    const mmr = await checkMMR(
-      data.puuid,
-      data.region,
-      data.config.platform,
-      matchlist.competitiveMatches
-    );
-
-    const player = await checkPlayer(
-      matchlist.data[0] || matchlist.competitiveMatches[0],
-      data.config.platform
-    );
-
-    if (data.username !== player.username || data.tag !== player.tagLine) {
-      data.username = player.username;
-      data.tag = player.tagLine;
-      await data.save();
-    }
-
-    const daily = data.config.daily.enabled
-      ? await checkDaily(
-          data.puuid,
-          data.region,
-          data.config.platform,
-          riotMatchlist!,
-          data.config.daily.only_competitive
-        )
-      : null;
-
-    set.headers["Cache"] = `${cached ? "HIT" : "MISS"}`;
-
-    set.status = 200;
-
-    return {
-      matchlist: data.config.match_history ? matchlist.data : null,
-      mmrHistory: data.config.match_history
-        ? matchlist.competitiveMatches
-        : null,
-      daily,
-      mmr,
-      player,
-    };
-  }
-);
-
-*/
 
 Api.get("/players/:channelId", async function handler({ headers, set, params: { channelId }}) {
   const payload = isAuthorized(headers);
@@ -252,6 +159,8 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
       ? await addMatches(data.puuid, data.config.platform, true, await parseMatches(data.puuid, data.region, data.config.platform, competitiveMatches.slice(0, 3)))
       : cachedCompetitiveMatches ? JSON.parse(cachedCompetitiveMatches) : null;
 
+      console.log(competitive)
+
     const unrated = unratedMatches.length
       ? await addMatches(data.puuid, data.config.platform, false, await parseMatches(data.puuid, data.region, data.config.platform, unratedMatches.slice(0, 3)))
       : cachedMatchlist ? JSON.parse(cachedMatchlist) : null;
@@ -283,69 +192,6 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
     };
 });
 
-
-/*Api.get("/players/mock", async ({ set }) => {
-
-  const user = await User.findOne({ channelId: "mock" });
-
-  if (!user) {
-    set.status = 404;
-    return { status: 404, error: "User not found" };
-  }
-  const { activeShard } = await RiotRequestManager.getAccountShard(user.puuid);
-
-  if (user.region !== activeShard) {
-    user.region = activeShard;
-    await user.save();
-  }
-
-  const {
-    data: matchlist,
-    cached,
-    riotMatchlist,
-  } = await checkMatchlist(user.puuid, user.region, user.config.platform);
-
-  if (!matchlist.data.length && !matchlist.competitiveMatches.length) {
-    set.status = 404;
-    return { status: 404, error: "No match history found." };
-  }
-
-  const mmr = await checkMMR(
-    user.puuid,
-    user.region,
-    user.config.platform,
-    matchlist.competitiveMatches
-  );
-
-  const player = await checkPlayer(
-    matchlist.data[0] || matchlist.competitiveMatches[0],
-    user.config.platform
-  );
-
-  const daily = user.config.daily.enabled
-    ? await checkDaily(
-        user.puuid,
-        user.region,
-        user.config.platform,
-        riotMatchlist!,
-        user.config.daily.only_competitive
-      )
-    : null;
-
-  set.headers["Cache"] = `${cached ? "HIT" : "MISS"}`;
-
-  set.status = 200;
-
-  return {
-    matchlist: user.config.match_history ? matchlist.data : null,
-    mmr,
-    player,
-    mmrHistory: user.config.match_history ? matchlist.competitiveMatches : null,
-    daily,
-  };
-});
-
-*/
 
 Api.get(
   "/setup",
