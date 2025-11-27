@@ -18,6 +18,7 @@
                 <div class="navItem" data-trigger="rankedMatches"><span>Ranked Matches</span></div>
             </div>
         </div>
+
         <div class="window playerStats">
             <div class="playerRank">
                 <div class="level"><span>128</span></div>
@@ -60,6 +61,7 @@
                             d="M192 64C86 64 0 150 0 256S86 448 192 448l256 0c106 0 192-86 192-192s-86-192-192-192L192 64zM496 168a40 40 0 1 1 0 80 40 40 0 1 1 0-80zM392 304a40 40 0 1 1 80 0 40 40 0 1 1 -80 0zM168 200c0-13.3 10.7-24 24-24s24 10.7 24 24l0 32 32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0 0 32c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-32-32 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l32 0 0-32z" />
                     </svg>
                 </div>
+                <svg class="close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M73.4 297.4C60.9 309.9 60.9 330.2 73.4 342.7L233.4 502.7C245.9 515.2 266.2 515.2 278.7 502.7C291.2 490.2 291.2 469.9 278.7 457.4L173.3 352L544 352C561.7 352 576 337.7 576 320C576 302.3 561.7 288 544 288L173.3 288L278.7 182.6C291.2 170.1 291.2 149.8 278.7 137.3C266.2 124.8 245.9 124.8 233.4 137.3L73.4 297.3z"/></svg>
             </div>
         </div>
         <div class="window casualMatches inactive">
@@ -80,10 +82,20 @@
                         <div class="gamemode">SWIFTPLAY</div>
                     </div>
                     <div class="pagination">
-                        <div class="dot"></div>
-                        <div class="dot active"></div>
-                        <div class="dot"></div>
+                        <div class="pagination-arrow left">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M11 14L5 8l6-6" />
+                            </svg>
+                        </div>
+                        <div class="pagination-text">1/3</div>
+                        <div class="pagination-arrow right">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M5 14l6-6-6-6" />
+                            </svg>
+                        </div>
                     </div>
+
+
                     <svg viewBox="0 0 33.316 80" class="accuracySvg">
                         <g transform="translate(-636.875 -624)">
                             <circle cx="6.153" cy="6.153" r="6.153" transform="translate(647.387 624)"
@@ -101,6 +113,173 @@
                         <span>75%</span>
                         <span>10%</span>
                     </div>
+
+
+                </div>
+            </div>
+            <div class="match victory">
+                <div class="filter"></div>
+                <img class="matchBackground"
+                    src="https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/listviewicon.png"></img>
+                <div class="matchWrapper">
+                    <img class="agent"
+                        src="https://media.valorant-api.com/agents/dade69b4-4f5a-8528-247b-219e5a1facd6/displayicon.png"></img>
+                    <div class="matchStats">
+                        <div class="kda">13/5/2</div>
+                        <div class="acs">ACS: 280</div>
+                    </div>
+                    <div class="matchInfo">
+                        <div class="matchStatus victory">VICTORY</div>
+                        <div class="matchScore">13 - 0</div>
+                        <div class="gamemode">SWIFTPLAY</div>
+                    </div>
+                    <div class="pagination">
+                        <div class="pagination-arrow left">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M11 14L5 8l6-6" />
+                            </svg>
+                        </div>
+                        <div class="pagination-text">1 / 3</div>
+                        <div class="pagination-arrow right">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M5 14l6-6-6-6" />
+                            </svg>
+                        </div>
+                    </div>
+
+
+                    <svg viewBox="0 0 33.316 80" class="accuracySvg">
+                        <g transform="translate(-636.875 -624)">
+                            <circle cx="6.153" cy="6.153" r="6.153" transform="translate(647.387 624)"
+                                fill="rgba(255, 255, 255, 0.5)"></circle>
+                            <path
+                                d="M29.285,26.472,24.17,13.678l-1.352,6.831H10.512l-1.363-6.84-5.117,12.8A2.049,2.049,0,1,1,.072,25.411L6.441,1.639l.008,0A2.055,2.055,0,0,1,8.461,0h4.1L16.67,4.1l4.1-4.1h4.111a2.048,2.048,0,0,1,2.016,1.712l6.352,23.7a2.049,2.049,0,1,1-3.959,1.061Z"
+                                transform="translate(636.875 638.36)" fill="#fff"></path>
+                            <path
+                                d="M6.521,41.025h0l-6.52,0L5.863,0H18.756l5.857,41.021-6.508,0L12.307,8.2,6.521,41.024Z"
+                                transform="translate(641.232 662.975)" fill="rgba(255, 255, 255, 0.5"></path>
+                        </g>
+                    </svg>
+                    <div class="accuracyText">
+                        <span>10%</span>
+                        <span>75%</span>
+                        <span>10%</span>
+                    </div>
+                    <div class="mvp-badge">
+                        <div class="star-icon">★</div>
+                        <div class="mvp-text">GAME MVP</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="window rankedMatches inactive">
+            <div class="match victory">
+                <div class="filter"></div>
+                <img class="matchBackground"
+                    src="https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/listviewicon.png"></img>
+                <div class="matchWrapper">
+                    <img class="agent"
+                        src="https://media.valorant-api.com/agents/dade69b4-4f5a-8528-247b-219e5a1facd6/displayicon.png"></img>
+                    <div class="matchStats">
+                        <div class="kda">13/5/2</div>
+                        <div class="acs">ACS: 280</div>
+                    </div>
+                    <div class="matchInfo">
+                        <div class="matchStatus victory">VICTORY</div>
+                        <div class="matchScore">13 - 0</div>
+                        <div class="gamemode">SWIFTPLAY</div>
+                    </div>
+                    <div class="pagination">
+                        <div class="pagination-arrow left">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M11 14L5 8l6-6" />
+                            </svg>
+                        </div>
+                        <div class="pagination-text">1/3</div>
+                        <div class="pagination-arrow right">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M5 14l6-6-6-6" />
+                            </svg>
+                        </div>
+                    </div>
+
+
+                    <svg viewBox="0 0 33.316 80" class="accuracySvg">
+                        <g transform="translate(-636.875 -624)">
+                            <circle cx="6.153" cy="6.153" r="6.153" transform="translate(647.387 624)"
+                                fill="rgba(255, 255, 255, 0.5)"></circle>
+                            <path
+                                d="M29.285,26.472,24.17,13.678l-1.352,6.831H10.512l-1.363-6.84-5.117,12.8A2.049,2.049,0,1,1,.072,25.411L6.441,1.639l.008,0A2.055,2.055,0,0,1,8.461,0h4.1L16.67,4.1l4.1-4.1h4.111a2.048,2.048,0,0,1,2.016,1.712l6.352,23.7a2.049,2.049,0,1,1-3.959,1.061Z"
+                                transform="translate(636.875 638.36)" fill="#fff"></path>
+                            <path
+                                d="M6.521,41.025h0l-6.52,0L5.863,0H18.756l5.857,41.021-6.508,0L12.307,8.2,6.521,41.024Z"
+                                transform="translate(641.232 662.975)" fill="rgba(255, 255, 255, 0.5"></path>
+                        </g>
+                    </svg>
+                    <div class="accuracyText">
+                        <span>10%</span>
+                        <span>75%</span>
+                        <span>10%</span>
+                    </div>
+
+                    <div class="matchRankIcon"></div>
+
+                </div>
+            </div>
+            <div class="match victory">
+                <div class="filter"></div>
+                <img class="matchBackground"
+                    src="https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/listviewicon.png"></img>
+                <div class="matchWrapper">
+                    <img class="agent"
+                        src="https://media.valorant-api.com/agents/dade69b4-4f5a-8528-247b-219e5a1facd6/displayicon.png"></img>
+                    <div class="matchStats">
+                        <div class="kda">13/5/2</div>
+                        <div class="acs">ACS: 280</div>
+                    </div>
+                    <div class="matchInfo">
+                        <div class="matchStatus victory">VICTORY</div>
+                        <div class="matchScore">13 - 0</div>
+                        <div class="gamemode">SWIFTPLAY</div>
+                    </div>
+                    <div class="pagination">
+                        <div class="pagination-arrow left">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M11 14L5 8l6-6" />
+                            </svg>
+                        </div>
+                        <div class="pagination-text">1 / 3</div>
+                        <div class="pagination-arrow right">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M5 14l6-6-6-6" />
+                            </svg>
+                        </div>
+                    </div>
+
+
+                    <svg viewBox="0 0 33.316 80" class="accuracySvg">
+                        <g transform="translate(-636.875 -624)">
+                            <circle cx="6.153" cy="6.153" r="6.153" transform="translate(647.387 624)"
+                                fill="rgba(255, 255, 255, 0.5)"></circle>
+                            <path
+                                d="M29.285,26.472,24.17,13.678l-1.352,6.831H10.512l-1.363-6.84-5.117,12.8A2.049,2.049,0,1,1,.072,25.411L6.441,1.639l.008,0A2.055,2.055,0,0,1,8.461,0h4.1L16.67,4.1l4.1-4.1h4.111a2.048,2.048,0,0,1,2.016,1.712l6.352,23.7a2.049,2.049,0,1,1-3.959,1.061Z"
+                                transform="translate(636.875 638.36)" fill="#fff"></path>
+                            <path
+                                d="M6.521,41.025h0l-6.52,0L5.863,0H18.756l5.857,41.021-6.508,0L12.307,8.2,6.521,41.024Z"
+                                transform="translate(641.232 662.975)" fill="rgba(255, 255, 255, 0.5"></path>
+                        </g>
+                    </svg>
+                    <div class="accuracyText">
+                        <span>10%</span>
+                        <span>75%</span>
+                        <span>10%</span>
+                    </div>
+                    <div class="mvp-badge competitive">
+                        <div class="star-icon">★</div>
+                        <div class="mvp-text">GAME MVP</div>
+                    </div>
+
+                    <div class="matchRankIcon"></div>
                 </div>
             </div>
         </div>

@@ -28,7 +28,7 @@ Api.get("/rank/:region/:username/:tag", async ({ set, params: { region, username
 
   set.status = 200;
 
-  return `Current: ${current.tier.name} ${current.rr}RR | Peak: ${peak.tier.name} ${peak.rr}RR`
+  return `Current: ${current.tier.name} ${current.rr}RR | Peak: ${peak.tier.name}`
 
 })
 
@@ -134,7 +134,7 @@ Api.get("/players/:channelId", async function handler({ headers, set, params: { 
     }
 
     const lastCachedMatch = await getLastMatchId(data.puuid, data.config.platform);
-    if (lastCachedMatch && matchlist.history[0].matchId === lastCachedMatch && cachedMatchlist && cachedCompetitiveMatches && cachedDaily && cachedMMR && cachedPlayer) {
+    if (lastCachedMatch && matchlist.history?.[0].matchId === lastCachedMatch && cachedMatchlist && cachedCompetitiveMatches && cachedDaily && cachedMMR && cachedPlayer) {
       set.headers["Cache"] = "HIT";
       set.status = 200;
 
