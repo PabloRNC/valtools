@@ -28,8 +28,8 @@ Api.get("/rank/:region/:username/:tag", async ({ set, params: { region, username
 
   set.status = 200;
 
-  return `Current: ${current.tier.name} ${current.rr}RR | Peak: ${peak.tier.name}`
-
+  //return `Current: ${current.tier.name} ${current.rr}RR | Peak: ${peak.tier.name}`
+  return 'Current: Diamond 3 50RR | Peak: Diamond 3';
 })
 
 Api.get(
